@@ -66,11 +66,7 @@ class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     # In production, set SECRET_KEY from environment variable
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL',
-        'sqlite:////tmp/caris.db'
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
     
 
 # Configuration dictionary
@@ -78,5 +74,5 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': ProductionConfig
 }
