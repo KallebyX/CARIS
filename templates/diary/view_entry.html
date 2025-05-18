@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Visualizar Reflexão - CÁRIS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <a href="{{ url_for('diary.view_entries') }}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left"></i> Voltar às Reflexões
+                </a>
+            </div>
+            
+            <div class="card diary-entry fade-in-effect">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <span class="diary-date">{{ entry.created_at|format_date('%d/%m/%Y %H:%M') }}</span>
+                        <span class="diary-emotion" style="background-color: {{ entry.cycle.color_code }};">{{ entry.emotion }}</span>
+                    </div>
+                    
+                    <h4 class="mb-3" style="color: {{ entry.cycle.color_code }};">Ciclo: {{ entry.cycle.name }}</h4>
+                    
+                    <div class="diary-content mb-4">{{ entry.content }}</div>
+                    
+                    <div class="mt-4 text-end">
+                        <form action="{{ url_for('diary.delete_entry', entry_id=entry.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Tem certeza que deseja excluir esta reflexão?');">Excluir</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

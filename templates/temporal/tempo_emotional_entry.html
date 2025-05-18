@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro Tempo-Emocional | CHRONOS CÁRIS{% endblock %}
+
+{% block styles %}
+<style>
+    .entry-form {
+        background-color: rgba(20, 20, 20, 0.7);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .range-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #d4af37;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+    
+    .range-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+    
+    .time-perception-option {
+        background-color: rgba(30, 30, 30, 0.7);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+    
+    .time-perception-option:hover {
+        background-color: rgba(40, 40, 40, 0.7);
+    }
+    
+    .time-perception-option.selected {
+        border-color: #d4af37;
+        background-color: rgba(50, 50, 50, 0.7);
+    }
+    
+    .time-perception-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .activity-type-select {
+        background-color: rgba(30, 30, 30, 0.7);
+        border: 1px solid #444;
+        color: #fff;
+        border-radius: 6px;
+        padding: 0.75rem;
+    }
+    
+    .diary-link {
+        background-color: rgba(30, 30, 30, 0.7);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="display-4 mb-4">Registro Tempo-Emocional</h1>
+    <p class="lead mb-5">Registre como você está se sentindo em relação ao seu tempo e energia neste momento.</p>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="entry-form">
+                <form action="{{ url_for('temporal.tempo_emotional_entry') }}" method="post">
+                    {% if diary_entry %}
+                        <input type="hidden" name="diary_id" value="{{ diary_entry.id }}">
+                        
+                        <div class="diary-link mb-4">
+                            <h5>Vinculado ao diário:</h5>
+                            <p>{{ diary_entry.title }}</p>
+                            <p class="text-muted">{{ diary_entry.date.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <label for="energy_level" class="form-label">Nível de Energia</label>
+                        <input type="range" class="form-range" min="1" max="10" step="1" id="energy_level" name="energy_level" value="5">
+                        <div class="range-value" id="energy_value">5</div>
+                        <div class="range-labels">
+                            <span>Baixa</span>
+                            <span>Média</span>
+                            <span>Alta</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="focus_level" class="form-label">Nível de Foco</label>
+                        <input type="range" class="form-range" min="1" max="10" step="1" id="focus_level" name="focus_level" value="5">
+                        <div class="range-value" id="focus_value">5</div>
+                        <div class="range-labels">
+                            <span>Disperso</span>
+                            <span>Moderado</span>
+                            <span>Concentrado</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Percepção de Tempo</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="time-perception-option" data-value="slow">
+                                    <div class="time-perception-icon text-center">
+                                        <i class="fas fa-hourglass-start"></i>
+                                    </div>
+                                    <h5 class="text-center">Lento</h5>
+                                    <p class="text-center text-muted small">O tempo parece estar se arrastando</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="time-perception-option selected" data-value="normal">
+                                    <div class="time-perception-icon text-center">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                    <h5 class="text-center">Normal</h5>
+                                    <p class="text-center text-muted small">O tempo está fluindo naturalmente</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="time-perception-option" data-value="fast">
+                                    <div class="time-perception-icon text-center">
+                                        <i class="fas fa-hourglass-end"></i>
+                                    </div>
+                                    <h5 class="text-center">Rápido</h5>
+                                    <p class="text-center text-muted small">O tempo está passando muito rápido</p>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="time_perception" id="time_perception" value="normal">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="activity_type" class="form-label">Tipo de Atividade</label>
+                        <select class="activity-type-select form-select" id="activity_type" name="activity_type">
+                            <option value="Trabalho Focado">Trabalho Focado</option>
+                            <option value="Trabalho Criativo">Trabalho Criativo</option>
+                            <option value="Reunião/Colaboração">Reunião/Colaboração</option>
+                            <option value="Aprendizado/Estudo">Aprendizado/Estudo</option>
+                            <option value="Planejamento/Organização">Planejamento/Organização</option>
+                            <option value="Descanso/Recuperação">Descanso/Recuperação</option>
+                            <option value="Socialização">Socialização</option>
+                            <option value="Cuidado Pessoal">Cuidado Pessoal</option>
+                            <option value="Movimento/Exercício">Movimento/Exercício</option>
+                            <option value="Reflexão/Contemplação">Reflexão/Contemplação</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    
+                    <div class="text-center mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Salvar Registro
+                        </button>
+                        
+                        <a href="{{ url_for('temporal.atlas') }}" class="btn btn-outline-light btn-lg ml-3">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Sobre Registros Tempo-Emocionais</h5>
+                </div>
+                <div class="card-body">
+                    <p>Registros tempo-emocionais capturam como você está experimentando o tempo em relação ao seu estado energético e emocional.</p>
+                    <p>Recomendamos fazer registros:</p>
+                    <ul>
+                        <li>Em diferentes momentos do dia</li>
+                        <li>Durante diferentes tipos de atividades</li>
+                        <li>Quando notar mudanças significativas</li>
+                    </ul>
+                    <p>Com o tempo, esses registros revelarão padrões valiosos sobre seus ciclos naturais.</p>
+                </div>
+            </div>
+            
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="mb-0">Dica</h5>
+                </div>
+                <div class="card-body">
+                    <p>Tente registrar como você está se sentindo <em>neste exato momento</em>, não como você se sentiu anteriormente ou como gostaria de se sentir.</p>
+                    <p>A precisão desses registros é o que torna o Atlas Tempo-Emocional uma ferramenta poderosa para autoconhecimento.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Energy level slider
+        const energySlider = document.getElementById('energy_level');
+        const energyValue = document.getElementById('energy_value');
+        
+        energySlider.addEventListener('input', function() {
+            energyValue.textContent = this.value;
+        });
+        
+        // Focus level slider
+        const focusSlider = document.getElementById('focus_level');
+        const focusValue = document.getElementById('focus_value');
+        
+        focusSlider.addEventListener('input', function() {
+            focusValue.textContent = this.value;
+        });
+        
+        // Time perception options
+        const timeOptions = document.querySelectorAll('.time-perception-option');
+        const timePerceptionInput = document.getElementById('time_perception');
+        
+        timeOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                timeOptions.forEach(opt => opt.classList.remove('selected'));
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Update hidden input value
+                timePerceptionInput.value = this.getAttribute('data-value');
+            });
+        });
+    });
+</script>
+{% endblock %}

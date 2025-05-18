@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Sobre - CÁRIS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="text-center text-gold mb-4">Sobre o CÁRIS</h2>
+            
+            <div class="card mb-5">
+                <div class="card-body">
+                    <h3 class="mb-3">Clareza existencial em uma experiência cinematográfica</h3>
+                    <p>CÁRIS é um software web premium que combina escrita reflexiva guiada, organização emocional por ciclos e visualizações poéticas para proporcionar uma jornada de autoconhecimento única.</p>
+                    
+                    <p>Diferente de outras ferramentas digitais focadas em produtividade, CÁRIS prioriza a qualidade da presença, a profundidade da reflexão e a beleza da experiência.</p>
+                    
+                    <blockquote class="quote">
+                        <p>A clareza não é apenas ver o mundo como ele é, mas reconhecer como você o transforma com seu olhar.</p>
+                    </blockquote>
+                </div>
+            </div>
+            
+            <h3 class="mb-4">Os Quatro Ciclos</h3>
+            
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card cycle-card criar h-100">
+                        <div class="card-body">
+                            <h4 class="cycle-criar">Criar</h4>
+                            <p>Momento de gerar ideias, iniciar projetos e manifestar sua criatividade. Este ciclo representa o nascimento, o impulso inicial e a expressão de seu potencial criativo.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card cycle-card cuidar h-100">
+                        <div class="card-body">
+                            <h4 class="cycle-cuidar">Cuidar</h4>
+                            <p>Tempo de nutrir relacionamentos, cuidar de si e manter o que já existe. Este ciclo representa a sustentação, a nutrição e a preservação do que é valioso.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card cycle-card crescer h-100">
+                        <div class="card-body">
+                            <h4 class="cycle-crescer">Crescer</h4>
+                            <p>Fase de expansão, aprendizado e desenvolvimento pessoal. Este ciclo representa a evolução, a transformação e a ampliação de horizontes.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card cycle-card curar h-100">
+                        <div class="card-body">
+                            <h4 class="cycle-curar">Curar</h4>
+                            <p>Momento de introspecção, cura emocional e renovação interior. Este ciclo representa a integração, a reconciliação e o retorno à essência.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="mb-4">Filosofia</h3>
+            
+            <div class="card mb-5">
+                <div class="card-body">
+                    <p>CÁRIS foi concebido a partir da crença de que a tecnologia pode e deve servir à alma humana, não apenas à sua produtividade. Em um mundo digital dominado por ferramentas que exigem cada vez mais de nós, CÁRIS oferece um espaço de pausa, reflexão e beleza.</p>
+                    
+                    <p>Inspirado pela interseção entre arte cinematográfica, filosofia contemplativa e psicologia narrativa, CÁRIS convida você a transformar sua relação com a tecnologia e consigo mesmo.</p>
+                    
+                    <p>Cada elemento da experiência - das cores às transições, das fontes aos prompts reflexivos - foi cuidadosamente projetado para evocar estados de presença, clareza e significado.</p>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="{{ url_for('auth.register') }}" class="btn btn-gold btn-lg">Iniciar Jornada</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

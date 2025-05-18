@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Reflexão - CÁRIS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4 text-center">Nova Reflexão</h2>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <blockquote class="quote">
+                        <p class="mb-0">{{ utils.get_cycle_quote(form.cycle.data|cycle_name) if form.cycle.data else "A jornada começa com um único passo consciente." }}</p>
+                    </blockquote>
+                </div>
+            </div>
+            
+            <div class="diary-form">
+                <form method="POST" action="{{ url_for('diary.new_entry') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            {{ form.cycle.label(class="form-label") }}
+                            {% if form.cycle.errors %}
+                                {{ form.cycle(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.cycle.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.cycle(class="form-select") }}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.emotion.label(class="form-label") }}
+                            {% if form.emotion.errors %}
+                                {{ form.emotion(class="form-select is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.emotion.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.emotion(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="text-muted mb-2">
+                            <small>{{ utils.generate_writing_prompt(form.cycle.data|cycle_name, form.emotion.data) }}</small>
+                        </p>
+                        
+                        {{ form.content.label(class="form-label") }}
+                        {% if form.content.errors %}
+                            {{ form.content(class="form-control diary-textarea is-invalid", rows=10) }}
+                            <div class="invalid-feedback">
+                                {% for error in form.content.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.content(class="form-control diary-textarea", rows=10) }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-gold") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cycleSelect = document.getElementById('cycle');
+        const emotionSelect = document.getElementById('emotion');
+        const promptElement = document.querySelector('.text-muted.mb-2 small');
+        
+        // Atualizar prompt quando ciclo ou emoção mudar
+        function updatePrompt() {
+            const cycleOption = cycleSelect.options[cycleSelect.selectedIndex];
+            const cycleName = cycleOption ? cycleOption.text : '';
+            const emotion = emotionSelect.value;
+            
+            fetch(`/diary/api/prompt?cycle=${cycleName}&emotion=${emotion}`)
+                .then(response => response.json())
+                .then(data => {
+                    promptElement.textContent = data.prompt;
+                })
+                .catch(error => console.error('Erro ao buscar prompt:', error));
+        }
+        
+        cycleSelect.addEventListener('change', updatePrompt);
+        emotionSelect.addEventListener('change', updatePrompt);
+        
+        // Efeito de máquina de escrever para o textarea
+        const textarea = document.querySelector('.diary-textarea');
+        textarea.addEventListener('focus', function() {
+            this.classList.add('focused');
+        });
+        
+        textarea.addEventListener('blur', function() {
+            this.classList.remove('focused');
+        });
+    });
+</script>
+{% endblock %}

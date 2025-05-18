@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Painel - CÁRIS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 dashboard-container">
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-10 text-center">
+            <h2 class="mb-3">Painel de Clareza</h2>
+            <p class="lead">Visualize sua jornada através dos ciclos e emoções.</p>
+        </div>
+    </div>
+    
+    <!-- Estatísticas Rápidas -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card dashboard-card hover-effect">
+                <div class="card-body dashboard-card-body text-center">
+                    <div class="stat-number counter-effect" data-count="{{ recent_entries|length }}">0</div>
+                    <div class="stat-label">Reflexões Recentes</div>
+                </div>
+            </div>
+        </div>
+        
+        {% for cycle_name, data in cycle_data.items() %}
+        <div class="col-md-3">
+            <div class="card dashboard-card hover-effect">
+                <div class="card-body dashboard-card-body text-center">
+                    <div class="stat-number counter-effect" data-count="{{ data.count }}" style="color: {{ data.color }};">0</div>
+                    <div class="stat-label">Ciclo {{ cycle_name }}</div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Gráficos -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card hover-effect h-100">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Distribuição por Ciclos</h4>
+                    <div class="chart-container">
+                        <canvas id="cycleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card hover-effect h-100">
+                <div class="card-body">
+                    <h4 class="card-title mb-4">Mapa Emocional</h4>
+                    <div class="chart-container">
+                        <canvas id="emotionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Arquétipos Desbloqueados -->
+    {% if archetypes %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">Arquétipos Desbloqueados</h3>
+            <div class="row g-4">
+                {% for archetype in archetypes %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card archetype-card hover-effect">
+                        <div class="archetype-image" style="background-color: {{ cycle_data.values()|list|random|attr('color') }};">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h5>{{ archetype.name }}</h5>
+                        <p class="text-muted small">{{ archetype.description }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Arquétipos Bloqueados -->
+                {% for i in range(4 - archetypes|length) %}
+                <div class="col-md-4 col-lg-3">
+                    <div class="card archetype-card hover-effect archetype-locked">
+                        <div class="archetype-image">
+                            <i class="bi bi-lock"></i>
+                        </div>
+                        <h5>???</h5>
+                        <p class="text-muted small">Continue sua jornada para desbloquear este arquétipo.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Reflexões Recentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Reflexões Recentes</h3>
+                <a href="{{ url_for('diary.view_entries') }}" class="btn btn-outline-light">Ver Todas</a>
+            </div>
+            
+            {% if recent_entries %}
+                {% for entry in recent_entries %}
+                <div class="card diary-entry mb-4 fade-in-effect">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="diary-date">{{ entry.created_at|format_date('%d/%m/%Y %H:%M') }}</span>
+                            <span class="diary-emotion" style="background-color: {{ entry.cycle.color_code }};">{{ entry.emotion }}</span>
+                        </div>
+                        <div class="diary-content">
+                            {% if entry.content|length > 200 %}
+                                {{ entry.content[:200] }}...
+                            {% else %}
+                                {{ entry.content }}
+                            {% endif %}
+                        </div>
+                        <div class="mt-3 text-end">
+                            <a href="{{ url_for('diary.view_entry', entry_id=entry.id) }}" class="btn btn-sm btn-outline-light">Ver completo</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="card">
+                    <div class="card-body py-4 text-center">
+                        <p class="mb-3">Você ainda não tem reflexões registradas.</p>
+                        <a href="{{ url_for('diary.new_entry') }}" class="btn btn-gold">Criar Primeira Reflexão</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Os gráficos serão inicializados automaticamente pelo chart-config.js
+        // que busca dados da API /dashboard/api/chart-data
+    });
+</script>
+{% endblock %}

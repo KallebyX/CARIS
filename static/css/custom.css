@@ -1,0 +1,374 @@
+/* 
+ * CÁRIS - Custom CSS
+ * Estética cinematográfica, minimalista e contemplativa
+ */
+
+/* Variáveis de cores e fontes */
+:root {
+  --caris-bg: #121212;
+  --caris-text: #F5F5F5;
+  --caris-gold: #D4AF37;
+  --caris-jade: #00A86B;
+  --caris-purple: #9370DB;
+  --caris-blue: #4682B4;
+  --caris-dark-gray: #1E1E1E;
+  --caris-medium-gray: #333333;
+  --caris-light-gray: #555555;
+}
+
+/* Estilos gerais */
+body {
+  background-color: var(--caris-bg);
+  color: var(--caris-text);
+  font-family: 'Open Sans', sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Merriweather', serif;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+}
+
+.content {
+  flex: 1;
+}
+
+/* Customização do Bootstrap */
+.btn-primary {
+  background-color: var(--caris-jade);
+  border-color: var(--caris-jade);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #008c5a;
+  border-color: #008c5a;
+  box-shadow: 0 0 0 0.25rem rgba(0, 168, 107, 0.25);
+}
+
+.btn-secondary {
+  background-color: var(--caris-medium-gray);
+  border-color: var(--caris-medium-gray);
+}
+
+.btn-outline-primary {
+  color: var(--caris-jade);
+  border-color: var(--caris-jade);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--caris-jade);
+  color: white;
+}
+
+.btn-gold {
+  background-color: var(--caris-gold);
+  border-color: var(--caris-gold);
+  color: var(--caris-bg);
+}
+
+.btn-gold:hover {
+  background-color: #c09c30;
+  border-color: #c09c30;
+  color: var(--caris-bg);
+}
+
+.card {
+  background-color: var(--caris-dark-gray);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.form-control, .form-select {
+  background-color: var(--caris-medium-gray);
+  border: 1px solid var(--caris-light-gray);
+  color: var(--caris-text);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--caris-medium-gray);
+  border-color: var(--caris-jade);
+  box-shadow: 0 0 0 0.25rem rgba(0, 168, 107, 0.25);
+  color: var(--caris-text);
+}
+
+.form-control::placeholder {
+  color: rgba(245, 245, 245, 0.5);
+}
+
+/* Navbar customizada */
+.navbar {
+  background-color: rgba(18, 18, 18, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar-brand {
+  font-family: 'Merriweather', serif;
+  color: var(--caris-gold);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color: rgba(245, 245, 245, 0.8);
+  transition: color 0.3s ease;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link:focus {
+  color: var(--caris-gold);
+}
+
+.navbar-dark .navbar-nav .nav-link.active {
+  color: var(--caris-gold);
+  font-weight: 600;
+}
+
+/* Página inicial */
+.hero-section {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(rgba(18, 18, 18, 0.7), rgba(18, 18, 18, 0.9)), url('../img/hero-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.hero-content {
+  max-width: 800px;
+  padding: 2rem;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--caris-gold);
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  font-weight: 300;
+}
+
+/* Ciclos */
+.cycle-criar {
+  color: var(--caris-gold);
+}
+
+.cycle-cuidar {
+  color: var(--caris-jade);
+}
+
+.cycle-crescer {
+  color: var(--caris-purple);
+}
+
+.cycle-curar {
+  color: var(--caris-blue);
+}
+
+.cycle-card {
+  border-top: 4px solid;
+  transition: all 0.3s ease;
+}
+
+.cycle-card.criar {
+  border-color: var(--caris-gold);
+}
+
+.cycle-card.cuidar {
+  border-color: var(--caris-jade);
+}
+
+.cycle-card.crescer {
+  border-color: var(--caris-purple);
+}
+
+.cycle-card.curar {
+  border-color: var(--caris-blue);
+}
+
+/* Diário */
+.diary-form {
+  background-color: var(--caris-dark-gray);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.diary-textarea {
+  min-height: 200px;
+  resize: vertical;
+  font-family: 'Merriweather', serif;
+  line-height: 1.8;
+}
+
+.diary-entry {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--caris-light-gray);
+}
+
+.diary-date {
+  color: rgba(245, 245, 245, 0.7);
+  font-size: 0.9rem;
+}
+
+.diary-emotion {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  background-color: var(--caris-medium-gray);
+}
+
+.diary-content {
+  white-space: pre-line;
+  font-family: 'Merriweather', serif;
+  line-height: 1.8;
+}
+
+/* Dashboard */
+.dashboard-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-card-body {
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--caris-gold);
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: rgba(245, 245, 245, 0.7);
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  margin-bottom: 1.5rem;
+}
+
+/* Arquétipos */
+.archetype-card {
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.archetype-image {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background-color: var(--caris-medium-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+.archetype-locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+/* Animações e microinterações */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 1s ease;
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typewriter 2s steps(40, end);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .diary-form {
+    padding: 1.5rem;
+  }
+}
+
+/* Utilitários */
+.text-gold {
+  color: var(--caris-gold);
+}
+
+.text-jade {
+  color: var(--caris-jade);
+}
+
+.bg-dark-gray {
+  background-color: var(--caris-dark-gray);
+}
+
+.quote {
+  font-family: 'Merriweather', serif;
+  font-style: italic;
+  color: rgba(245, 245, 245, 0.8);
+  border-left: 3px solid var(--caris-gold);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+}
+
+.footer {
+  background-color: var(--caris-dark-gray);
+  padding: 2rem 0;
+  margin-top: 3rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Efeitos de hover e foco */
+a {
+  color: var(--caris-jade);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover, a:focus {
+  color: #00c07c;
+  text-decoration: none;
+}

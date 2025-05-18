@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}Atlas Tempo-Emocional | CHRONOS CÁRIS{% endblock %}
+
+{% block styles %}
+<style>
+    .atlas-container {
+        background-color: #111;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    
+    .tempo-emotional-chart {
+        height: 400px;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+    
+    .chronotype-info {
+        background-color: rgba(20, 20, 20, 0.7);
+        border-left: 4px solid #d4af37;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .entry-card {
+        background-color: rgba(20, 20, 20, 0.7);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .entry-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .entry-card.high-energy {
+        border-left-color: #d4af37;
+    }
+    
+    .entry-card.medium-energy {
+        border-left-color: #3a9188;
+    }
+    
+    .entry-card.low-energy {
+        border-left-color: #6c757d;
+    }
+    
+    .time-perception {
+        font-size: 0.85rem;
+        font-style: italic;
+        opacity: 0.8;
+    }
+    
+    .cycle-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .cycle-criar {
+        background-color: #d4af37;
+    }
+    
+    .cycle-cuidar {
+        background-color: #3a9188;
+    }
+    
+    .cycle-crescer {
+        background-color: #9c27b0;
+    }
+    
+    .cycle-curar {
+        background-color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="display-4 mb-4">Atlas Tempo-Emocional</h1>
+    <p class="lead mb-5">Visualize a interseção entre seus ciclos temporais e estados emocionais para descobrir padrões e harmonizar sua experiência.</p>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="chronotype-info">
+                <h3>Seu Perfil Temporal</h3>
+                {% if temporal_pattern %}
+                    <p><strong>Cronotipo:</strong> 
+                        {% if temporal_pattern.chronotype == 'early_bird' %}
+                            Matutino
+                        {% elif temporal_pattern.chronotype == 'night_owl' %}
+                            Noturno
+                        {% else %}
+                            Intermediário
+                        {% endif %}
+                    </p>
+                    
+                    {% if temporal_pattern.peak_energy_start and temporal_pattern.peak_energy_end %}
+                    <p><strong>Pico de Energia:</strong> 
+                        {{ temporal_pattern.peak_energy_start.strftime('%H:%M') }} - 
+                        {{ temporal_pattern.peak_energy_end.strftime('%H:%M') }}
+                    </p>
+                    {% endif %}
+                    
+                    <p class="mt-3">
+                        <a href="{{ url_for('temporal.chronotype_quiz') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sync-alt"></i> Atualizar Perfil
+                        </a>
+                    </p>
+                {% else %}
+                    <p>Você ainda não definiu seu perfil temporal.</p>
+                    <a href="{{ url_for('temporal.chronotype_quiz') }}" class="btn btn-primary">
+                        Fazer Questionário de Cronotipo
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('temporal.tempo_emotional_entry') }}" class="btn btn-primary btn-block mb-3">
+                        <i class="fas fa-plus-circle"></i> Novo Registro Tempo-Emocional
+                    </a>
+                    <a href="{{ url_for('temporal.rituals') }}" class="btn btn-outline-light btn-block">
+                        <i class="fas fa-moon"></i> Rituais de Transição
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="atlas-container">
+                <h3 class="mb-4">Visualização Tempo-Emocional</h3>
+                
+                <div class="tempo-emotional-chart" id="tempoEmotionalChart">
+                    <!-- Chart will be rendered here by JavaScript -->
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-light" role="status">
+                            <span class="sr-only">Carregando...</span>
+                        </div>
+                        <p class="mt-3">Carregando sua visualização tempo-emocional...</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-4">
+                    <button class="btn btn-sm btn-outline-light" id="view7days">7 dias</button>
+                    <button class="btn btn-sm btn-outline-light active" id="view30days">30 dias</button>
+                    <button class="btn btn-sm btn-outline-light" id="view90days">90 dias</button>
+                    <button class="btn btn-sm btn-outline-light" id="viewAll">Todos</button>
+                </div>
+                
+                <h4 class="mb-3">Registros Recentes</h4>
+                
+                {% if entries %}
+                    {% for entry in entries %}
+                        <div class="entry-card 
+                            {% if entry.energy_level >= 7 %}high-energy
+                            {% elif entry.energy_level >= 4 %}medium-energy
+                            {% else %}low-energy{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5>{{ entry.activity_type }}</h5>
+                                    <div class="mb-2">
+                                        <span class="badge bg-primary">Energia: {{ entry.energy_level }}/10</span>
+                                        <span class="badge bg-info">Foco: {{ entry.focus_level }}/10</span>
+                                    </div>
+                                    <p class="time-perception">
+                                        Percepção de tempo: 
+                                        {% if entry.time_perception == 'fast' %}
+                                            Rápido
+                                        {% elif entry.time_perception == 'slow' %}
+                                            Lento
+                                        {% else %}
+                                            Normal
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="text-muted">
+                                    {{ entry.timestamp.strftime('%d/%m/%Y %H:%M') }}
+                                </div>
+                            </div>
+                            
+                            {% if entry.diary %}
+                                <div class="mt-2 pt-2 border-top border-secondary">
+                                    <small>
+                                        <span class="cycle-indicator 
+                                            {% if entry.diary.cycle == 'criar' %}cycle-criar
+                                            {% elif entry.diary.cycle == 'cuidar' %}cycle-cuidar
+                                            {% elif entry.diary.cycle == 'crescer' %}cycle-crescer
+                                            {% else %}cycle-curar{% endif %}">
+                                        </span>
+                                        Vinculado ao diário: 
+                                        <a href="{{ url_for('diary.view_entry', entry_id=entry.diary.id) }}" class="text-light">
+                                            {{ entry.diary.title }}
+                                        </a>
+                                    </small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <p>Você ainda não tem registros tempo-emocionais.</p>
+                        <a href="{{ url_for('temporal.tempo_emotional_entry') }}" class="btn btn-primary">
+                            Criar Primeiro Registro
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Placeholder for chart initialization
+        // In a real implementation, this would fetch data from the API endpoint
+        // and render the chart using Chart.js
+        
+        setTimeout(function() {
+            document.getElementById('tempoEmotionalChart').innerHTML = 
+                '<div class="text-center py-5">' +
+                '<p>Visualização simulada para o MVP</p>' +
+                '<p>Esta área exibirá seu gráfico tempo-emocional personalizado</p>' +
+                '</div>';
+        }, 1500);
+        
+        // View period buttons
+        const viewButtons = document.querySelectorAll('#view7days, #view30days, #view90days, #viewAll');
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                // In a real implementation, this would update the chart data
+            });
+        });
+    });
+</script>
+{% endblock %}

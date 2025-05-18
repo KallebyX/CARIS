@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Exportação PDF - CÁRIS{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="text-center mb-5">Jornada de {{ user.username }}</h2>
+            
+            <div class="mb-4 text-center">
+                <p>Exportado em: {{ export_date }}</p>
+            </div>
+            
+            {% for cycle in cycles %}
+                <h3 class="mb-4" style="color: {{ cycle.color_code }};">{{ cycle.name }}</h3>
+                <p class="mb-4">{{ cycle.description }}</p>
+                
+                {% set cycle_entries = entries|selectattr('cycle_id', 'equalto', cycle.id)|list %}
+                
+                {% if cycle_entries %}
+                    {% for entry in cycle_entries %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <span>{{ entry.created_at|format_date('%d/%m/%Y %H:%M') }}</span>
+                                    <span>{{ entry.emotion }}</span>
+                                </div>
+                                <div>{{ entry.content }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted mb-5">Nenhuma reflexão registrada neste ciclo.</p>
+                {% endif %}
+                
+                <hr class="mb-5">
+            {% endfor %}
+            
+            <div class="text-center mt-5">
+                <p>CÁRIS - Clareza existencial em uma experiência cinematográfica</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

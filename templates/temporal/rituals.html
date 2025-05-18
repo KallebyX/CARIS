@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+
+{% block title %}Rituais de Transição | CHRONOS CÁRIS{% endblock %}
+
+{% block styles %}
+<style>
+    .ritual-card {
+        background-color: rgba(20, 20, 20, 0.7);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        border-left: 4px solid #d4af37;
+        height: 100%;
+    }
+    
+    .ritual-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .ritual-card.morning {
+        border-left-color: #d4af37; /* Gold for morning */
+    }
+    
+    .ritual-card.evening {
+        border-left-color: #3a9188; /* Jade for evening */
+    }
+    
+    .ritual-card.transition {
+        border-left-color: #9c27b0; /* Purple for transitions */
+    }
+    
+    .ritual-card.focus {
+        border-left-color: #2196f3; /* Blue for focus */
+    }
+    
+    .ritual-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #d4af37;
+    }
+    
+    .ritual-icon.morning {
+        color: #d4af37;
+    }
+    
+    .ritual-icon.evening {
+        color: #3a9188;
+    }
+    
+    .ritual-icon.transition {
+        color: #9c27b0;
+    }
+    
+    .ritual-icon.focus {
+        color: #2196f3;
+    }
+    
+    .ritual-stats {
+        font-size: 0.85rem;
+        color: #aaa;
+        margin-top: 1rem;
+    }
+    
+    .premium-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #d4af37, #aa8c2c);
+        color: #000;
+        font-size: 0.7rem;
+        font-weight: bold;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+    
+    .ritual-duration {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="display-4 mb-4">Rituais de Transição</h1>
+    <p class="lead mb-5">Rituais são micro-experiências que marcam transições entre diferentes momentos e estados, ajudando você a navegar conscientemente pelo seu dia.</p>
+    
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <div class="card bg-dark text-light">
+                <div class="card-body">
+                    <h3>Seus Rituais</h3>
+                    
+                    {% if user_rituals %}
+                        <div class="row">
+                            {% for user_ritual in user_rituals %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="ritual-card {{ user_ritual.ritual.ritual_type }}">
+                                        <div class="ritual-icon {{ user_ritual.ritual.ritual_type }}">
+                                            {% if user_ritual.ritual.ritual_type == 'morning' %}
+                                                <i class="fas fa-sun"></i>
+                                            {% elif user_ritual.ritual.ritual_type == 'evening' %}
+                                                <i class="fas fa-moon"></i>
+                                            {% elif user_ritual.ritual.ritual_type == 'transition' %}
+                                                <i class="fas fa-exchange-alt"></i>
+                                            {% else %}
+                                                <i class="fas fa-bullseye"></i>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <h4>{{ user_ritual.custom_name or user_ritual.ritual.name }}</h4>
+                                        <p>{{ user_ritual.custom_description or user_ritual.ritual.description }}</p>
+                                        
+                                        <div class="ritual-duration">
+                                            <i class="far fa-clock"></i> {{ user_ritual.ritual.duration_minutes }} minutos
+                                        </div>
+                                        
+                                        <div class="ritual-stats">
+                                            {% if user_ritual.last_performed %}
+                                                Último: {{ user_ritual.last_performed.strftime('%d/%m/%Y') }}<br>
+                                            {% endif %}
+                                            Realizado {{ user_ritual.times_performed }} vezes
+                                        </div>
+                                        
+                                        <div class="mt-3">
+                                            <a href="{{ url_for('temporal.perform_ritual', user_ritual_id=user_ritual.id) }}" class="btn btn-primary btn-sm">
+                                                Realizar Ritual
+                                            </a>
+                                            
+                                            {% if user_ritual.is_favorite %}
+                                                <button class="btn btn-outline-warning btn-sm ml-2">
+                                                    <i class="fas fa-star"></i>
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-light btn-sm ml-2">
+                                                    <i class="far fa-star"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p>Você ainda não adicionou nenhum ritual à sua coleção.</p>
+                            <p>Explore os rituais disponíveis abaixo e adicione os que mais ressoam com você.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-dark text-light mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Sobre Rituais</h5>
+                </div>
+                <div class="card-body">
+                    <p>Rituais de transição são práticas intencionais que ajudam a:</p>
+                    <ul>
+                        <li>Marcar mudanças entre diferentes contextos</li>
+                        <li>Facilitar transições emocionais</li>
+                        <li>Criar momentos de presença e consciência</li>
+                        <li>Estabelecer limites saudáveis entre atividades</li>
+                    </ul>
+                    <p>Recomendamos incorporar pelo menos dois rituais ao seu dia: um para iniciar e outro para encerrar.</p>
+                </div>
+            </div>
+            
+            <div class="card bg-dark text-light">
+                <div class="card-header">
+                    <h5 class="mb-0">Filtrar por Tipo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group-vertical w-100">
+                        <button class="btn btn-outline-light active" data-filter="all">Todos os Rituais</button>
+                        <button class="btn btn-outline-warning" data-filter="morning">Rituais Matinais</button>
+                        <button class="btn btn-outline-info" data-filter="evening">Rituais Noturnos</button>
+                        <button class="btn btn-outline-primary" data-filter="transition">Rituais de Transição</button>
+                        <button class="btn btn-outline-success" data-filter="focus">Rituais de Foco</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <h3 class="mb-4">Rituais Disponíveis</h3>
+    
+    <div class="row">
+        {% if available_rituals %}
+            {% for ritual in available_rituals %}
+                <div class="col-md-4 mb-4 ritual-item" data-type="{{ ritual.ritual_type }}">
+                    <div class="ritual-card {{ ritual.ritual_type }}">
+                        <div class="ritual-icon {{ ritual.ritual_type }}">
+                            {% if ritual.ritual_type == 'morning' %}
+                                <i class="fas fa-sun"></i>
+                            {% elif ritual.ritual_type == 'evening' %}
+                                <i class="fas fa-moon"></i>
+                            {% elif ritual.ritual_type == 'transition' %}
+                                <i class="fas fa-exchange-alt"></i>
+                            {% else %}
+                                <i class="fas fa-bullseye"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <h4>{{ ritual.name }}</h4>
+                        <p>{{ ritual.description }}</p>
+                        
+                        <div class="ritual-duration">
+                            <i class="far fa-clock"></i> {{ ritual.duration_minutes }} minutos
+                        </div>
+                        
+                        <div class="mt-3">
+                            <form action="{{ url_for('temporal.add_ritual', ritual_id=ritual.id) }}" method="post">
+                                <button type="submit" class="btn btn-outline-light">
+                                    <i class="fas fa-plus-circle"></i> Adicionar à Minha Coleção
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Não há rituais disponíveis no momento.
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if premium_rituals and not current_user.is_premium %}
+        <div class="mt-5">
+            <h3 class="mb-4">Rituais Premium <span class="badge bg-warning text-dark">Exclusivo</span></h3>
+            
+            <div class="row">
+                {% for ritual in premium_rituals %}
+                    <div class="col-md-4 mb-4 ritual-item" data-type="{{ ritual.ritual_type }}">
+                        <div class="ritual-card {{ ritual.ritual_type }} position-relative" style="opacity: 0.7;">
+                            <div class="premium-badge">Premium</div>
+                            
+                            <div class="ritual-icon {{ ritual.ritual_type }}">
+                                {% if ritual.ritual_type == 'morning' %}
+                                    <i class="fas fa-sun"></i>
+                                {% elif ritual.ritual_type == 'evening' %}
+                                    <i class="fas fa-moon"></i>
+                                {% elif ritual.ritual_type == 'transition' %}
+                                    <i class="fas fa-exchange-alt"></i>
+                                {% else %}
+                                    <i class="fas fa-bullseye"></i>
+                                {% endif %}
+                            </div>
+                            
+                            <h4>{{ ritual.name }}</h4>
+                            <p>{{ ritual.description }}</p>
+                            
+                            <div class="ritual-duration">
+                                <i class="far fa-clock"></i> {{ ritual.duration_minutes }} minutos
+                            </div>
+                            
+                            <div class="mt-3">
+                                <a href="#" class="btn btn-warning disabled">
+                                    <i class="fas fa-crown"></i> Exclusivo para Assinantes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-warning btn-lg">
+                    <i class="fas fa-crown"></i> Torne-se Premium
+                </a>
+                <p class="text-muted mt-2">Desbloqueie rituais exclusivos e muito mais.</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('[data-filter]');
+        const ritualItems = document.querySelectorAll('.ritual-item');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filterValue = this.getAttribute('data-filter');
+                
+                // Filter items
+                ritualItems.forEach(item => {
+                    if (filterValue === 'all' || item.getAttribute('data-type') === filterValue) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
