@@ -1,4 +1,4 @@
-<h1 align="center">⏳ CHRONOS CÁRIS</h1>
+<h1 align="center">⏳ CÁRIS</h1>
 <p align="center"><em>Onde tempo e emoção se encontram em uma jornada de clareza e significado.</em></p>
 
 <p align="center">
@@ -82,9 +82,9 @@ Acesse: [http://localhost:5000](http://localhost:5000)
 
 ---
 
-## 🧭 Manifesto CHRONOS CÁRIS
+## 🧭 Manifesto CÁRIS
 
-> Em um mundo que divorciou produtividade de significado, CHRONOS CÁRIS propõe um reencontro.  
+> Em um mundo que divorciou produtividade de significado, CÁRIS propõe um reencontro.  
 > Onde cada segundo pode ser um espelho e cada emoção, um mestre.  
 > O tempo não é apenas algo que se mede. É algo que se sente.  
 > E é nessa fusão entre o tempo e a alma que nasce o CÁRIS.
@@ -101,10 +101,10 @@ Todos os direitos de propriedade intelectual são reservados ao autor.
 - ✅ Uso pessoal, educacional e exploratório está liberado.
 - ❌ Proibido qualquer uso comercial, redistribuição, revenda ou adaptação não autorizada.
 - 🛡️ Protegido pela licença **Business Source License 1.1 (BUSL-1.1)**.
-- 🔒 O nome **CHRONOS CÁRIS** e o domínio **carisapp.com.br** são de uso exclusivo da Oryum Tech.
+- 🔒 O nome **CÁRIS** e o domínio **carisapp.com.br** são de uso exclusivo da Oryum Tech.
 
 **Contato para licenciamento ou parcerias**: [kallebyevangelho03@gmail.com](mailto:kallebyevangelho03@gmail.com)
 
 ---
 
-<p align="center"><strong>CHRONOS CÁRIS</strong> — A tecnologia do tempo com alma.</p>
+<p align="center"><strong>CÁRIS</strong> — A tecnologia do tempo com alma.</p>
