@@ -13,6 +13,8 @@ import utils
 def create_app(config_name='default'):
     """Application factory function."""
     app = Flask(__name__)
+    from dotenv import load_dotenv
+    load_dotenv()
     app.config.from_object(config[config_name])
 
     from datetime import datetime
@@ -92,6 +94,8 @@ def create_app(config_name='default'):
                 print("✅ Migração automática executada com sucesso.")
             except Exception as e:
                 print("⚠️ Erro ao aplicar migrations:", e)
+    print("✅ Ambiente:", os.environ.get("FLASK_ENV"))
+    print("✅ Database URL:", os.environ.get("DATABASE_URL"))
     return app
 
 if __name__ == '__main__':

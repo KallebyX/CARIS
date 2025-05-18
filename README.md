@@ -7,7 +7,7 @@
 
 ---
 
-**CHRONOS CÁRIS** é uma plataforma digital premium desenvolvida por <strong>Kalleby Evangelho Mota</strong> (Oryum Tech), que revoluciona a forma como as pessoas se relacionam com o tempo e suas emoções. Integrando clareza emocional, simbologia arquetípica e gestão consciente do tempo, propomos um novo paradigma para autoconhecimento, presença e significado.
+**CÁRIS** é uma plataforma digital premium desenvolvida por <strong>Kalleby Evangelho Mota</strong> (Oryum Tech), que revoluciona a forma como as pessoas se relacionam com o tempo e suas emoções. Integrando clareza emocional, simbologia arquetípica e gestão consciente do tempo, propomos um novo paradigma para autoconhecimento, presença e significado.
 
 ---
 
