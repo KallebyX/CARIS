@@ -1,10 +1,14 @@
 import os
+basedir = os.path.abspath(os.path.dirname(__file__))
 from datetime import timedelta
 
 class Config:
     """Base configuration for CÁRIS application."""
     SECRET_KEY = os.environ.get('SECRET_KEY', 'caris_clareza_existencial_cinematografica')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///instance/caris.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:///' + os.path.join(basedir, 'instance', 'caris.db')
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Flask-Login settings

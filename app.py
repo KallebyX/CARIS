@@ -1,4 +1,6 @@
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -6,11 +8,32 @@ from flask_migrate import Migrate
 from models import db, User
 from routes import auth_bp, diary_bp, dashboard_bp, export_bp, main_bp, temporal_bp
 from config import config
+import utils
 
 def create_app(config_name='default'):
     """Application factory function."""
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+
+    from datetime import datetime
+
+    def format_date(value, format="%d/%m/%Y"):
+        if isinstance(value, datetime):
+            return value.strftime(format)
+        return value
+
+    app.jinja_env.filters['format_date'] = format_date
+
+    def cycle_name(value):
+        mapping = {
+            'preparacao': 'Preparação',
+            'despertar': 'Despertar',
+            'exploracao': 'Exploração',
+            'renascimento': 'Renascimento'
+        }
+        return mapping.get(value, value)
+
+    app.jinja_env.filters['cycle_name'] = cycle_name
     
     # Initialize extensions
     db.init_app(app)
@@ -47,6 +70,14 @@ def create_app(config_name='default'):
     @app.shell_context_processor
     def make_shell_context():
         return dict(app=app, db=db, User=User)
+    
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.utcnow()}
+
+    @app.context_processor
+    def inject_utils():
+        return {'utils': utils}
     
     return app
 

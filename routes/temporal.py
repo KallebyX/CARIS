@@ -2,8 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from datetime import datetime
 
-from ..models import db, TemporalPattern, Ritual, UserRitual, TempoEmotionalEntry, DiaryEntry
-from ..utils.date_helpers import get_current_week_dates
+from models import db, TemporalPattern, Ritual, UserRitual, TempoEmotionalEntry, DiaryEntry
+from utils.date_helpers import get_current_week_dates
 
 temporal_bp = Blueprint('temporal', __name__)
 

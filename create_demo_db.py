@@ -13,9 +13,12 @@ from models.temporal import TemporalPattern, Ritual, UserRitual, TempoEmotionalE
 
 def create_demo_db():
     """Create a demo database with sample data."""
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    os.makedirs(os.path.join(basedir, "instance"), exist_ok=True)
     # Create a Flask app context
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/caris.db'
+    db_path = os.path.join(basedir, 'instance', 'caris.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Initialize the database
@@ -28,19 +31,19 @@ def create_demo_db():
         
         # Create cycles
         cycles = [
-            Cycle(name='criar', description='Ciclo de criatividade e inovação'),
-            Cycle(name='cuidar', description='Ciclo de cuidado e nutrição'),
-            Cycle(name='crescer', description='Ciclo de crescimento e expansão'),
-            Cycle(name='curar', description='Ciclo de cura e integração')
+            Cycle(name='criar', slug='criar', description='Ciclo de criatividade e inovação', color_code='#FF6B6B'),
+            Cycle(name='cuidar', slug='cuidar', description='Ciclo de cuidado e nutrição', color_code='#4ECDC4'),
+            Cycle(name='crescer', slug='crescer', description='Ciclo de crescimento e expansão', color_code='#FFD93D'),
+            Cycle(name='curar', slug='curar', description='Ciclo de cura e integração', color_code='#1A535C')
         ]
         db.session.add_all(cycles)
         
         # Create archetypes
         archetypes = [
-            Archetype(name='Explorador', description='Busca liberdade e autodescoberta'),
-            Archetype(name='Sábio', description='Busca a verdade e o conhecimento'),
-            Archetype(name='Criador', description='Busca criar coisas de valor duradouro'),
-            Archetype(name='Cuidador', description='Busca proteger e cuidar dos outros')
+            Archetype(name='Explorador', description='Busca liberdade e autodescoberta', image_path='explorador.png', unlock_criteria='Complete 3 reflexões ao ar livre'),
+            Archetype(name='Sábio', description='Busca a verdade e o conhecimento', image_path='sabio.png', unlock_criteria='Complete 5 leituras profundas'),
+            Archetype(name='Criador', description='Busca criar coisas de valor duradouro', image_path='criador.png', unlock_criteria='Complete 3 projetos criativos'),
+            Archetype(name='Cuidador', description='Busca proteger e cuidar dos outros', image_path='cuidador.png', unlock_criteria='Ajudar 2 pessoas nos últimos 7 dias')
         ]
         db.session.add_all(archetypes)
         
@@ -48,10 +51,7 @@ def create_demo_db():
         demo_user = User(
             username='caris_demo',
             email='demo@chronoscaris.com',
-            password_hash=generate_password_hash('clareza123'),
-            first_name='Usuário',
-            last_name='Demonstração',
-            is_premium=True
+            password='clareza123'
         )
         db.session.add(demo_user)
         db.session.commit()
@@ -88,11 +88,9 @@ def create_demo_db():
             
             entry = DiaryEntry(
                 user_id=demo_user.id,
-                title=title,
-                content=content,
+                cycle_id=cycle.id,
                 emotion=emotion,
-                cycle=cycle.name,
-                date=date
+                content=content
             )
             db.session.add(entry)
         
@@ -201,8 +199,8 @@ def create_demo_db():
                 # Get a random diary entry from the same day if available
                 diary_entry = DiaryEntry.query.filter(
                     DiaryEntry.user_id == demo_user.id,
-                    DiaryEntry.date >= day.replace(hour=0, minute=0, second=0),
-                    DiaryEntry.date < day.replace(hour=23, minute=59, second=59)
+                    DiaryEntry.created_at >= day.replace(hour=0, minute=0, second=0),
+                    DiaryEntry.created_at < day.replace(hour=23, minute=59, second=59)
                 ).first()
                 
                 diary_id = diary_entry.id if diary_entry else None

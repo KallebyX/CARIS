@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def format_date(date_obj, format_str='%d/%m/%Y'):
     """Format date object to string."""
@@ -34,3 +34,11 @@ def get_date_range_description(start_date, end_date):
         return f"{start.day} de {start.strftime('%B')} a {end.day} de {end.strftime('%B')} de {start.year}"
     
     return f"{start.day}/{start.month}/{start.year} a {end.day}/{end.month}/{end.year}"
+
+
+# New helper: get_current_week_dates
+def get_current_week_dates():
+    """Return a list of dates for the current week (Monday to Sunday)."""
+    today = datetime.utcnow()
+    start = today - timedelta(days=today.weekday())
+    return [start + timedelta(days=i) for i in range(7)]

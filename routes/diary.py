@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import TextAreaField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Length
 
-from ..models import DiaryEntry, Cycle, db
+from models import DiaryEntry, Cycle, db
 from datetime import datetime
 
 # Create Blueprint

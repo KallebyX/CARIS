@@ -4,7 +4,7 @@ import os
 import tempfile
 from datetime import datetime
 
-from ..models import DiaryEntry, Cycle
+from models import DiaryEntry, Cycle
 
 # Create Blueprint
 export_bp = Blueprint('export', __name__)
