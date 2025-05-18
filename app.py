@@ -81,11 +81,13 @@ def create_app(config_name='default'):
     def inject_utils():
         return {'utils': utils}
     
-    db_path = os.path.join(app.instance_path, "caris.db")
-    if not os.path.exists(db_path):
-        with app.app_context():
-            db.create_all()
-            print("✅ Banco criado manualmente porque não existia.")
+    # Criação segura do banco quando usando SQLite local
+    if "sqlite" in app.config["SQLALCHEMY_DATABASE_URI"] and "/tmp/" in app.config["SQLALCHEMY_DATABASE_URI"]:
+        db_path = app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
+        if not os.path.exists(db_path):
+            with app.app_context():
+                db.create_all()
+                print(f"✅ Banco criado em: {db_path}")
     if os.environ.get("FLASK_ENV") == "production":
         with app.app_context():
             from flask_migrate import upgrade

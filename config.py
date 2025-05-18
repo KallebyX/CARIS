@@ -7,7 +7,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'caris_clareza_existencial_cinematografica')
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',
-        'sqlite:///' + os.path.join(basedir, 'instance', 'caris.db')
+        'sqlite:///instance/caris.db'
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
@@ -66,6 +66,11 @@ class ProductionConfig(Config):
     """Production configuration."""
     DEBUG = False
     # In production, set SECRET_KEY from environment variable
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL',
+        'sqlite:////tmp/caris.db'
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
 
 # Configuration dictionary

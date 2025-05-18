@@ -9,5 +9,5 @@ services:
       - key: FLASK_ENV
         value: production
       - key: DATABASE_URL
-        value: sqlite:///instance/caris.db
+        value: sqlite:////tmp/caris.db
     autoDeploy: true
