@@ -79,6 +79,14 @@ def create_app(config_name='default'):
     def inject_utils():
         return {'utils': utils}
     
+    if os.environ.get("FLASK_ENV") == "production":
+        with app.app_context():
+            from flask_migrate import upgrade
+            try:
+                upgrade()
+                print("✅ Migração automática executada com sucesso.")
+            except Exception as e:
+                print("⚠️ Erro ao aplicar migrations:", e)
     return app
 
 if __name__ == '__main__':
