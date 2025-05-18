@@ -2,7 +2,6 @@ import os
 import sys
 from datetime import datetime, timedelta
 import random
-from werkzeug.security import generate_password_hash
 from flask import Flask
 
 # Add the current directory to the path so we can import the models
@@ -18,7 +17,7 @@ def create_demo_db():
     # Create a Flask app context
     app = Flask(__name__)
     db_path = os.path.join(basedir, 'instance', 'caris.db')
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{db_path}')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Initialize the database
@@ -51,7 +50,7 @@ def create_demo_db():
         demo_user = User(
             username='caris_demo',
             email='demo@chronoscaris.com',
-            password='clareza123'
+            password='clareza123'  # ajuste conforme seu modelo exige
         )
         db.session.add(demo_user)
         db.session.commit()
