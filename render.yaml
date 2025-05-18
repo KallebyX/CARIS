@@ -1,0 +1,13 @@
+# render.yaml
+services:
+  - type: web
+    name: caris-web
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        value: sqlite:///instance/caris.db
+    autoDeploy: true
