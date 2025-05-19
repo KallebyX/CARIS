@@ -32,6 +32,9 @@
                                 </div>
                             {% else %}
                                 {{ form.cycle(class="form-select") }}
+                                <small class="form-text text-muted">
+                                    Não encontrou seu ciclo? <a href="{{ url_for('cycles.new_cycle') }}">Cadastre um novo ciclo</a>
+                                </small>
                             {% endif %}
                         </div>
                         

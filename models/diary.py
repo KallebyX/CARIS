@@ -1,6 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+# Import Cycle for relationship
+from .cycle import Cycle
+
 # Import db instance from user.py to maintain single SQLAlchemy instance
 from .user import db
 
@@ -11,6 +14,7 @@ class DiaryEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     cycle_id = db.Column(db.Integer, db.ForeignKey('cycles.id'), nullable=False)
+    cycle = db.relationship('Cycle', backref=db.backref('entries', lazy='dynamic'))
     emotion = db.Column(db.String(64), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
