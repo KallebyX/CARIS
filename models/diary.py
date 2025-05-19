@@ -1,10 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-# Import Cycle for relationship
-from .cycle import Cycle
-
-# Import db instance from user.py to maintain single SQLAlchemy instance
+# Import the shared db instance from user.py to maintain a single SQLAlchemy instance
 from .user import db
 
 class DiaryEntry(db.Model):
@@ -14,7 +11,6 @@ class DiaryEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     cycle_id = db.Column(db.Integer, db.ForeignKey('cycles.id'), nullable=False)
-    cycle = db.relationship('Cycle', back_populates='entries')
     emotion = db.Column(db.String(64), nullable=False)
     content = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -32,7 +28,8 @@ class DiaryEntry(db.Model):
             'id': self.id,
             'user_id': self.user_id,
             'cycle_id': self.cycle_id,
-            'cycle_name': self.cycle.name if self.cycle else None,
+            # the Cycle model should define diary_entries with backref='cycle' so this attribute exists
+            'cycle_name': self.cycle.name if hasattr(self, 'cycle') and self.cycle else None,
             'emotion': self.emotion,
             'content': self.content,
             'created_at': self.created_at.isoformat(),
@@ -60,10 +57,7 @@ class DiaryEntry(db.Model):
         emotions = {}
         
         for entry in entries:
-            if entry.emotion in emotions:
-                emotions[entry.emotion] += 1
-            else:
-                emotions[entry.emotion] = 1
+            emotions[entry.emotion] = emotions.get(entry.emotion, 0) + 1
         
         return emotions
     

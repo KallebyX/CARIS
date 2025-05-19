@@ -28,8 +28,8 @@ def new_entry():
     """Create new diary entry."""
     form = DiaryEntryForm()
     
-    # Populate cycle choices
-    form.cycle.choices = [(c.id, c.name) for c in Cycle.query.filter_by(user_id=current_user.id).all()]
+    # Populate cycle choices (global cycles are available to all users)
+    form.cycle.choices = [(c.id, c.name) for c in Cycle.query.order_by(Cycle.name).all()]
     
     # Populate emotion choices from config
     emotions = [

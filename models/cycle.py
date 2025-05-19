@@ -14,8 +14,8 @@ class Cycle(db.Model):
     description = db.Column(db.Text, nullable=False)
     color_code = db.Column(db.String(7), nullable=False)  # Hex color code
     
-    # Relationships
-    diary_entries = db.relationship('DiaryEntry', backref='cycle', lazy='dynamic')
+    # one-to-many relationship from Cycle to DiaryEntry, without conflicting backref
+    diary_entries = db.relationship('DiaryEntry', lazy='dynamic')
     
     def __init__(self, name, slug, description, color_code):
         self.name = name
