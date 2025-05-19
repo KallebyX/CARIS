@@ -86,11 +86,6 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        # Cria ciclos padrão para o novo usuário
-        default_cycles = ['preparacao', 'despertar', 'exploracao', 'renascimento']
-        for name in default_cycles:
-            db.session.add(Cycle(name=name, user_id=user.id))
-        db.session.commit()
 
         flash('Conta criada com sucesso! Agora você pode entrar.', 'success')
         return redirect(url_for('auth.login'))
