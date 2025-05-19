@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, EmailField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
 
-from models import User, db
+from models import User, db, Cycle
 
 # Create Blueprint
 auth_bp = Blueprint('auth', __name__)
@@ -85,6 +85,13 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
+
+        # Cria ciclos padrão para o novo usuário
+        default_cycles = ['preparacao', 'despertar', 'exploracao', 'renascimento']
+        for name in default_cycles:
+            db.session.add(Cycle(name=name, user_id=user.id))
+        db.session.commit()
+
         flash('Conta criada com sucesso! Agora você pode entrar.', 'success')
         return redirect(url_for('auth.login'))
     
