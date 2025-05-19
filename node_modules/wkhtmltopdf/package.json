@@ -1,0 +1,34 @@
+{
+  "name": "wkhtmltopdf",
+  "version": "0.4.0",
+  "description": "A wrapper for the wkhtmltopdf HTML to PDF converter using WebKit",
+  "author": {
+    "name": "Devon Govett",
+    "email": "devongovett@gmail.com",
+    "url": "http://badassjs.com/"
+  },
+  "engines": {
+    "node": ">=0.6"
+  },
+  "dependencies": {
+    "is-stream": "^1.0.1",
+    "slang": ">=0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devongovett/node-wkhtmltopdf.git"
+  },
+  "scripts": {
+    "test": "jasmine"
+  },
+  "bugs": "http://github.com/devongovett/node-wkhtmltopdf/issues",
+  "devDependencies": {
+    "express": "^4.13.3",
+    "jasmine": "^2.3.2",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.4.3"
+  },
+  "files": [
+    "index.js"
+  ]
+}
