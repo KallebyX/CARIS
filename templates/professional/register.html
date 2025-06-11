@@ -1,0 +1,170 @@
+{% extends "professional/base_professional.html" %}
+
+{% block title %}Registro - CÁRIS Profissional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="professional-card card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                        <h2 class="card-title">Registre-se como Profissional</h2>
+                        <p class="text-muted">Junte-se à rede de profissionais da saúde do CÁRIS</p>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Dados Pessoais -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.nome_completo.label(class="form-label") }}
+                                {{ form.nome_completo(class="form-control" + (" is-invalid" if form.nome_completo.errors else "")) }}
+                                {% if form.nome_completo.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.nome_completo.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.email.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Senhas -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.password.label(class="form-label") }}
+                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.password.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.password_confirm.label(class="form-label") }}
+                                {{ form.password_confirm(class="form-control" + (" is-invalid" if form.password_confirm.errors else "")) }}
+                                {% if form.password_confirm.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.password_confirm.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Dados Profissionais -->
+                        <hr class="my-4">
+                        <h5 class="mb-3"><i class="fas fa-briefcase me-2"></i>Dados Profissionais</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.tipo_profissional.label(class="form-label") }}
+                                {{ form.tipo_profissional(class="form-select" + (" is-invalid" if form.tipo_profissional.errors else "")) }}
+                                {% if form.tipo_profissional.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.tipo_profissional.errors[0] }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.crm_crp.label(class="form-label") }}
+                                {{ form.crm_crp(class="form-control", placeholder="Ex: CRP 12345-6") }}
+                                <div class="form-text">Registro profissional (opcional)</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.especialidade.label(class="form-label") }}
+                                {{ form.especialidade(class="form-control", placeholder="Ex: Psicologia Clínica") }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.telefone.label(class="form-label") }}
+                                {{ form.telefone(class="form-control", placeholder="(11) 99999-9999") }}
+                            </div>
+                        </div>
+
+                        <!-- Termos e Condições -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    Concordo com os <a href="#" target="_blank">Termos de Uso</a> e 
+                                    <a href="#" target="_blank">Política de Privacidade</a> para profissionais
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="ethics" required>
+                                <label class="form-check-label" for="ethics">
+                                    Declaro estar em conformidade com o código de ética da minha profissão
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+
+                    <div class="text-center">
+                        <p>
+                            Já tem conta? 
+                            <a href="{{ url_for('professional.login') }}" class="text-decoration-none fw-bold">
+                                Faça login aqui
+                            </a>
+                        </p>
+                    </div>
+
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Sua conta será verificada em até 24 horas
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processo de Verificação -->
+            <div class="card mt-4 bg-transparent border-0">
+                <div class="card-body">
+                    <h5 class="text-light mb-3 text-center">Processo de Verificação</h5>
+                    <div class="row g-3 text-center">
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="fas fa-user-plus fa-2x text-primary mb-2"></i>
+                                <h6 class="text-light">1. Registro</h6>
+                                <small class="text-muted">Preencha seus dados profissionais</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="fas fa-search fa-2x text-primary mb-2"></i>
+                                <h6 class="text-light">2. Verificação</h6>
+                                <small class="text-muted">Análise dos dados e credenciais</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3">
+                                <i class="fas fa-check-circle fa-2x text-primary mb-2"></i>
+                                <h6 class="text-light">3. Aprovação</h6>
+                                <small class="text-muted">Acesso liberado à plataforma</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

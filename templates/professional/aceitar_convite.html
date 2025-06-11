@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Convite Profissional - CÁRIS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <i class="fas fa-user-md fa-3x text-primary mb-3"></i>
+                <h2 class="text-light">Convite de Profissional</h2>
+                <p class="text-muted">Você recebeu um convite para se conectar com um profissional no CÁRIS</p>
+            </div>
+
+            <!-- Informações do Convite -->
+            <div class="card shadow-lg">
+                <div class="card-body p-4">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle fa-2x me-3"></i>
+                            <div>
+                                <h6 class="alert-heading mb-1">Detalhes do Convite</h6>
+                                <p class="mb-1"><strong>Profissional:</strong> {{ vinculo.profissional.nome_completo }}</p>
+                                <p class="mb-1"><strong>Especialidade:</strong> {{ vinculo.profissional.tipo_profissional|title }}</p>
+                                <p class="mb-0"><strong>Data do Convite:</strong> {{ vinculo.data_convite.strftime('%d/%m/%Y às %H:%M') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consentimento -->
+                    <form method="POST" action="{{ url_for('professional.confirmar_convite', codigo=vinculo.codigo_convite) }}">
+                        <h5 class="mb-3"><i class="fas fa-shield-alt me-2"></i>Controle de Privacidade</h5>
+                        <p class="text-muted mb-4">
+                            Escolha quais informações você gostaria de compartilhar com este profissional. 
+                            Você pode alterar essas configurações a qualquer momento.
+                        </p>
+
+                        <!-- Opções de Consentimento -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="radio" name="consentimento_completo" value="true" id="consentimento_completo" checked>
+                                    <label class="form-check-label" for="consentimento_completo">
+                                        <strong>Acesso Completo</strong>
+                                    </label>
+                                    <div class="form-text">
+                                        O profissional terá acesso a:
+                                        <ul class="mt-2 mb-0">
+                                            <li>Todas as suas emoções registradas</li>
+                                            <li>Informações sobre ciclos (Criar, Cuidar, Crescer, Curar)</li>
+                                            <li>Histórico completo de entradas do diário</li>
+                                            <li>Dados sobre rituais e práticas (opcional)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="radio" name="consentimento_completo" value="false" id="consentimento_limitado">
+                                    <label class="form-check-label" for="consentimento_limitado">
+                                        <strong>Acesso Limitado</strong>
+                                    </label>
+                                    <div class="form-text">
+                                        O profissional terá acesso apenas a:
+                                        <ul class="mt-2 mb-0">
+                                            <li>Emoções e ciclos dos últimos 14 dias</li>
+                                            <li>Resumos estatísticos básicos</li>
+                                            <li>Sem acesso a rituais ou histórico completo</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Importantes -->
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Importante</h6>
+                            <ul class="mb-0">
+                                <li>Você pode <strong>revogar o acesso</strong> a qualquer momento</li>
+                                <li>O profissional <strong>não pode</strong> editar seus dados</li>
+                                <li>Todas as interações são <strong>registradas</strong> para sua segurança</li>
+                                <li>Seus dados nunca serão compartilhados com terceiros</li>
+                            </ul>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-check me-2"></i>Aceitar Convite
+                            </button>
+                            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary flex-fill">
+                                <i class="fas fa-times me-2"></i>Recusar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informações de Segurança -->
+            <div class="card mt-4 bg-transparent border-0">
+                <div class="card-body text-center">
+                    <h6 class="text-light mb-3">Sua Privacidade é Protegida</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <i class="fas fa-lock fa-2x text-primary mb-2"></i>
+                            <small class="d-block text-muted">Dados Criptografados</small>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fas fa-user-shield fa-2x text-primary mb-2"></i>
+                            <small class="d-block text-muted">Controle Total</small>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fas fa-history fa-2x text-primary mb-2"></i>
+                            <small class="d-block text-muted">Histórico de Acessos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Código do Convite -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Código do convite: <code>{{ vinculo.codigo_convite }}</code>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

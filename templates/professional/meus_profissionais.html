@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Profissionais - CÁRIS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-light">
+                <i class="fas fa-users me-2"></i>Meus Profissionais
+            </h2>
+            <p class="text-muted">Gerencie os profissionais que têm acesso aos seus dados</p>
+        </div>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Voltar ao Painel
+        </a>
+    </div>
+
+    {% if vinculos %}
+        <!-- Lista de Profissionais -->
+        <div class="row">
+            {% for vinculo in vinculos %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <!-- Header do Card -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ vinculo.profissional.nome_completo }}</h5>
+                                <p class="text-muted mb-0">{{ vinculo.profissional.tipo_profissional|title }}</p>
+                                {% if vinculo.profissional.especialidade %}
+                                    <small class="text-muted">{{ vinculo.profissional.especialidade }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" title="Opções">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button class="dropdown-item" onclick="abrirModalPermissoes('{{ vinculo.id }}')">
+                                            <i class="fas fa-shield-alt me-2"></i>Gerenciar Permissões
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger" onclick="confirmarRevogacao('{{ vinculo.id }}', '{{ vinculo.profissional.nome_completo }}')">
+                                            <i class="fas fa-times me-2"></i>Revogar Acesso
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Status do Vínculo -->
+                        <div class="mb-3">
+                            {% if vinculo.consentimento_ativo %}
+                                <span class="badge bg-success mb-2">
+                                    <i class="fas fa-check me-1"></i>Acesso Ativo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger mb-2">
+                                    <i class="fas fa-times me-1"></i>Acesso Revogado
+                                </span>
+                            {% endif %}
+                            
+                            <div class="small text-muted">
+                                <div>Vinculado em: {{ vinculo.data_aceite.strftime('%d/%m/%Y') if vinculo.data_aceite }}</div>
+                                {% if vinculo.data_revogacao %}
+                                    <div>Revogado em: {{ vinculo.data_revogacao.strftime('%d/%m/%Y') }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Permissões Atuais -->
+                        {% if vinculo.consentimento_ativo %}
+                        <div class="mb-3">
+                            <h6 class="small fw-bold mb-2">Permissões Concedidas:</h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if vinculo.pode_ver_emocoes %}
+                                    <span class="badge bg-primary">Emoções</span>
+                                {% endif %}
+                                {% if vinculo.pode_ver_ciclos %}
+                                    <span class="badge bg-success">Ciclos</span>
+                                {% endif %}
+                                {% if vinculo.pode_ver_historico_completo %}
+                                    <span class="badge bg-info">Histórico Completo</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Últimas 2 Semanas</span>
+                                {% endif %}
+                                {% if vinculo.pode_ver_rituais %}
+                                    <span class="badge bg-secondary">Rituais</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Informações de Contato -->
+                        {% if vinculo.profissional.telefone or vinculo.profissional.crm_crp %}
+                        <div class="mb-3">
+                            <h6 class="small fw-bold mb-2">Contato:</h6>
+                            {% if vinculo.profissional.telefone %}
+                                <div class="small text-muted">
+                                    <i class="fas fa-phone me-1"></i>{{ vinculo.profissional.telefone }}
+                                </div>
+                            {% endif %}
+                            {% if vinculo.profissional.crm_crp %}
+                                <div class="small text-muted">
+                                    <i class="fas fa-id-card me-1"></i>{{ vinculo.profissional.crm_crp }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Botões de Ação -->
+                        <div class="d-grid gap-2">
+                            {% if vinculo.consentimento_ativo %}
+                                <button class="btn btn-outline-primary btn-sm" onclick="abrirModalPermissoes('{{ vinculo.id }}')">
+                                    <i class="fas fa-cog me-2"></i>Gerenciar Permissões
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success btn-sm" onclick="reativarVinculo('{{ vinculo.id }}')">
+                                    <i class="fas fa-undo me-2"></i>Reativar Acesso
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Informações Extras -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Informações Importantes</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Controle de Privacidade</h6>
+                        <ul class="small">
+                            <li>Você tem controle total sobre seus dados</li>
+                            <li>Pode alterar permissões a qualquer momento</li>
+                            <li>Pode revogar acesso quando desejar</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Segurança</h6>
+                        <ul class="small">
+                            <li>Todos os acessos são registrados</li>
+                            <li>Profissionais não podem editar seus dados</li>
+                            <li>Dados nunca são compartilhados com terceiros</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Estado Vazio -->
+        <div class="text-center py-5">
+            <i class="fas fa-user-md fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">Nenhum Profissional Vinculado</h4>
+            <p class="text-muted mb-4">
+                Você ainda não tem profissionais conectados à sua conta CÁRIS.<br>
+                Quando um profissional enviar um convite, ele aparecerá aqui.
+            </p>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+                <i class="fas fa-tachometer-alt me-2"></i>Voltar ao Painel
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Gerenciar Permissões -->
+<div class="modal fade" id="permissoesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-shield-alt me-2"></i>Gerenciar Permissões
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" title="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Funcionalidade em desenvolvimento. Em breve você poderá ajustar permissões granulares.</p>
+                <div class="alert alert-info">
+                    <small>
+                        Por enquanto, use o botão "Revogar Acesso" para remover todas as permissões,
+                        ou entre em contato com o suporte para ajustes específicos.
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Revogação -->
+<div class="modal fade" id="revogacaoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Revogar Acesso
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" title="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja revogar o acesso do profissional <strong id="nomeProfissional"></strong>?</p>
+                <p class="text-muted small">
+                    Esta ação irá:
+                </p>
+                <ul class="small text-muted">
+                    <li>Remover imediatamente o acesso aos seus dados</li>
+                    <li>Permitir reativação posterior, se desejar</li>
+                    <li>Ser registrada para auditoria</li>
+                </ul>
+
+                <form id="formRevogacao" method="POST" style="display: none;">
+                    <div class="mb-3">
+                        <label for="motivoRevogacao" class="form-label">Motivo (opcional):</label>
+                        <textarea class="form-control" id="motivoRevogacao" name="motivo" rows="3" placeholder="Descreva o motivo da revogação..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="executarRevogacao()">
+                    <i class="fas fa-times me-2"></i>Confirmar Revogação
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let vinculoParaRevogar = null;
+
+function abrirModalPermissoes(vinculoId) {
+    // TODO: Implementar gerenciamento granular de permissões
+    const modal = new bootstrap.Modal(document.getElementById('permissoesModal'));
+    modal.show();
+}
+
+function confirmarRevogacao(vinculoId, nomeProfissional) {
+    vinculoParaRevogar = vinculoId;
+    document.getElementById('nomeProfissional').textContent = nomeProfissional;
+    document.getElementById('formRevogacao').style.display = 'block';
+    
+    const modal = new bootstrap.Modal(document.getElementById('revogacaoModal'));
+    modal.show();
+}
+
+function executarRevogacao() {
+    if (vinculoParaRevogar) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ url_for('professional.revogar_consentimento_paciente', vinculo_id=0) }}`.replace('0', vinculoParaRevogar);
+        
+        const motivo = document.getElementById('motivoRevogacao').value;
+        if (motivo) {
+            const motivoInput = document.createElement('input');
+            motivoInput.type = 'hidden';
+            motivoInput.name = 'motivo';
+            motivoInput.value = motivo;
+            form.appendChild(motivoInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function reativarVinculo(vinculoId) {
+    if (confirm('Deseja reativar o acesso deste profissional aos seus dados?')) {
+        // TODO: Implementar reativação
+        alert('Funcionalidade de reativação em desenvolvimento. Entre em contato com o profissional para um novo convite.');
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,96 @@
+{% extends "professional/base_professional.html" %}
+
+{% block title %}Login - CÁRIS Profissional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="professional-card card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-stethoscope fa-3x text-primary mb-3"></i>
+                        <h2 class="card-title">CÁRIS Profissional</h2>
+                        <p class="text-muted">Acesso para profissionais da saúde</p>
+                    </div>
+
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.email.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password.errors[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            {{ form.remember_me(class="form-check-input") }}
+                            {{ form.remember_me.label(class="form-check-label") }}
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+
+                    <div class="text-center">
+                        <p class="mb-2">
+                            <a href="#" class="text-decoration-none">Esqueceu sua senha?</a>
+                        </p>
+                        <p>
+                            Não tem conta? 
+                            <a href="{{ url_for('professional.register') }}" class="text-decoration-none fw-bold">
+                                Registre-se aqui
+                            </a>
+                        </p>
+                    </div>
+
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            Ambiente seguro e criptografado
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações extras -->
+            <div class="card mt-4 bg-transparent border-0">
+                <div class="card-body text-center">
+                    <h5 class="text-light mb-3">Benefícios da Plataforma</h5>
+                    <div class="row g-3">
+                        <div class="col-4">
+                            <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                            <small class="d-block text-muted">Análises Detalhadas</small>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-lock fa-2x text-primary mb-2"></i>
+                            <small class="d-block text-muted">Dados Seguros</small>
+                        </div>
+                        <div class="col-4">
+                            <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                            <small class="d-block text-muted">Gestão de Pacientes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

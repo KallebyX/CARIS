@@ -1,0 +1,167 @@
+{% extends "professional/base_professional.html" %}
+
+{% block title %}Convidar Paciente - CÁRIS Profissional{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ url_for('professional.painel') }}" class="text-decoration-none">
+                                <i class="fas fa-tachometer-alt me-1"></i>Painel
+                            </a>
+                        </li>
+                        <li class="breadcrumb-item active">Convidar Paciente</li>
+                    </ol>
+                </nav>
+                
+                <h2 class="text-light">
+                    <i class="fas fa-user-plus me-2"></i>Convidar Novo Paciente
+                </h2>
+                <p class="text-muted">Envie um convite para que seu paciente se conecte com você na plataforma CÁRIS.</p>
+            </div>
+
+            <!-- Formulário -->
+            <div class="professional-card card shadow-lg">
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            {{ form.email_paciente.label(class="form-label") }}
+                            {{ form.email_paciente(class="form-control" + (" is-invalid" if form.email_paciente.errors else ""), placeholder="email@exemplo.com") }}
+                            {% if form.email_paciente.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.email_paciente.errors[0] }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                O paciente deve estar registrado no CÁRIS para receber o convite.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.mensagem_personalizada.label(class="form-label") }}
+                            {{ form.mensagem_personalizada(class="form-control", rows="4", placeholder="Olá! Gostaria de convidá-lo(a) para se conectar comigo na plataforma CÁRIS...") }}
+                            <div class="form-text">Mensagem opcional que será incluída no convite.</div>
+                        </div>
+
+                        <!-- Informações sobre Consentimento -->
+                        <div class="alert alert-info d-flex align-items-start" role="alert">
+                            <i class="fas fa-shield-alt fa-2x me-3 mt-1"></i>
+                            <div>
+                                <h6 class="alert-heading">Sobre Privacidade e Consentimento</h6>
+                                <p class="mb-2">
+                                    Ao aceitar seu convite, o paciente poderá escolher quais dados compartilhar:
+                                </p>
+                                <ul class="mb-0">
+                                    <li><strong>Emoções:</strong> Relatórios de estados emocionais</li>
+                                    <li><strong>Ciclos:</strong> Padrões dos ciclos de vida (Criar, Cuidar, Crescer, Curar)</li>
+                                    <li><strong>Histórico:</strong> Acesso completo ou limitado a entradas anteriores</li>
+                                    <li><strong>Rituais:</strong> Informações sobre práticas e rituais (opcional)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex gap-3">
+                            {{ form.submit(class="btn btn-primary flex-fill") }}
+                            <a href="{{ url_for('professional.painel') }}" class="btn btn-outline-secondary flex-fill">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Como Funciona -->
+            <div class="card mt-4 bg-transparent border-0">
+                <div class="card-body">
+                    <h5 class="text-light mb-3 text-center">Como Funciona o Convite</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4 text-center">
+                            <div class="p-3">
+                                <i class="fas fa-paper-plane fa-2x text-primary mb-3"></i>
+                                <h6 class="text-light">1. Envio do Convite</h6>
+                                <small class="text-muted">
+                                    Um código único será gerado e você poderá compartilhá-lo com o paciente
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3">
+                                <i class="fas fa-user-check fa-2x text-primary mb-3"></i>
+                                <h6 class="text-light">2. Aceitação</h6>
+                                <small class="text-muted">
+                                    Paciente usa o código para aceitar e define permissões de compartilhamento
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="p-3">
+                                <i class="fas fa-chart-line fa-2x text-primary mb-3"></i>
+                                <h6 class="text-light">3. Acesso aos Dados</h6>
+                                <small class="text-muted">
+                                    Você terá acesso aos dados conforme as permissões concedidas
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Rápido -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-question-circle me-2"></i>Perguntas Frequentes</h6>
+                </div>
+                <div class="card-body">
+                    <div class="accordion accordion-flush" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    E se o paciente não tiver conta no CÁRIS?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    O paciente precisará se registrar primeiro em <strong>carisapp.com.br</strong> antes de aceitar seu convite.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    O convite expira?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim, os convites expiram em 30 dias. Você pode enviar um novo convite se necessário.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    O paciente pode revogar o acesso?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Sim, o paciente tem controle total e pode revogar seu consentimento a qualquer momento.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

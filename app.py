@@ -9,8 +9,8 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 
-from models import db, User
-from routes import auth_bp, diary_bp, dashboard_bp, export_bp, main_bp, temporal_bp
+from models import db, User, ProfissionalSaude
+from routes import auth_bp, diary_bp, dashboard_bp, export_bp, main_bp, temporal_bp, professional_bp
 from config import config
 import utils
 
@@ -53,7 +53,14 @@ def create_app(config_name='default'):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        # Tentar carregar como usuário comum primeiro
+        user = User.query.get(int(user_id))
+        if user:
+            return user
+        
+        # Se não encontrar, tentar como profissional de saúde
+        professional = ProfissionalSaude.query.get(int(user_id))
+        return professional
     
     # Setup Flask-Migrate
     migrate = Migrate(app, db)
@@ -65,6 +72,7 @@ def create_app(config_name='default'):
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(export_bp, url_prefix='/export')
     app.register_blueprint(temporal_bp, url_prefix='/temporal')
+    app.register_blueprint(professional_bp, url_prefix='/professional')
     
     # Ensure instance folder exists
     try:
@@ -75,7 +83,10 @@ def create_app(config_name='default'):
     # Shell context
     @app.shell_context_processor
     def make_shell_context():
-        return dict(app=app, db=db, User=User)
+        from models import ProfissionalSaude, VinculoProfissionalPaciente, ConsentimentoPaciente
+        return dict(app=app, db=db, User=User, ProfissionalSaude=ProfissionalSaude, 
+                   VinculoProfissionalPaciente=VinculoProfissionalPaciente, 
+                   ConsentimentoPaciente=ConsentimentoPaciente)
     
     @app.context_processor
     def inject_now():

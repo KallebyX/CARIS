@@ -4,3 +4,4 @@ from .dashboard import dashboard_bp
 from .export import export_bp
 from .main import main_bp
 from .temporal import temporal_bp
+from .professional import professional_bp
