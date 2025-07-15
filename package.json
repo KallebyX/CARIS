@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "chart.js": "^4.4.9",
+    "chart.js": "^4.5.0",
     "wkhtmltopdf": "^0.4.0"
   }
 }
