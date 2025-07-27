@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, CheckCircle, Heart, Calendar, TrendingUp, Clock, Target, Star, Award } from "lucide-react"
 import { EmotionalMap } from "@/components/emotional-map"
+import { GamificationSummary } from "@/components/gamification/gamification-summary"
 
 interface ProgressData {
   stats: {
@@ -251,6 +252,9 @@ export default function ProgressPage() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid lg:grid-cols-2 gap-6">
+            {/* Gamification Summary */}
+            <GamificationSummary />
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -282,7 +286,9 @@ export default function ProgressPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
+          <div className="grid lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -304,7 +310,10 @@ export default function ProgressPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-slate-500 text-center py-4">Continue sua jornada para desbloquear conquistas!</p>
+                  <div className="text-center py-4">
+                    <p className="text-slate-500 mb-2">Continue sua jornada para desbloquear conquistas!</p>
+                    <p className="text-sm text-slate-400">Experimente o novo dashboard gamificado para ver todas as suas conquistas.</p>
+                  </div>
                 )}
               </CardContent>
             </Card>

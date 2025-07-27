@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { users, weeklyChallenes, userChallengeProgress, pointActivities } from "@/db/schema"
+import { users, weeklyChallenges, userChallengeProgress, pointActivities } from "@/db/schema"
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
 
@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
     const today = new Date().toISOString().split('T')[0]
     
     // Buscar desafios ativos
-    const activeChallenges = await db.query.weeklyChallenes.findMany({
+    const activeChallenges = await db.query.weeklyChallenges.findMany({
       where: and(
-        eq(weeklyChallenes.isActive, true),
-        lte(weeklyChallenes.startDate, today),
-        gte(weeklyChallenes.endDate, today)
+        eq(weeklyChallenges.isActive, true),
+        lte(weeklyChallenges.startDate, today),
+        gte(weeklyChallenges.endDate, today)
       ),
-      orderBy: [weeklyChallenes.endDate],
+      orderBy: [weeklyChallenges.endDate],
     })
 
     // Buscar progresso do usuário nos desafios ativos
@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
       }
 
-      const challenge = await db.query.weeklyChallenes.findFirst({
-        where: eq(weeklyChallenes.id, challengeId),
+      const challenge = await db.query.weeklyChallenges.findFirst({
+        where: eq(weeklyChallenges.id, challengeId),
       })
 
       if (!challenge) {
@@ -255,7 +255,7 @@ async function createWeeklyChallenges() {
   const newChallenges = []
 
   for (const template of weeklyTemplates) {
-    const [challenge] = await db.insert(weeklyChallenes).values({
+    const [challenge] = await db.insert(weeklyChallenges).values({
       ...template,
       startDate,
       endDate: endDateStr,

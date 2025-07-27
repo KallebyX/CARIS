@@ -1,5 +1,5 @@
 import { db } from "../db"
-import { achievements, weeklyChallenes, virtualRewards } from "../db/schema"
+import { achievements, weeklyChallenges, virtualRewards } from "../db/schema"
 
 // Initial achievements data
 const initialAchievements = [
@@ -331,7 +331,7 @@ export async function seedGamificationData() {
     // Seed challenges
     console.log("🎯 Inserindo desafios semanais...")
     for (const challenge of initialChallenges) {
-      await db.insert(weeklyChallenes).values(challenge).onConflictDoNothing()
+      await db.insert(weeklyChallenges).values(challenge).onConflictDoNothing()
     }
 
     // Seed rewards

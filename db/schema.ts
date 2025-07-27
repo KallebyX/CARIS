@@ -122,7 +122,7 @@ export const pointActivities = pgTable("point_activities", {
 })
 
 // Desafios semanais
-export const weeklyChallenes = pgTable("weekly_challenges", {
+export const weeklyChallenges = pgTable("weekly_challenges", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
@@ -144,7 +144,7 @@ export const userChallengeProgress = pgTable("user_challenge_progress", {
     .references(() => users.id)
     .notNull(),
   challengeId: integer("challenge_id")
-    .references(() => weeklyChallenes.id)
+    .references(() => weeklyChallenges.id)
     .notNull(),
   progress: integer("progress").default(0).notNull(),
   completed: boolean("completed").default(false).notNull(),
@@ -353,7 +353,7 @@ export const pointActivitiesRelations = relations(pointActivities, ({ one }) => 
   }),
 }))
 
-export const weeklyChallensRelations = relations(weeklyChallenes, ({ many }) => ({
+export const weeklyChallengesRelations = relations(weeklyChallenges, ({ many }) => ({
   userChallengeProgress: many(userChallengeProgress),
 }))
 
@@ -362,7 +362,7 @@ export const userChallengeProgressRelations = relations(userChallengeProgress, (
     fields: [userChallengeProgress.userId],
     references: [users.id],
   }),
-  challenge: one(weeklyChallenes, {
+  challenge: one(weeklyChallenges, {
     fields: [userChallengeProgress.challengeId],
     references: [weeklyChallenes.id],
   }),
