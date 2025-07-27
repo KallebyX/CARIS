@@ -85,6 +85,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
         { href: "/dashboard/patients", icon: Users, label: "Pacientes" },
         { href: "/dashboard/schedule", icon: Calendar, label: "Agenda" },
+        { href: "/dashboard/ai-assistant", icon: Brain, label: "Assistente IA" },
         { href: "/dashboard/reports", icon: BarChart3, label: "Relatórios" },
         { href: "/dashboard/library", icon: BookOpen, label: "Biblioteca" },
         ...commonItems,

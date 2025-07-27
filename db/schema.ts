@@ -182,3 +182,97 @@ export const meditationSessionsRelations = relations(meditationSessions, ({ one 
     references: [users.id],
   }),
 }))
+
+// Tabela de insights clínicos gerados por IA
+export const clinicalInsights = pgTable('clinical_insights', {
+  id: serial('id').primaryKey(),
+  patientId: integer('patient_id').references(() => users.id).notNull(),
+  psychologistId: integer('psychologist_id').references(() => users.id).notNull(),
+  type: text('type').notNull(), // 'session_analysis', 'pattern_detection', 'risk_assessment', 'progress_summary'
+  title: varchar('title', { length: 255 }).notNull(),
+  content: text('content').notNull(), // JSON string with insights
+  severity: text('severity').notNull(), // 'info', 'warning', 'critical'
+  status: text('status').notNull().default('active'), // 'active', 'reviewed', 'dismissed'
+  metadata: text('metadata'), // JSON string with additional data
+  generatedAt: timestamp('generated_at').notNull().defaultNow(),
+  reviewedAt: timestamp('reviewed_at'),
+  reviewedBy: integer('reviewed_by').references(() => users.id),
+})
+
+// Tabela de alertas clínicos automáticos
+export const clinicalAlerts = pgTable('clinical_alerts', {
+  id: serial('id').primaryKey(),
+  patientId: integer('patient_id').references(() => users.id).notNull(),
+  psychologistId: integer('psychologist_id').references(() => users.id).notNull(),
+  alertType: text('alert_type').notNull(), // 'risk_escalation', 'pattern_change', 'mood_decline', 'session_concern'
+  severity: text('severity').notNull(), // 'low', 'medium', 'high', 'critical'
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  recommendations: text('recommendations'), // JSON string with action recommendations
+  triggeredBy: text('triggered_by'), // JSON string with trigger data
+  isActive: boolean('is_active').notNull().default(true),
+  acknowledgedAt: timestamp('acknowledged_at'),
+  acknowledgedBy: integer('acknowledged_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Tabela de relatórios de progresso automáticos
+export const progressReports = pgTable('progress_reports', {
+  id: serial('id').primaryKey(),
+  patientId: integer('patient_id').references(() => users.id).notNull(),
+  psychologistId: integer('psychologist_id').references(() => users.id).notNull(),
+  reportType: text('report_type').notNull(), // 'weekly', 'monthly', 'session_summary', 'treatment_milestone'
+  period: text('period').notNull(), // e.g., '2024-01-01_2024-01-07'
+  summary: text('summary').notNull(),
+  keyFindings: text('key_findings'), // JSON string
+  recommendations: text('recommendations'), // JSON string
+  moodTrends: text('mood_trends'), // JSON string
+  riskAssessment: text('risk_assessment'), // JSON string
+  progressScore: integer('progress_score'), // 0-100
+  generatedAt: timestamp('generated_at').notNull().defaultNow(),
+  sharedWithPatient: boolean('shared_with_patient').notNull().default(false),
+  sharedAt: timestamp('shared_at'),
+})
+
+// Relações para as novas tabelas
+export const clinicalInsightsRelations = relations(clinicalInsights, ({ one }) => ({
+  patient: one(users, {
+    fields: [clinicalInsights.patientId],
+    references: [users.id],
+  }),
+  psychologist: one(users, {
+    fields: [clinicalInsights.psychologistId],
+    references: [users.id],
+  }),
+  reviewedByUser: one(users, {
+    fields: [clinicalInsights.reviewedBy],
+    references: [users.id],
+  }),
+}))
+
+export const clinicalAlertsRelations = relations(clinicalAlerts, ({ one }) => ({
+  patient: one(users, {
+    fields: [clinicalAlerts.patientId],
+    references: [users.id],
+  }),
+  psychologist: one(users, {
+    fields: [clinicalAlerts.psychologistId],
+    references: [users.id],
+  }),
+  acknowledgedByUser: one(users, {
+    fields: [clinicalAlerts.acknowledgedBy],
+    references: [users.id],
+  }),
+}))
+
+export const progressReportsRelations = relations(progressReports, ({ one }) => ({
+  patient: one(users, {
+    fields: [progressReports.patientId],
+    references: [users.id],
+  }),
+  psychologist: one(users, {
+    fields: [progressReports.psychologistId],
+    references: [users.id],
+  }),
+}))
