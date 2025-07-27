@@ -1,5 +1,5 @@
 import { pgTable, serial, text, integer, timestamp, boolean, varchar, date } from "drizzle-orm/pg-core"
-import { relations } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm"
 
 // Tabela de usuários
 export const users = pgTable("users", {
@@ -156,4 +156,29 @@ export const userAchievementsRelations = relations(userAchievements, ({ one }) =
 
 export const achievementsRelations = relations(achievements, ({ many }) => ({
   userAchievements: many(userAchievements),
+}))
+
+// Tabela de sessões de meditação
+export const meditationSessions = pgTable('meditation_sessions', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  meditationId: text('meditation_id').notNull(),
+  startedAt: timestamp('started_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  duration: integer('duration').notNull(), // em segundos
+  wasCompleted: boolean('was_completed').notNull().default(false),
+  rating: integer('rating'), // 1-5
+  feedback: text('feedback'),
+  moodBefore: integer('mood_before'), // 1-10
+  moodAfter: integer('mood_after'), // 1-10
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const meditationSessionsRelations = relations(meditationSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [meditationSessions.userId],
+    references: [users.id],
+  }),
 }))
