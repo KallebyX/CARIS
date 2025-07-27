@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AudioSource } from '@/lib/meditation-audio-sources'
 import { audioSourceService } from '@/lib/audio-source-service'
-import { Sync, CheckCircle, AlertTriangle, Info, Download, Search } from 'lucide-react'
+import { RefreshCw as Sync, CheckCircle, AlertTriangle, Info, Download, Search } from 'lucide-react'
 
 export default function AudioSourcesAdminPage() {
   const [isLoading, setIsLoading] = useState(false)
