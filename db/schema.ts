@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, varchar, date } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, jsonb } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
 // Tabela de usuários
@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   role: text("role").notNull(), // 'psychologist', 'patient', 'admin'
   avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Perfis de psicólogos
@@ -41,12 +42,13 @@ export const sessions = pgTable("sessions", {
   patientId: integer("patient_id")
     .references(() => users.id)
     .notNull(),
-  sessionDate: timestamp("session_date").notNull(),
-  durationMinutes: integer("duration_minutes").notNull(),
-  type: text("type").notNull(), // 'online', 'presencial'
-  status: text("status").notNull(), // 'agendada', 'confirmada', 'realizada', 'cancelada'
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  duration: integer("duration").notNull().default(50), // em minutos
+  type: text("type").notNull().default('therapy'), // 'therapy', 'consultation', 'group'
+  status: text("status").notNull().default('scheduled'), // 'scheduled', 'confirmed', 'completed', 'cancelled'
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Entradas do diário
@@ -112,7 +114,7 @@ export const psychologistProfilesRelations = relations(psychologistProfiles, ({ 
   }),
 }))
 
-export const patientProfilesRelations = relations(patientProfiles, ({ one, many }) => ({
+export const patientProfilesRelations = relations(patientProfiles, ({ one }) => ({
   user: one(users, {
     fields: [patientProfiles.userId],
     references: [users.id],
@@ -121,8 +123,6 @@ export const patientProfilesRelations = relations(patientProfiles, ({ one, many 
     fields: [patientProfiles.psychologistId],
     references: [users.id],
   }),
-  sessions: many(sessions),
-  diaryEntries: many(diaryEntries),
 }))
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -235,6 +235,93 @@ export const progressReports = pgTable('progress_reports', {
   sharedAt: timestamp('shared_at'),
 })
 
+// Tabela de mensagens de chat
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  senderId: integer('sender_id').references(() => users.id).notNull(),
+  receiverId: integer('receiver_id').references(() => users.id).notNull(),
+  content: text('content').notNull(),
+  sentAt: timestamp('sent_at').notNull().defaultNow(),
+  readAt: timestamp('read_at'),
+  isRead: boolean('is_read').default(false),
+})
+
+// Tabela de configurações do usuário
+export const userSettings = pgTable('user_settings', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  notifications: boolean('notifications').default(true),
+  emailNotifications: boolean('email_notifications').default(true),
+  smsNotifications: boolean('sms_notifications').default(false),
+  theme: text('theme').default('light'),
+  language: text('language').default('pt-BR'),
+  timezone: text('timezone').default('America/Sao_Paulo'),
+})
+
+// Tabela de rastreamento de humor
+export const moodTracking = pgTable('mood_tracking', {
+  id: serial('id').primaryKey(),
+  patientId: integer('patient_id').references(() => users.id).notNull(),
+  date: timestamp('date').notNull().defaultNow(),
+  moodScore: integer('mood_score').notNull(), // 1-10
+  energyLevel: integer('energy_level'), // 1-10
+  stressLevel: integer('stress_level'), // 1-10
+  sleepQuality: integer('sleep_quality'), // 1-10
+  notes: text('notes'),
+})
+
+// Tabela de tarefas terapêuticas
+export const tasks = pgTable('tasks', {
+  id: serial('id').primaryKey(),
+  patientId: integer('patient_id').references(() => users.id).notNull(),
+  psychologistId: integer('psychologist_id').references(() => users.id).notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  category: text('category').notNull(),
+  difficulty: text('difficulty').notNull(),
+  estimatedTime: integer('estimated_time'), // em minutos
+  status: text('status').default('pending'), // pending, in_progress, completed
+  assignedAt: timestamp('assigned_at').notNull().defaultNow(),
+  dueDate: timestamp('due_date'),
+  completedAt: timestamp('completed_at'),
+  feedback: text('feedback'),
+})
+
+// Tabela de uso do SOS
+export const sosUsages = pgTable('sos_usages', {
+  id: serial('id').primaryKey(),
+  patientId: integer('patient_id').references(() => users.id).notNull(),
+  level: text('level').notNull(), // mild, moderate, severe, emergency
+  timestamp: timestamp('timestamp').notNull().defaultNow(),
+  resolved: boolean('resolved').default(false),
+  resolvedAt: timestamp('resolved_at'),
+  notes: text('notes'),
+})
+
+// Tabela de fontes de áudio para meditação
+export const audioSources = pgTable('audio_sources', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  url: text('url').notNull(),
+  license: text('license').notNull(), // 'creative_commons', 'public_domain', 'royalty_free', 'fair_use'
+  licenseDetails: text('license_details'),
+  attribution: text('attribution'),
+  author: varchar('author', { length: 255 }).notNull(),
+  duration: integer('duration').notNull().default(0), // em segundos
+  category: text('category').notNull(), // 'meditation', 'nature', 'binaural', 'music', 'voice'
+  tags: jsonb('tags').default([]), // array de strings
+  language: varchar('language', { length: 10 }), // 'pt-BR', 'pt-PT', 'en', 'es'
+  quality: text('quality').notNull().default('medium'), // 'low', 'medium', 'high'
+  format: text('format').notNull().default('mp3'), // 'mp3', 'wav', 'ogg'
+  downloadUrl: text('download_url'),
+  embedUrl: text('embed_url'),
+  isVerified: boolean('is_verified').default(false),
+  addedBy: integer('added_by').references(() => users.id).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 // Relações para as novas tabelas
 export const clinicalInsightsRelations = relations(clinicalInsights, ({ one }) => ({
   patient: one(users, {
@@ -273,6 +360,57 @@ export const progressReportsRelations = relations(progressReports, ({ one }) => 
   }),
   psychologist: one(users, {
     fields: [progressReports.psychologistId],
+    references: [users.id],
+  }),
+}))
+
+export const audioSourcesRelations = relations(audioSources, ({ one }) => ({
+  addedByUser: one(users, {
+    fields: [audioSources.addedBy],
+    references: [users.id],
+  }),
+}))
+
+// Relações adicionais
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  sender: one(users, {
+    fields: [chatMessages.senderId],
+    references: [users.id],
+  }),
+  receiver: one(users, {
+    fields: [chatMessages.receiverId],
+    references: [users.id],
+  }),
+}))
+
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [userSettings.userId],
+    references: [users.id],
+  }),
+}))
+
+export const moodTrackingRelations = relations(moodTracking, ({ one }) => ({
+  patient: one(users, {
+    fields: [moodTracking.patientId],
+    references: [users.id],
+  }),
+}))
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  patient: one(users, {
+    fields: [tasks.patientId],
+    references: [users.id],
+  }),
+  psychologist: one(users, {
+    fields: [tasks.psychologistId],
+    references: [users.id],
+  }),
+}))
+
+export const sosUsagesRelations = relations(sosUsages, ({ one }) => ({
+  patient: one(users, {
+    fields: [sosUsages.patientId],
     references: [users.id],
   }),
 }))
