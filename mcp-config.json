@@ -1,69 +1,76 @@
 {
   "mcpServers": {
-    "database": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-postgres"],
-      "env": {
-        "POSTGRES_CONNECTION_STRING": "postgresql://user:password@localhost:5432/caris_db"
-      }
-    },
     "filesystem": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"]
+      "args": ["@modelcontextprotocol/server-filesystem", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"],
+      "description": "Acesso ao sistema de arquivos do projeto"
     },
     "git": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-git", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"]
+      "args": ["@modelcontextprotocol/server-git", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"],
+      "description": "Controle de versão Git local"
     },
     "sqlite": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-sqlite", "/Users/kalleby/Downloads/Caris SaaS Pro (1)/data/caris.db"]
+      "args": ["@modelcontextprotocol/server-sqlite", "/Users/kalleby/Downloads/Caris SaaS Pro (1)/data/caris.db"],
+      "description": "Banco de dados SQLite para desenvolvimento"
     },
-    "brave-search": {
+    "memory": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-brave-search"],
-      "env": {
-        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
-      }
+      "args": ["@modelcontextprotocol/server-memory"],
+      "description": "Cache em memória para desenvolvimento"
     },
     "github": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-github"],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      }
+      },
+      "description": "Integração com GitHub para repositório"
     },
-    "google-drive": {
+    "analytics": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-gdrive"],
+      "args": ["@modelcontextprotocol/server-google-analytics"],
       "env": {
-        "GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
-        "GOOGLE_CLIENT_SECRET": "${GOOGLE_CLIENT_SECRET}"
-      }
+        "GA_PROPERTY_ID": "${NEXT_PUBLIC_GA_ID}"
+      },
+      "description": "Google Analytics (ativo)"
     },
-    "aws": {
+    "pdf": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-aws"],
-      "env": {
-        "AWS_ACCESS_KEY_ID": "${AWS_ACCESS_KEY_ID}",
-        "AWS_SECRET_ACCESS_KEY": "${AWS_SECRET_ACCESS_KEY}",
-        "AWS_REGION": "us-east-1"
-      }
-    },
-    "memory": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-memory"]
+      "args": ["@modelcontextprotocol/server-pdf"],
+      "description": "Processamento de PDFs"
     },
     "puppeteer": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-puppeteer"]
+      "args": ["@modelcontextprotocol/server-puppeteer"],
+      "description": "Automação de navegador para testes"
+    }
+  },
+  "mcpServersProduction": {
+    "database": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_URL}"
+      },
+      "description": "PostgreSQL para produção"
+    },
+    "redis": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-redis"],
+      "env": {
+        "REDIS_URL": "${REDIS_URL}"
+      },
+      "description": "Cache Redis para produção"
     },
     "email": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-resend"],
       "env": {
         "RESEND_API_KEY": "${RESEND_API_KEY}"
-      }
+      },
+      "description": "Email transacional"
     },
     "sms": {
       "command": "npx",
@@ -72,30 +79,24 @@
         "TWILIO_ACCOUNT_SID": "${TWILIO_ACCOUNT_SID}",
         "TWILIO_AUTH_TOKEN": "${TWILIO_AUTH_TOKEN}",
         "TWILIO_PHONE_NUMBER": "${TWILIO_PHONE_NUMBER}"
-      }
-    },
-    "payments": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-stripe"],
-      "env": {
-        "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}",
-        "STRIPE_PUBLISHABLE_KEY": "${STRIPE_PUBLISHABLE_KEY}",
-        "STRIPE_WEBHOOK_SECRET": "${STRIPE_WEBHOOK_SECRET}"
-      }
+      },
+      "description": "SMS via Twilio"
     },
     "ai-openai": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-openai"],
       "env": {
         "OPENAI_API_KEY": "${OPENAI_API_KEY}"
-      }
+      },
+      "description": "OpenAI GPT"
     },
     "ai-anthropic": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-anthropic"],
       "env": {
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
-      }
+      },
+      "description": "Anthropic Claude"
     },
     "real-time": {
       "command": "npx",
@@ -105,7 +106,37 @@
         "PUSHER_KEY": "${NEXT_PUBLIC_PUSHER_KEY}",
         "PUSHER_SECRET": "${PUSHER_SECRET}",
         "PUSHER_CLUSTER": "${NEXT_PUBLIC_PUSHER_CLUSTER}"
-      }
+      },
+      "description": "Real-time com Pusher"
+    },
+    "payments-stripe": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-stripe"],
+      "env": {
+        "STRIPE_SECRET_KEY": "${STRIPE_SECRET_KEY}",
+        "STRIPE_PUBLISHABLE_KEY": "${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}",
+        "STRIPE_WEBHOOK_SECRET": "${STRIPE_WEBHOOK_SECRET}"
+      },
+      "description": "Pagamentos Stripe"
+    },
+    "payments-mercadopago": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-mercadopago"],
+      "env": {
+        "MERCADOPAGO_ACCESS_TOKEN": "${MERCADOPAGO_ACCESS_TOKEN}",
+        "MERCADOPAGO_CLIENT_ID": "${MERCADOPAGO_CLIENT_ID}",
+        "MERCADOPAGO_CLIENT_SECRET": "${MERCADOPAGO_CLIENT_SECRET}"
+      },
+      "description": "Pagamentos MercadoPago (Brasil)"
+    },
+    "monitoring": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-sentry"],
+      "env": {
+        "SENTRY_DSN": "${SENTRY_DSN}",
+        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
+      },
+      "description": "Monitoramento com Sentry"
     },
     "cloud-storage": {
       "command": "npx",
@@ -114,186 +145,24 @@
         "R2_ACCOUNT_ID": "${R2_ACCOUNT_ID}",
         "R2_ACCESS_KEY_ID": "${R2_ACCESS_KEY_ID}",
         "R2_SECRET_ACCESS_KEY": "${R2_SECRET_ACCESS_KEY}"
-      }
-    },
-    "analytics": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-google-analytics"],
-      "env": {
-        "GA_PROPERTY_ID": "${GA_PROPERTY_ID}",
-        "GA_CLIENT_EMAIL": "${GA_CLIENT_EMAIL}",
-        "GA_PRIVATE_KEY": "${GA_PRIVATE_KEY}"
-      }
-    },
-    "time-series": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-influxdb"],
-      "env": {
-        "INFLUXDB_URL": "${INFLUXDB_URL}",
-        "INFLUXDB_TOKEN": "${INFLUXDB_TOKEN}",
-        "INFLUXDB_ORG": "${INFLUXDB_ORG}"
-      }
-    },
-    "monitoring": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-sentry"],
-      "env": {
-        "SENTRY_DSN": "${SENTRY_DSN}",
-        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
-      }
-    },
-    "calendar": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-google-calendar"],
-      "env": {
-        "GOOGLE_CALENDAR_CLIENT_ID": "${GOOGLE_CALENDAR_CLIENT_ID}",
-        "GOOGLE_CALENDAR_CLIENT_SECRET": "${GOOGLE_CALENDAR_CLIENT_SECRET}"
-      }
-    },
-    "maps": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-google-maps"],
-      "env": {
-        "GOOGLE_MAPS_API_KEY": "${GOOGLE_MAPS_API_KEY}"
-      }
-    },
-    "slack": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-slack"],
-      "env": {
-        "SLACK_BOT_TOKEN": "${SLACK_BOT_TOKEN}",
-        "SLACK_APP_TOKEN": "${SLACK_APP_TOKEN}"
-      }
-    },
-    "discord": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-discord"],
-      "env": {
-        "DISCORD_BOT_TOKEN": "${DISCORD_BOT_TOKEN}"
-      }
-    },
-    "youtube": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-youtube"],
-      "env": {
-        "YOUTUBE_API_KEY": "${YOUTUBE_API_KEY}"
-      }
-    },
-    "weather": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-weather"],
-      "env": {
-        "WEATHER_API_KEY": "${WEATHER_API_KEY}"
-      }
-    },
-    "translation": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-google-translate"],
-      "env": {
-        "GOOGLE_TRANSLATE_API_KEY": "${GOOGLE_TRANSLATE_API_KEY}"
-      }
-    },
-    "pdf": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-pdf"]
-    },
-    "ssh": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-ssh"],
-      "env": {
-        "SSH_HOST": "${SSH_HOST}",
-        "SSH_USERNAME": "${SSH_USERNAME}",
-        "SSH_PRIVATE_KEY": "${SSH_PRIVATE_KEY}"
-      }
-    },
-    "docker": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-docker"]
-    },
-    "kubernetes": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-kubernetes"],
-      "env": {
-        "KUBECONFIG": "${KUBECONFIG}"
-      }
-    },
-    "redis": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-redis"],
-      "env": {
-        "REDIS_URL": "${REDIS_URL}"
-      }
-    },
-    "mongodb": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-mongodb"],
-      "env": {
-        "MONGODB_URI": "${MONGODB_URI}"
-      }
-    },
-    "elasticsearch": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-elasticsearch"],
-      "env": {
-        "ELASTICSEARCH_URL": "${ELASTICSEARCH_URL}",
-        "ELASTICSEARCH_API_KEY": "${ELASTICSEARCH_API_KEY}"
-      }
-    },
-    "mercadopago": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-mercadopago"],
-      "env": {
-        "MERCADOPAGO_ACCESS_TOKEN": "${MERCADOPAGO_ACCESS_TOKEN}",
-        "MERCADOPAGO_CLIENT_ID": "${MERCADOPAGO_CLIENT_ID}",
-        "MERCADOPAGO_CLIENT_SECRET": "${MERCADOPAGO_CLIENT_SECRET}"
-      }
-    },
-    "jira": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-jira"],
-      "env": {
-        "JIRA_HOST": "${JIRA_HOST}",
-        "JIRA_EMAIL": "${JIRA_EMAIL}",
-        "JIRA_API_TOKEN": "${JIRA_API_TOKEN}"
-      }
-    },
-    "linear": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-linear"],
-      "env": {
-        "LINEAR_API_KEY": "${LINEAR_API_KEY}"
-      }
-    },
-    "notion": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-notion"],
-      "env": {
-        "NOTION_API_KEY": "${NOTION_API_KEY}"
-      }
-    },
-    "airtable": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-airtable"],
-      "env": {
-        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}"
-      }
-    },
-    "hubspot": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-hubspot"],
-      "env": {
-        "HUBSPOT_ACCESS_TOKEN": "${HUBSPOT_ACCESS_TOKEN}"
-      }
-    },
-    "salesforce": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-salesforce"],
-      "env": {
-        "SALESFORCE_CLIENT_ID": "${SALESFORCE_CLIENT_ID}",
-        "SALESFORCE_CLIENT_SECRET": "${SALESFORCE_CLIENT_SECRET}",
-        "SALESFORCE_USERNAME": "${SALESFORCE_USERNAME}",
-        "SALESFORCE_PASSWORD": "${SALESFORCE_PASSWORD}"
-      }
+      },
+      "description": "Armazenamento Cloudflare R2"
+    }
+  },
+  "environment": "development",
+  "activeServers": ["filesystem", "git", "sqlite", "memory", "github", "analytics", "pdf", "puppeteer"],
+  "notes": {
+    "development": "Configuração otimizada para desenvolvimento local com SQLite",
+    "production": "Para produção, altere 'environment' para 'production' e configure as variáveis necessárias",
+    "features": {
+      "analytics": "✅ Habilitado - Google Analytics G-ZC76X199S2", 
+      "database": "✅ SQLite local - ./data/caris.db",
+      "pushNotifications": "❌ Desabilitado",
+      "sms": "❌ Desabilitado", 
+      "email": "❌ Desabilitado",
+      "ai": "❌ Desabilitado",
+      "payments": "❌ Desabilitado",
+      "realtime": "❌ Desabilitado"
     }
   }
 } 
