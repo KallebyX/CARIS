@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs"
-import prisma from "@/lib/prisma"
+import { getUserIdFromRequest } from "@/lib/auth"
+import { db } from "@/db"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 
 export async function POST(req: Request) {

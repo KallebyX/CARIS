@@ -1,11 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs"
-import prismadb from "@/lib/prismadb"
+import { getUserIdFromRequest } from "@/lib/auth"
+import { db } from "@/db"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = auth()
+    const userId = await getUserIdFromRequest(req)
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    
     const body = await req.json()
     const { receiverId, content } = body
 
