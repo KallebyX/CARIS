@@ -26,19 +26,10 @@ import {
   BarChart3
 } from 'lucide-react'
 import { 
-  MeditationPractice,
-  MeditationSession,
-  MeditationTrack,
-  meditationLibrary,
-  meditationTracks,
-  meditationCategories,
-  getMeditationsByCategory,
-  getMeditationsByDifficulty,
-  getMeditationsByDuration,
-  searchMeditations,
-  getPopularMeditations,
-  getRecommendedMeditations
-} from '@/lib/meditation-library'
+  MeditationAudio,
+  MeditationCategory,
+  MeditationLibraryService
+} from '@/lib/meditation-library-service'
 
 interface MeditationLibraryProps {
   userId: number
@@ -54,14 +45,33 @@ interface UserProgress {
   averageRating: number
 }
 
+interface MeditationSession {
+  id: string
+  userId: number
+  meditationId: string
+  startedAt: Date
+  completedAt?: Date
+  duration: number
+  wasCompleted: boolean
+  rating?: number
+  feedback?: string
+  moodBefore?: number
+  moodAfter?: number
+  notes?: string
+}
+
 export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
-  const [meditations, setMeditations] = useState<MeditationPractice[]>(meditationLibrary)
-  const [selectedMeditation, setSelectedMeditation] = useState<MeditationPractice | null>(null)
+  const [meditations, setMeditations] = useState<MeditationAudio[]>([])
+  const [categories, setCategories] = useState<MeditationCategory[]>([])
+  const [selectedMeditation, setSelectedMeditation] = useState<MeditationAudio | null>(null)
   const [isPlayerOpen, setIsPlayerOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all')
   const [durationRange, setDurationRange] = useState<string>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [userProgress, setUserProgress] = useState<UserProgress>({
     totalSessions: 45,
     totalMinutes: 420,
@@ -72,43 +82,113 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
     averageRating: 4.3
   })
   const [recentSessions, setRecentSessions] = useState<MeditationSession[]>([])
+  const [popularMeditations, setPopularMeditations] = useState<MeditationAudio[]>([])
+  const [recommendedMeditations, setRecommendedMeditations] = useState<MeditationAudio[]>([])
 
   useEffect(() => {
-    filterMeditations()
-  }, [searchQuery, selectedCategory, selectedDifficulty, durationRange])
+    loadInitialData()
+  }, [])
 
-  const filterMeditations = () => {
-    let filtered = meditationLibrary
+  useEffect(() => {
+    loadMeditations()
+  }, [searchQuery, selectedCategory, selectedDifficulty, durationRange, currentPage])
 
-    if (searchQuery) {
-      filtered = searchMeditations(searchQuery)
+  const loadInitialData = async () => {
+    try {
+      const [categoriesData, popularData, recommendedData] = await Promise.all([
+        MeditationLibraryService.getCategories(),
+        MeditationLibraryService.getPopularAudios(3),
+        MeditationLibraryService.getRecommendedAudios(userId, 3)
+      ])
+
+      setCategories(categoriesData)
+      setPopularMeditations(popularData)
+      setRecommendedMeditations(recommendedData)
+    } catch (error) {
+      console.error('Erro ao carregar dados iniciais:', error)
     }
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(med => med.category === selectedCategory)
-    }
-
-    if (selectedDifficulty !== 'all') {
-      filtered = filtered.filter(med => med.difficulty === selectedDifficulty)
-    }
-
-    if (durationRange !== 'all') {
-      const [min, max] = durationRange.split('-').map(Number)
-      filtered = filtered.filter(med => {
-        if (max) {
-          return med.duration >= min && med.duration <= max
-        } else {
-          return med.duration >= min
-        }
-      })
-    }
-
-    setMeditations(filtered)
   }
 
-  const startMeditation = (meditation: MeditationPractice) => {
-    setSelectedMeditation(meditation)
-    setIsPlayerOpen(true)
+  const loadMeditations = async () => {
+    try {
+      setLoading(true)
+      
+      const filters = {
+        userId,
+        ...(searchQuery && { search: searchQuery }),
+        ...(selectedCategory !== 'all' && { categoryId: selectedCategory }),
+        ...(selectedDifficulty !== 'all' && { difficulty: selectedDifficulty }),
+        ...(durationRange !== 'all' && getDurationFilter(durationRange))
+      }
+
+      const result = await MeditationLibraryService.getAudios(filters, currentPage, 20)
+      setMeditations(result.audios)
+      setTotalPages(result.pagination.totalPages)
+    } catch (error) {
+      console.error('Erro ao carregar meditações:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getDurationFilter = (range: string) => {
+    switch (range) {
+      case '0-10':
+        return { minDuration: 0, maxDuration: 600 }
+      case '10-20':
+        return { minDuration: 600, maxDuration: 1200 }
+      case '20-30':
+        return { minDuration: 1200, maxDuration: 1800 }
+      case '30':
+        return { minDuration: 1800 }
+      default:
+        return {}
+    }
+  }
+
+  const startMeditation = async (meditation: MeditationAudio) => {
+    try {
+      // Incrementar contador de reprodução
+      await MeditationLibraryService.incrementPlayCount(meditation.id)
+      
+      setSelectedMeditation(meditation)
+      setIsPlayerOpen(true)
+    } catch (error) {
+      console.error('Erro ao iniciar meditação:', error)
+    }
+  }
+
+  const handleToggleFavorite = async (audioId: string) => {
+    try {
+      const isFavorite = await MeditationLibraryService.toggleFavorite(userId, audioId)
+      
+      // Atualizar estado local
+      setMeditations(prev => 
+        prev.map(med => 
+          med.id === audioId 
+            ? { ...med, isFavorite }
+            : med
+        )
+      )
+      
+      setPopularMeditations(prev => 
+        prev.map(med => 
+          med.id === audioId 
+            ? { ...med, isFavorite }
+            : med
+        )
+      )
+      
+      setRecommendedMeditations(prev => 
+        prev.map(med => 
+          med.id === audioId 
+            ? { ...med, isFavorite }
+            : med
+        )
+      )
+    } catch (error) {
+      console.error('Erro ao alterar favorito:', error)
+    }
   }
 
   const handleMeditationComplete = async (sessionData: any) => {
@@ -117,7 +197,10 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
       const response = await fetch('/api/patient/meditation-sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionData)
+        body: JSON.stringify({
+          ...sessionData,
+          meditationId: selectedMeditation?.id
+        })
       })
 
       if (response.ok) {
@@ -138,7 +221,7 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
   }
 
   const getCategoryIcon = (categoryId: string) => {
-    const category = meditationCategories.find(cat => cat.id === categoryId)
+    const category = categories.find(cat => cat.id === categoryId)
     return category?.icon || '🧘‍♀️'
   }
 
@@ -151,19 +234,16 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
     }
   }
 
-  const formatDuration = (minutes: number) => {
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
     if (minutes < 60) return `${minutes}m`
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
     return `${hours}h ${mins}m`
   }
 
-  const popularMeditations = getPopularMeditations(3)
-  const recommendedMeditations = getRecommendedMeditations({
-    categories: ['ansiedade', 'mindfulness'],
-    difficulty: 'iniciante',
-    maxDuration: 15
-  }).slice(0, 3)
+  const popularMeditationsData = popularMeditations.slice(0, 3)
+  const recommendedMeditationsData = recommendedMeditations.slice(0, 3)
 
   if (isPlayerOpen && selectedMeditation) {
     return (
@@ -264,7 +344,7 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {meditationCategories.map(category => (
+                    {categories.map(category => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.icon} {category.name}
                       </SelectItem>
@@ -311,17 +391,17 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {popularMeditations.map((meditation) => (
+                {popularMeditationsData.map((meditation) => (
                   <div key={meditation.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{getCategoryIcon(meditation.category)}</div>
+                      <div className="text-2xl">{getCategoryIcon(meditation.categoryId)}</div>
                       <div>
                         <h4 className="font-medium">{meditation.title}</h4>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Clock className="w-3 h-3" />
-                          {meditation.duration}min
+                          {Math.floor(meditation.duration / 60)}min
                           <Star className="w-3 h-3 text-yellow-500" />
-                          {meditation.effectivenessRating}
+                          {meditation.averageRating.toFixed(1)}
                         </div>
                       </div>
                     </div>
@@ -342,15 +422,15 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recommendedMeditations.map((meditation) => (
+                {recommendedMeditationsData.map((meditation) => (
                   <div key={meditation.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="text-2xl">{getCategoryIcon(meditation.category)}</div>
+                      <div className="text-2xl">{getCategoryIcon(meditation.categoryId)}</div>
                       <div>
                         <h4 className="font-medium">{meditation.title}</h4>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Clock className="w-3 h-3" />
-                          {meditation.duration}min
+                          {Math.floor(meditation.duration / 60)}min
                           <Badge className={getDifficultyColor(meditation.difficulty)}>
                             {meditation.difficulty}
                           </Badge>
@@ -367,107 +447,116 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
           </div>
 
           {/* Lista de Meditações */}
-          <div className="grid gap-4">
-            {meditations.map((meditation) => (
-              <Card key={meditation.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="text-4xl">{getCategoryIcon(meditation.category)}</div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{meditation.title}</h3>
-                          <Badge className={getDifficultyColor(meditation.difficulty)}>
-                            {meditation.difficulty}
-                          </Badge>
-                          {userProgress.favoriteMeditations.includes(meditation.id) && (
-                            <Heart className="w-4 h-4 text-red-500 fill-current" />
-                          )}
-                        </div>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="mt-2 text-gray-600">Carregando meditações...</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {meditations.map((meditation) => (
+                <Card key={meditation.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4 flex-1">
+                        <div className="text-4xl">{getCategoryIcon(meditation.categoryId)}</div>
                         
-                        <p className="text-gray-600 mb-3">{meditation.description}</p>
-                        
-                        <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            {meditation.instructor}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {meditation.duration} minutos
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Star className="w-3 h-3 text-yellow-500" />
-                            {meditation.effectivenessRating}/5
-                          </span>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-1">
-                          {meditation.tags.slice(0, 4).map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-lg">{meditation.title}</h3>
+                            <Badge className={getDifficultyColor(meditation.difficulty)}>
+                              {meditation.difficulty}
                             </Badge>
-                          ))}
+                            {meditation.isFavorite && (
+                              <Heart className="w-4 h-4 text-red-500 fill-current" />
+                            )}
+                          </div>
+                          
+                          <p className="text-gray-600 mb-3">{meditation.description}</p>
+                          
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
+                            <span className="flex items-center gap-1">
+                              <User className="w-3 h-3" />
+                              {meditation.instructor}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {Math.floor(meditation.duration / 60)} minutos
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-yellow-500" />
+                              {meditation.averageRating.toFixed(1)}/5
+                            </span>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-1">
+                            {meditation.tags?.slice(0, 4).map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       </div>
+                      
+                      <div className="flex flex-col gap-2 ml-4">
+                        <Button onClick={() => startMeditation(meditation)}>
+                          <Play className="w-4 h-4 mr-2" />
+                          Meditar
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleToggleFavorite(meditation.id)}
+                        >
+                          <Heart className={`w-4 h-4 ${meditation.isFavorite ? 'fill-current text-red-500' : ''}`} />
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button onClick={() => startMeditation(meditation)}>
-                        <Play className="w-4 h-4 mr-2" />
-                        Meditar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Heart className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {meditations.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">Nenhuma meditação encontrada com os filtros aplicados.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+              >
+                Anterior
+              </Button>
+              <span className="flex items-center px-4">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+              >
+                Próxima
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         {/* Trilhas de Meditação */}
         <TabsContent value="tracks" className="space-y-4">
-          {meditationTracks.map((track) => (
-            <Card key={track.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>{track.title}</CardTitle>
-                    <p className="text-gray-600 mt-1">{track.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline">{track.weekNumber} semanas</Badge>
-                    {userProgress.completedTracks.includes(track.id) && (
-                      <Badge className="ml-2 bg-green-100 text-green-800">
-                        <Award className="w-3 h-3 mr-1" />
-                        Concluída
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <p className="text-sm"><strong>Objetivo:</strong> {track.objective}</p>
-                  <p className="text-sm"><strong>Tema:</strong> {track.theme}</p>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">
-                      {track.meditations.length} meditações
-                    </span>
-                    <Button variant="outline">
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Ver Trilha
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          <Card>
+            <CardContent className="text-center py-8">
+              <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-500">Trilhas de meditação em desenvolvimento</p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Favoritos */}
@@ -520,7 +609,7 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {meditationCategories.slice(0, 5).map((category) => (
+                  {categories.slice(0, 5).map((category) => (
                     <div key={category.id} className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <span>{category.icon}</span>
