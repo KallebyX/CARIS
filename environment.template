@@ -1,0 +1,135 @@
+# =============================================================================
+# CÁRIS SaaS Pro - Environment Variables Template
+# =============================================================================
+# Copie este arquivo para .env.local e preencha com seus valores reais
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+# PostgreSQL/Neon Database
+POSTGRES_URL="postgresql://username:password@your-host.neon.tech/caris_db?sslmode=require"
+
+# Local PostgreSQL (desenvolvimento)
+# POSTGRES_URL="postgresql://postgres:password@localhost:5432/caris_dev"
+
+# SQLite (desenvolvimento local)
+DATABASE_URL="file:./data/caris.db"
+
+# =============================================================================
+# AUTHENTICATION & SECURITY
+# =============================================================================
+# JWT Secret (use um hash forte: openssl rand -hex 32)
+JWT_SECRET="your-super-secret-jwt-key-here"
+NEXTAUTH_SECRET="your-nextauth-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Session encryption key
+SESSION_SECRET="your-session-secret-here"
+
+# =============================================================================
+# EMAIL SERVICES
+# =============================================================================
+# Resend (recomendado)
+RESEND_API_KEY="re_xxxxxxxxxx"
+FROM_EMAIL="noreply@caris.com"
+
+# SendGrid (alternativa)
+SENDGRID_API_KEY="SG.xxxxxxxxxx"
+
+# Gmail SMTP (desenvolvimento)
+GMAIL_USER="your-gmail@gmail.com"
+GMAIL_PASS="your-app-password"
+
+# =============================================================================
+# SMS SERVICES
+# =============================================================================
+# Twilio
+TWILIO_ACCOUNT_SID="ACxxxxxxxxxx"
+TWILIO_AUTH_TOKEN="your-auth-token"
+TWILIO_PHONE_NUMBER="+5511999999999"
+
+# =============================================================================
+# REAL-TIME COMMUNICATION
+# =============================================================================
+# Pusher
+PUSHER_APP_ID="your-app-id"
+NEXT_PUBLIC_PUSHER_KEY="your-public-key"
+PUSHER_SECRET="your-secret-key"
+NEXT_PUBLIC_PUSHER_CLUSTER="us2"
+
+# =============================================================================
+# PUSH NOTIFICATIONS
+# =============================================================================
+# VAPID Keys (web-push: npx web-push generate-vapid-keys)
+VAPID_PUBLIC_KEY="your-vapid-public-key"
+VAPID_PRIVATE_KEY="your-vapid-private-key"
+
+# Firebase Cloud Messaging (opcional)
+FCM_SERVER_KEY="your-fcm-server-key"
+NEXT_PUBLIC_FCM_VAPID_KEY="your-fcm-vapid-key"
+
+# =============================================================================
+# PAYMENT SERVICES
+# =============================================================================
+# Stripe
+STRIPE_SECRET_KEY="sk_test_xxxxxxxxxx"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxxxxxxx"
+STRIPE_WEBHOOK_SECRET="whsec_xxxxxxxxxx"
+
+# Mercado Pago (Brasil)
+MERCADOPAGO_ACCESS_TOKEN="TEST-xxxxxxxxxx"
+MERCADOPAGO_CLIENT_ID="your-client-id"
+MERCADOPAGO_CLIENT_SECRET="your-client-secret"
+NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY="TEST-xxxxxxxxxx"
+
+# =============================================================================
+# AI SERVICES
+# =============================================================================
+# OpenAI
+OPENAI_API_KEY="sk-xxxxxxxxxx"
+
+# Anthropic Claude
+ANTHROPIC_API_KEY="sk-ant-xxxxxxxxxx"
+
+# Google AI
+GOOGLE_AI_API_KEY="your-google-ai-key"
+
+# =============================================================================
+# MONITORING & ANALYTICS
+# =============================================================================
+# Sentry
+SENTRY_DSN="https://xxxxxxxxxx@sentry.io/xxxxxxxxxx"
+SENTRY_AUTH_TOKEN="your-sentry-auth-token"
+
+# Google Analytics
+GA_PROPERTY_ID="G-XXXXXXXXXX"
+
+# =============================================================================
+# EXTERNAL APIS
+# =============================================================================
+# GitHub
+GITHUB_TOKEN="ghp_xxxxxxxxxx"
+
+# Brave Search
+BRAVE_API_KEY="your-brave-search-key"
+
+# =============================================================================
+# DEVELOPMENT & DEPLOYMENT
+# =============================================================================
+# Next.js
+NODE_ENV="development"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_NAME="Cáris SaaS Pro"
+NEXT_PUBLIC_APP_VERSION="1.0.0"
+
+# =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+# Funcionalidades opcionais
+ENABLE_ANALYTICS="true"
+ENABLE_PUSH_NOTIFICATIONS="true"
+ENABLE_SMS_NOTIFICATIONS="true"
+ENABLE_EMAIL_NOTIFICATIONS="true"
+ENABLE_AI_FEATURES="true"
+ENABLE_PAYMENT_PROCESSING="true"
+ENABLE_REAL_TIME_CHAT="true" 
