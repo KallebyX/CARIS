@@ -75,9 +75,9 @@ databases:
   - name: caris-database
     databaseName: caris
     user: caris_user
-    plan: starter # Pode ser alterado para standard ou pro
+    plan: free # Plano gratuito (limitado) - pode ser alterado para standard ou pro
     region: oregon
     
     # Scripts de inicialização
-    postgresMajorVersion: 15
+    postgresMajorVersion: "15"
     
