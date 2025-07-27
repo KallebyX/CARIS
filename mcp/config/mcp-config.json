@@ -1,0 +1,176 @@
+{
+  "version": "2.0.0",
+  "description": "Configuração principal dos MCPs - Caris SaaS Pro",
+  "lastUpdated": "2025-07-27",
+  "structure": {
+    "development": "./development.json",
+    "production": "./production.json"
+  },
+  "environment": "development",
+  "configManager": {
+    "autoLoad": true,
+    "validateOnLoad": true,
+    "backupOnChange": true
+  },
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"],
+      "description": "Acesso ao sistema de arquivos do projeto",
+      "status": "active"
+    },
+    "git": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"],
+      "description": "Controle de versão Git local",
+      "status": "active"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-sqlite", "/Users/kalleby/Downloads/Caris SaaS Pro (1)/data/caris.db"],
+      "description": "Banco de dados SQLite para desenvolvimento",
+      "status": "active"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-memory"],
+      "description": "Cache em memória para desenvolvimento",
+      "status": "active"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "Integração com GitHub para repositório",
+      "status": "active"
+    },
+    "analytics": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-google-analytics"],
+      "env": {
+        "GA_PROPERTY_ID": "${NEXT_PUBLIC_GA_ID}"
+      },
+      "description": "Google Analytics (ativo)",
+      "status": "active"
+    },
+    "pdf": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-pdf"],
+      "description": "Processamento de PDFs",
+      "status": "active"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-puppeteer"],
+      "description": "Automação de navegador para testes",
+      "status": "active"
+    },
+    "database": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_URL}"
+      },
+      "description": "PostgreSQL - testado e funcionando ✅",
+      "status": "available",
+      "lastTested": "2025-07-27"
+    }
+  },
+  "mcpServersProduction": {
+    "database": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_URL}"
+      },
+      "description": "PostgreSQL para produção ✅",
+      "status": "active",
+      "priority": "high"
+    },
+    "redis": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-redis"],
+      "env": {
+        "REDIS_URL": "${REDIS_URL}"
+      },
+      "description": "Cache Redis para produção",
+      "status": "available",
+      "priority": "high"
+    },
+    "email": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-resend"],
+      "env": {
+        "RESEND_API_KEY": "${RESEND_API_KEY}"
+      },
+      "description": "Email transacional",
+      "status": "available",
+      "priority": "medium"
+    },
+    "payments-mercadopago": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-mercadopago"],
+      "env": {
+        "MERCADOPAGO_ACCESS_TOKEN": "${MERCADOPAGO_ACCESS_TOKEN}",
+        "MERCADOPAGO_CLIENT_ID": "${MERCADOPAGO_CLIENT_ID}",
+        "MERCADOPAGO_CLIENT_SECRET": "${MERCADOPAGO_CLIENT_SECRET}"
+      },
+      "description": "Pagamentos MercadoPago (Brasil) ✅",
+      "status": "active",
+      "priority": "high",
+      "lastTested": "2025-07-27"
+    },
+    "monitoring": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-sentry"],
+      "env": {
+        "SENTRY_DSN": "${SENTRY_DSN}",
+        "SENTRY_AUTH_TOKEN": "${SENTRY_AUTH_TOKEN}"
+      },
+      "description": "Monitoramento com Sentry",
+      "status": "available",
+      "priority": "high"
+    }
+  },
+  "activeServers": [
+    "filesystem", 
+    "git", 
+    "sqlite", 
+    "memory", 
+    "github", 
+    "analytics", 
+    "pdf", 
+    "puppeteer"
+  ],
+  "testing": {
+    "lastRun": "2025-07-27",
+    "postgresTest": "✅ Passed",
+    "mercadoPagoTest": "✅ Passed",
+    "allTestsPassed": true
+  },
+  "features": {
+    "analytics": "✅ Habilitado - Google Analytics G-ZC76X199S2", 
+    "database": "✅ SQLite local + PostgreSQL testado",
+    "payments": "✅ MercadoPago testado e funcionando",
+    "pushNotifications": "⚠️ Disponível", 
+    "sms": "⚠️ Disponível", 
+    "email": "⚠️ Disponível",
+    "ai": "⚠️ Disponível",
+    "realtime": "⚠️ Disponível",
+    "storage": "⚠️ Disponível"
+  },
+  "documentation": {
+    "mainDocs": "../docs/README.md",
+    "setupGuide": "../docs/setup.md",
+    "troubleshooting": "../docs/troubleshooting.md",
+    "postgres": "../docs/postgres.md"
+  },
+  "migration": {
+    "from": "v1.0 - configuração básica",
+    "to": "v2.0 - estrutura organizada",
+    "date": "2025-07-27",
+    "status": "completed"
+  }
+} 

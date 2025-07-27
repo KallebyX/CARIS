@@ -1,0 +1,94 @@
+{
+  "environment": "development",
+  "description": "Configuração MCPs para desenvolvimento local",
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"],
+      "description": "Acesso ao sistema de arquivos do projeto",
+      "status": "active"
+    },
+    "git": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"],
+      "description": "Controle de versão Git local",
+      "status": "active"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-sqlite", "/Users/kalleby/Downloads/Caris SaaS Pro (1)/data/caris.db"],
+      "description": "Banco de dados SQLite para desenvolvimento",
+      "status": "active"
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-memory"],
+      "description": "Cache em memória para desenvolvimento",
+      "status": "active"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "Integração com GitHub para repositório",
+      "status": "active"
+    },
+    "analytics": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-google-analytics"],
+      "env": {
+        "GA_PROPERTY_ID": "${NEXT_PUBLIC_GA_ID}"
+      },
+      "description": "Google Analytics (ativo)",
+      "status": "active"
+    },
+    "pdf": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-pdf"],
+      "description": "Processamento de PDFs",
+      "status": "active"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-puppeteer"],
+      "description": "Automação de navegador para testes",
+      "status": "active"
+    },
+    "database": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${POSTGRES_URL}"
+      },
+      "description": "PostgreSQL para desenvolvimento e testes",
+      "status": "available",
+      "notes": "Ativado para testes. Para usar em dev, alterar status para 'active'"
+    }
+  },
+  "activeServers": [
+    "filesystem", 
+    "git", 
+    "sqlite", 
+    "memory", 
+    "github", 
+    "analytics", 
+    "pdf", 
+    "puppeteer"
+  ],
+  "features": {
+    "analytics": "✅ Habilitado - Google Analytics G-ZC76X199S2", 
+    "database": "✅ SQLite local - ./data/caris.db",
+    "postgres": "⚠️ Disponível para testes",
+    "pushNotifications": "❌ Desabilitado",
+    "sms": "❌ Desabilitado", 
+    "email": "❌ Desabilitado",
+    "ai": "❌ Desabilitado",
+    "payments": "❌ Desabilitado",
+    "realtime": "❌ Desabilitado"
+  },
+  "testMode": true,
+  "logLevel": "debug",
+  "healthCheckInterval": 30000
+} 

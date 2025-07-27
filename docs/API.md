@@ -33,7 +33,7 @@ Content-Type: application/json
 
 {
   "email": "user@example.com",
-  "password": "password123"
+  "password": "your-password"
 }
 ```
 
@@ -167,7 +167,7 @@ POST /api/auth/login
 ```json
 {
   "email": "user@example.com",
-  "password": "password123",
+  "password": "your-password",
   "rememberMe": true
 }
 ```
@@ -230,8 +230,8 @@ POST /api/auth/reset-password
 ```json
 {
   "token": "reset_token",
-  "password": "new_password123",
-  "confirmPassword": "new_password123"
+  "password": "new_your-password",
+  "confirmPassword": "new_your-password"
 }
 ```
 
@@ -324,8 +324,8 @@ Authorization: Bearer <token>
 ```json
 {
   "currentPassword": "old_password",
-  "newPassword": "new_password123",
-  "confirmPassword": "new_password123"
+  "newPassword": "new_your-password",
+  "confirmPassword": "new_your-password"
 }
 ```
 
@@ -769,7 +769,7 @@ Authorization: Bearer <admin_token>
 {
   "name": "Novo Usuário",
   "email": "novo@email.com",
-  "password": "password123",
+  "password": "your-password",
   "role": "patient",
   "profile": {
     "phone": "+5511999999999",

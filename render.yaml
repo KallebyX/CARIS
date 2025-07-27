@@ -1,0 +1,83 @@
+services:
+  # Aplicação Web Principal
+  - type: web
+    name: caris-saas-pro
+    runtime: node
+    plan: starter # Pode ser alterado para standard ou pro
+    region: oregon # Região mais próxima do Brasil disponível
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /api/health
+    
+    # Configurações do ambiente
+    envVars:
+      # Configurações da aplicação
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_APP_URL
+        fromService:
+          type: web
+          name: caris-saas-pro
+          property: host
+      
+      # Banco de dados (conecta automaticamente ao PostgreSQL)
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: caris-database
+          property: connectionString
+      
+      # Segurança - JWT
+      - key: JWT_SECRET
+        generateValue: true
+      
+      # Notificações Push
+      - key: VAPID_PUBLIC_KEY
+        generateValue: true
+      - key: VAPID_PRIVATE_KEY
+        generateValue: true
+      
+      # Email (configurar manualmente)
+      - key: FROM_EMAIL
+        value: noreply@caris.com
+      
+      # Variáveis que precisam ser configuradas manualmente
+      - key: RESEND_API_KEY
+        sync: false # Deve ser configurado no dashboard do Render
+      - key: PUSHER_APP_ID
+        sync: false
+      - key: NEXT_PUBLIC_PUSHER_KEY
+        sync: false
+      - key: PUSHER_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_PUSHER_CLUSTER
+        value: us2
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_CLIENT_ID
+        sync: false
+      - key: MERCADOPAGO_CLIENT_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_AUTH_TOKEN
+        sync: false
+
+  # Banco de Dados PostgreSQL
+databases:
+  - name: caris-database
+    databaseName: caris
+    user: caris_user
+    plan: starter # Pode ser alterado para standard ou pro
+    region: oregon
+    
+    # Scripts de inicialização
+    postgresMajorVersion: 15
+    
