@@ -10,12 +10,22 @@ Este guia detalha como fazer o deploy da aplicação CÁRIS SaaS Pro no Render.
 
 ## 🔧 Configuração Automática
 
-### 1. Deploy via Blueprint
+### 1. Deploy via Blueprint (ATUALIZADO)
 
-1. Acesse [Render Dashboard](https://dashboard.render.com)
-2. Clique em "New" → "Blueprint"
-3. Conecte seu repositório GitHub
-4. O Render detectará automaticamente o arquivo `render.yaml`
+⚠️ **IMPORTANTE**: Upgrade para plano pago necessário devido ao limite de 1 banco gratuito.
+
+#### Opção A: Script Automático
+```bash
+# Execute o script de deploy
+./scripts/deploy-render.sh
+```
+
+#### Opção B: Manual no Dashboard
+1. **Upgrade conta**: Dashboard → Account Settings → Billing → Starter Plan ($7/mês)
+2. Acesse [Render Dashboard](https://dashboard.render.com)
+3. Clique em "New" → "Blueprint"
+4. Conecte seu repositório GitHub
+5. O Render detectará automaticamente o arquivo `render.yaml`
 
 ### 2. Configuração do render.yaml
 
