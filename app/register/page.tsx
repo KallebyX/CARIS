@@ -4,25 +4,87 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "",
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Erro",
+        description: "As senhas não coincidem",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.role) {
+      toast({
+        title: "Erro", 
+        description: "Selecione um tipo de conta",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Falha no registro")
+      }
+
+      toast({
+        title: "Sucesso!",
+        description: "Conta criada com sucesso",
+      })
+
+      router.push("/dashboard")
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 relative">
-      <div className="absolute inset-0">
-        <Image
-          src="/images/auth-background.png"
-          alt="Fundo Abstrato"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-50"
-        />
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-teal-50 relative">
       <div className="w-full max-w-md relative z-10">
         <Link
           href="/"
@@ -44,13 +106,16 @@ export default function RegisterPage() {
             <p className="text-teal-100">Inicie sua jornada de clareza existencial.</p>
           </CardHeader>
           <CardContent className="p-8">
-            <form className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Nome de usuário</Label>
+                <Label htmlFor="name">Nome completo</Label>
                 <Input
-                  id="username"
+                  id="name"
                   type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="bg-white/20 border-teal-400 h-12 placeholder:text-teal-200 focus:bg-white/30"
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -58,8 +123,23 @@ export default function RegisterPage() {
                 <Input
                   id="email"
                   type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="bg-white/20 border-teal-400 h-12 placeholder:text-teal-200 focus:bg-white/30"
+                  required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Tipo de conta</Label>
+                <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                  <SelectTrigger className="bg-white/20 border-teal-400 h-12 text-white">
+                    <SelectValue placeholder="Selecione o tipo de conta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="patient">Paciente</SelectItem>
+                    <SelectItem value="psychologist">Psicólogo(a)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
@@ -67,7 +147,11 @@ export default function RegisterPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30"
+                    required
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -84,7 +168,10 @@ export default function RegisterPage() {
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                     className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30"
+                    required
                   />
                   <button
                     type="button"
@@ -97,9 +184,10 @@ export default function RegisterPage() {
               </div>
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base font-semibold rounded-full shadow-lg mt-6"
               >
-                Registrar
+                {isLoading ? "Criando conta..." : "Registrar"}
               </Button>
               <div className="text-center text-sm pt-2">
                 <span className="text-teal-100">Já tem uma conta? </span>

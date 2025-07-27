@@ -1,7 +1,7 @@
 const { neon } = require("@neondatabase/serverless")
 const bcrypt = require("bcryptjs")
 
-const sql = neon(process.env.DATABASE_URL)
+const sql = neon(process.env.POSTGRES_URL || process.env.DATABASE_URL)
 
 async function seed() {
   console.log("🌱 Iniciando seed do banco de dados...")

@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuHeader,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications"
@@ -78,7 +78,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-80 p-0">
-        <DropdownMenuHeader className="p-4 pb-2">
+        <div className="p-4 pb-2">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Notificações</h3>
             <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export function NotificationCenter({ userId }: NotificationCenterProps) {
               </Button>
             </div>
           )}
-        </DropdownMenuHeader>
+        </div>
 
         <Separator />
 

@@ -1,56 +1,43 @@
-import { db } from "@/lib/db"
-import { diaryEntries, patientProfiles } from "@/lib/db/schema"
-import { auth } from "@clerk/nextjs"
+import { db } from "@/db"
+import { diaryEntries, patientProfiles } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import { z } from "zod"
-import { RealtimeNotificationService } from "@/lib/realtime-notifications"
+import { getUserIdFromRequest } from "@/lib/auth"
 
 const entrySchema = z.object({
-  title: z.string().min(1, {
-    message: "Title must be at least 1 character.",
-  }),
+  moodRating: z.number().min(0).max(4),
+  intensityRating: z.number().min(1).max(10),
   content: z.string().min(1, {
     message: "Content must be at least 1 character.",
   }),
-  mood: z.string().min(1, {
-    message: "Mood must be at least 1 character.",
-  }),
+  cycle: z.enum(["criar", "cuidar", "crescer", "curar"]),
+  emotions: z.array(z.string()).optional(),
 })
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { userId } = auth()
+    const userId = await getUserIdFromRequest(req)
 
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 403 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
     const json = await req.json()
     const body = entrySchema.parse(json)
 
-    const { title, content, mood } = body
+    const { moodRating, intensityRating, content, cycle, emotions } = body
 
     const entry = await db.insert(diaryEntries).values({
-      title,
+      patientId: userId,
+      moodRating,
+      intensityRating,
       content,
-      mood,
-      userId,
+      cycle,
+      emotions: emotions ? JSON.stringify(emotions) : null,
     })
 
-    // Buscar o psicólogo responsável
-    const patientProfile = await db
-      .select({ psychologistId: patientProfiles.psychologistId })
-      .from(patientProfiles)
-      .where(eq(patientProfiles.userId, userId))
-      .limit(1)
-
-    if (patientProfile.length > 0) {
-      const realtimeService = RealtimeNotificationService.getInstance()
-      await realtimeService.notifyNewDiaryEntry(userId, patientProfile[0].psychologistId, title, mood)
-    }
-
-    return NextResponse.json({ entry })
+    return NextResponse.json({ success: true, entry })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return new NextResponse(JSON.stringify(error.issues), { status: 422 })

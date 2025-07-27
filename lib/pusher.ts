@@ -1,4 +1,5 @@
 import PusherServer from "pusher"
+import PusherClient from "pusher-js"
 
 // Validação das variáveis de ambiente do Pusher
 if (
@@ -16,4 +17,9 @@ export const pusherServer = new PusherServer({
   secret: process.env.PUSHER_SECRET,
   cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
   useTLS: true,
+})
+
+export const pusherClient = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+  enabledTransports: ["ws", "wss"],
 })

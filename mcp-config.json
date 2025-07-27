@@ -1,8 +1,34 @@
 {
-  "configPath": "./mcp/config/mcp-config.json",
-  "environment": "development",
-  "description": "Configuração principal dos MCPs - Caris SaaS Pro",
-  "version": "2.0.0",
-  "lastUpdated": "2025-07-27",
-  "documentation": "./mcp/docs/README.md"
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"]
+    },
+    "git": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/Users/kalleby/Downloads/Caris SaaS Pro (1)"]
+    },
+    "memory": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-memory"]
+    },
+    "puppeteer-enhanced": {
+      "command": "npx",
+      "args": ["puppeteer-enhanced-mcp-server"]
+    },
+    "enhanced-postgres": {
+      "command": "npx",
+      "args": ["enhanced-postgres-mcp-server"],
+      "env": {
+        "POSTGRES_URL": "${POSTGRES_URL}"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  }
 } 

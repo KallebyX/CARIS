@@ -4,44 +4,32 @@ import { relations } from "drizzle-orm"
 // Tabela de usuários
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  password: text("password").notNull(),
-  name: text("name").notNull(),
+  password: text("password_hash").notNull(),
   role: text("role").notNull(), // 'psychologist', 'patient', 'admin'
+  avatarUrl: text("avatar_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Perfis de psicólogos
 export const psychologistProfiles = pgTable("psychologist_profiles", {
-  id: serial("id").primaryKey(),
   userId: integer("user_id")
     .references(() => users.id)
-    .notNull(),
-  crp: varchar("crp", { length: 20 }).notNull(),
-  specialties: text("specialties"),
+    .primaryKey(),
+  crp: varchar("crp", { length: 20 }),
   bio: text("bio"),
-  avatar: text("avatar"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Perfis de pacientes
 export const patientProfiles = pgTable("patient_profiles", {
-  id: serial("id").primaryKey(),
   userId: integer("user_id")
     .references(() => users.id)
-    .notNull(),
+    .primaryKey(),
   psychologistId: integer("psychologist_id")
-    .references(() => users.id)
-    .notNull(),
-  birthDate: date("birth_date"),
-  phone: varchar("phone", { length: 20 }),
-  emergencyContact: varchar("emergency_contact", { length: 20 }),
-  currentCycle: text("current_cycle").default("Criar"), // Criar, Cuidar, Crescer, Curar
-  avatar: text("avatar"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    .references(() => users.id),
+  birthDate: timestamp("birth_date"),
+  currentCycle: text("current_cycle"),
 })
 
 // Sessões
@@ -54,12 +42,11 @@ export const sessions = pgTable("sessions", {
     .references(() => users.id)
     .notNull(),
   sessionDate: timestamp("session_date").notNull(),
-  durationMinutes: integer("duration_minutes").notNull().default(50),
+  durationMinutes: integer("duration_minutes").notNull(),
   type: text("type").notNull(), // 'online', 'presencial'
-  status: text("status").notNull().default("agendada"), // 'agendada', 'confirmada', 'realizada', 'cancelada'
+  status: text("status").notNull(), // 'agendada', 'confirmada', 'realizada', 'cancelada'
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Entradas do diário
@@ -68,99 +55,31 @@ export const diaryEntries = pgTable("diary_entries", {
   patientId: integer("patient_id")
     .references(() => users.id)
     .notNull(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  mood: integer("mood").notNull(), // 1-5
-  tags: text("tags"), // JSON array as string
-  isPrivate: boolean("is_private").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
-
-// Mensagens do chat
-export const chatMessages = pgTable("chat_messages", {
-  id: serial("id").primaryKey(),
-  senderId: integer("sender_id")
-    .references(() => users.id)
-    .notNull(),
-  receiverId: integer("receiver_id")
-    .references(() => users.id)
-    .notNull(),
-  content: text("content").notNull(),
-  isRead: boolean("is_read").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-})
-
-// Tarefas terapêuticas
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  psychologistId: integer("psychologist_id")
-    .references(() => users.id)
-    .notNull(),
-  patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
-  title: text("title").notNull(),
-  description: text("description"),
-  dueDate: timestamp("due_date"),
-  status: text("status").default("pendente"), // 'pendente', 'em_progresso', 'concluida'
-  priority: text("priority").default("media"), // 'baixa', 'media', 'alta'
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
-
-// Uso das ferramentas SOS
-export const sosUsages = pgTable("sos_usages", {
-  id: serial("id").primaryKey(),
-  patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
-  toolName: text("tool_name").notNull(), // 'breathing', 'meditation', 'grounding'
-  durationMinutes: integer("duration_minutes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-})
-
-// Acompanhamento de humor
-export const moodTracking = pgTable("mood_tracking", {
-  id: serial("id").primaryKey(),
-  patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
-  mood: integer("mood").notNull(), // 1-5
-  energy: integer("energy").notNull(), // 1-5
-  anxiety: integer("anxiety").notNull(), // 1-5
-  notes: text("notes"),
-  date: date("date").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  entryDate: timestamp("entry_date").defaultNow().notNull(),
+  moodRating: integer("mood_rating"),
+  intensityRating: integer("intensity_rating"),
+  content: text("content"),
+  cycle: text("cycle"),
+  emotions: text("emotions"), // jsonb
 })
 
 // Conquistas
 export const achievements = pgTable("achievements", {
   id: serial("id").primaryKey(),
-  patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
-  type: text("type").notNull(), // 'first_entry', 'week_streak', 'sos_usage', etc.
-  title: text("title").notNull(),
-  description: text("description"),
-  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  icon: varchar("icon", { length: 50 }).notNull(),
 })
 
-// Configurações do usuário
-export const userSettings = pgTable("user_settings", {
-  id: serial("id").primaryKey(),
+// Conquistas do usuário
+export const userAchievements = pgTable("user_achievements", {
   userId: integer("user_id")
     .references(() => users.id)
     .notNull(),
-  emailNotifications: boolean("email_notifications").default(true),
-  pushNotifications: boolean("push_notifications").default(true),
-  sessionReminders: boolean("session_reminders").default(true),
-  diaryReminders: boolean("diary_reminders").default(true),
-  theme: text("theme").default("light"), // 'light', 'dark'
-  language: text("language").default("pt-BR"),
-  pushSubscription: text("push_subscription"), // JSON da subscription do push
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  achievementId: integer("achievement_id")
+    .references(() => achievements.id)
+    .notNull(),
+  unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
 })
 
 // Relações
@@ -173,19 +92,15 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [patientProfiles.userId],
   }),
-  sentMessages: many(chatMessages, { relationName: "sender" }),
-  receivedMessages: many(chatMessages, { relationName: "receiver" }),
   diaryEntries: many(diaryEntries),
-  settings: one(userSettings),
+  userAchievements: many(userAchievements),
 }))
 
-export const psychologistProfilesRelations = relations(psychologistProfiles, ({ one, many }) => ({
+export const psychologistProfilesRelations = relations(psychologistProfiles, ({ one }) => ({
   user: one(users, {
     fields: [psychologistProfiles.userId],
     references: [users.id],
   }),
-  patients: many(patientProfiles),
-  sessions: many(sessions, { relationName: "psychologistSessions" }),
 }))
 
 export const patientProfilesRelations = relations(patientProfiles, ({ one, many }) => ({
@@ -197,37 +112,18 @@ export const patientProfilesRelations = relations(patientProfiles, ({ one, many 
     fields: [patientProfiles.psychologistId],
     references: [users.id],
   }),
-  sessions: many(sessions, { relationName: "patientSessions" }),
+  sessions: many(sessions),
   diaryEntries: many(diaryEntries),
-  tasks: many(tasks),
-  sosUsages: many(sosUsages),
-  moodTracking: many(moodTracking),
-  achievements: many(achievements),
 }))
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   psychologist: one(users, {
     fields: [sessions.psychologistId],
     references: [users.id],
-    relationName: "psychologistSessions",
   }),
   patient: one(users, {
     fields: [sessions.patientId],
     references: [users.id],
-    relationName: "patientSessions",
-  }),
-}))
-
-export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
-  sender: one(users, {
-    fields: [chatMessages.senderId],
-    references: [users.id],
-    relationName: "sender",
-  }),
-  receiver: one(users, {
-    fields: [chatMessages.receiverId],
-    references: [users.id],
-    relationName: "receiver",
   }),
 }))
 
@@ -238,13 +134,17 @@ export const diaryEntriesRelations = relations(diaryEntries, ({ one }) => ({
   }),
 }))
 
-export const tasksRelations = relations(tasks, ({ one }) => ({
-  psychologist: one(users, {
-    fields: [tasks.psychologistId],
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
     references: [users.id],
   }),
-  patient: one(users, {
-    fields: [tasks.patientId],
-    references: [users.id],
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
   }),
+}))
+
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements),
 }))
