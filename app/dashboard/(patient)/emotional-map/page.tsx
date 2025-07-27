@@ -1,10 +1,10 @@
-import { CrisisButton } from '@/components/sos/crisis-button'
+import { EmotionalDashboard } from '@/components/emotional-map/emotional-dashboard'
 import { getUserIdFromRequest } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import jwt from 'jsonwebtoken'
 
-export default async function SOSPage() {
+export default async function EmotionalMapPage() {
   // Verificar autenticação
   const cookieStore = await cookies()
   const token = cookieStore.get('token')?.value
@@ -27,14 +27,15 @@ export default async function SOSPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <CrisisButton 
-        userId={userId} 
-        onActivate={() => {
-          // Callback quando SOS é ativado
-          console.log('SOS ativado para usuário:', userId)
-        }}
-      />
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Mapa Emocional</h1>
+        <p className="text-muted-foreground mt-2">
+          Visualize e analise seus padrões emocionais com insights gerados por IA
+        </p>
+      </div>
+      
+      <EmotionalDashboard userId={userId} />
     </div>
   )
 }

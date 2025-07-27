@@ -1,48 +1,50 @@
-import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
-import { currentProfile } from "@/lib/current-profile"
-import { RealtimeNotificationService } from "@/lib/realtime-notifications"
+import { NextResponse, NextRequest } from "next/server"
+import { getUserIdFromRequest } from "@/lib/auth"
 
-export async function POST(req: Request, { params }: { params: { patientId: string } }) {
+// Mock data - em produção seria do banco de dados
+const mockPrescribedTasks = [
+  {
+    id: 'task_001',
+    taskId: 'tcc-001',
+    patientId: 1,
+    psychologistId: 2,
+    prescribedAt: new Date('2024-01-15'),
+    dueDate: new Date('2024-01-22'),
+    status: 'pending',
+    notes: 'Foque especialmente em identificar pensamentos sobre trabalho'
+  },
+  {
+    id: 'task_002', 
+    taskId: 'act-001',
+    patientId: 1,
+    psychologistId: 2,
+    prescribedAt: new Date('2024-01-10'),
+    dueDate: null,
+    status: 'completed',
+    notes: 'Pratique quando sentir ansiedade',
+    patientFeedback: 'Ajudou muito com a ansiedade matinal',
+    completedAt: new Date('2024-01-12')
+  }
+]
+
+export async function GET(request: NextRequest) {
   try {
-    const profile = await currentProfile()
-    const { userId, title, description, dueDate } = await req.json()
-    const { patientId } = params
-
-    if (!profile) {
-      return new NextResponse("Unauthorized", { status: 401 })
-    }
-
-    if (!patientId) {
-      return new NextResponse("Patient ID missing", { status: 400 })
-    }
+    const userId = await getUserIdFromRequest(request)
 
     if (!userId) {
-      return new NextResponse("User ID missing", { status: 400 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
 
-    if (!title) {
-      return new NextResponse("Title missing", { status: 400 })
-    }
+    // Buscar tarefas prescritas para o paciente
+    const patientTasks = mockPrescribedTasks.filter(task => task.patientId === userId)
 
-    const newTask = await db.task.createMany({
-      data: [
-        {
-          patientId,
-          userId,
-          title,
-          description,
-          dueDate,
-        },
-      ],
+    return NextResponse.json({
+      success: true,
+      tasks: patientTasks
     })
 
-    const realtimeService = RealtimeNotificationService.getInstance()
-    await realtimeService.notifyTaskAssigned(newTask[0].id, patientId, userId, title)
-
-    return NextResponse.json(newTask)
   } catch (error) {
-    console.log("[TASKS_POST]", error)
-    return new NextResponse("Internal Error", { status: 500 })
+    console.error('Error fetching patient tasks:', error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

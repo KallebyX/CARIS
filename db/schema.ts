@@ -61,6 +61,15 @@ export const diaryEntries = pgTable("diary_entries", {
   content: text("content"),
   cycle: text("cycle"),
   emotions: text("emotions"), // jsonb
+  // AI Analysis fields
+  aiAnalyzed: boolean("ai_analyzed").default(false),
+  dominantEmotion: text("dominant_emotion"),
+  emotionIntensity: integer("emotion_intensity"),
+  sentimentScore: integer("sentiment_score"), // stored as integer (-100 to 100)
+  riskLevel: text("risk_level"), // 'low', 'medium', 'high', 'critical'
+  aiInsights: text("ai_insights"), // JSON string
+  suggestedActions: text("suggested_actions"), // JSON string
+  plutchikCategories: text("plutchik_categories"), // JSON string
 })
 
 // Conquistas

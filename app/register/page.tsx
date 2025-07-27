@@ -95,13 +95,9 @@ export default function RegisterPage() {
         </Link>
         <Card className="bg-teal-600/95 text-white rounded-3xl shadow-2xl backdrop-blur-sm border-0">
           <CardHeader className="text-center pt-10 pb-6">
-            <Image
-              src="/images/caris-logo-v2.png"
-              alt="CÁRIS Logo"
-              width={60}
-              height={60}
-              className="mx-auto mb-4 invert brightness-0"
-            />
+            <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">C</span>
+            </div>
             <CardTitle className="text-3xl font-bold text-orange-300">Criar Conta</CardTitle>
             <p className="text-teal-100">Inicie sua jornada de clareza existencial.</p>
           </CardHeader>

@@ -19,6 +19,8 @@ import {
   Shield,
   Menu,
   X,
+  Brain,
+  Video,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -91,8 +93,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
         { href: "/dashboard/journey", icon: Heart, label: "Jornada" },
         { href: "/dashboard/diary", icon: FileText, label: "Diário" },
+        { href: "/dashboard/emotional-map", icon: Brain, label: "Mapa Emocional" },
+        { href: "/dashboard/videotherapy", icon: Video, label: "Videoterapia" },
         { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
         { href: "/dashboard/sessions", icon: Calendar, label: "Sessões" },
+        { href: "/dashboard/tasks", icon: BookOpen, label: "Tarefas" },
         { href: "/dashboard/progress", icon: BarChart3, label: "Progresso" },
         { href: "/dashboard/sos", icon: Shield, label: "SOS" },
         ...commonItems,

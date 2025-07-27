@@ -69,16 +69,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 relative">
-      <div className="absolute inset-0">
-        <Image
-          src="/images/auth-background.png"
-          alt="Fundo Abstrato"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-50"
-        />
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-teal-50 relative">
       <div className="w-full max-w-md relative z-10">
         <Link
           href="/"
@@ -89,13 +80,9 @@ export default function LoginPage() {
         </Link>
         <Card className="bg-teal-600/95 text-white rounded-3xl shadow-2xl backdrop-blur-sm border-0">
           <CardHeader className="text-center pt-10 pb-6">
-            <Image
-              src="/images/caris-logo-v2.png"
-              alt="CÁRIS Logo"
-              width={60}
-              height={60}
-              className="mx-auto mb-4 invert brightness-0"
-            />
+            <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">C</span>
+            </div>
             <CardTitle className="text-3xl font-bold text-orange-300">Entrar</CardTitle>
             <p className="text-teal-100">Bem-vindo de volta à sua jornada de clareza existencial.</p>
           </CardHeader>
