@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs"
-import prisma from "@/lib/prisma"
+import { db } from "@/db"
+import { sessions } from "@/db/schema"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 
 export async function POST(req: Request) {
@@ -8,7 +9,7 @@ export async function POST(req: Request) {
     const { userId } = auth()
     const body = await req.json()
 
-    const { patientId, startTime, endTime, notes } = body
+    const { patientId, sessionDate, durationMinutes, type, notes } = body
 
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 })
@@ -18,26 +19,24 @@ export async function POST(req: Request) {
       return new NextResponse("Patient ID is required", { status: 400 })
     }
 
-    if (!startTime || !endTime) {
-      return new NextResponse("Start and end times are required", {
+    if (!sessionDate) {
+      return new NextResponse("Session date is required", {
         status: 400,
       })
     }
 
-    const newSession = await prisma.session.createMany({
-      data: [
-        {
-          psychologistId: userId,
-          patientId: patientId,
-          startTime: new Date(startTime),
-          endTime: new Date(endTime),
-          notes: notes,
-        },
-      ],
-    })
+    const [newSession] = await db.insert(sessions).values({
+      psychologistId: parseInt(userId),
+      patientId: parseInt(patientId),
+      sessionDate: new Date(sessionDate),
+      durationMinutes: durationMinutes || 50,
+      type: type || 'online',
+      status: 'agendada',
+      notes: notes || null,
+    }).returning()
 
     const realtimeService = RealtimeNotificationService.getInstance()
-    await realtimeService.notifySessionUpdate(newSession[0].id, "created", userId)
+    await realtimeService.notifySessionScheduled(userId, patientId, newSession)
 
     return NextResponse.json(newSession)
   } catch (error) {

@@ -1,8 +1,8 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
 
 export interface EmotionalAnalysis {
   dominantEmotion: string
@@ -13,6 +13,19 @@ export interface EmotionalAnalysis {
   insights: string[]
   suggestedActions: string[]
   plutchikCategories: string[]
+  // Multimodal fields
+  audioAnalysis?: {
+    transcription: string
+    voiceTone: string
+    speechPattern: string
+    emotionalMarkers: string[]
+  }
+  imageAnalysis?: {
+    visualMood: string
+    colorPsychology: string
+    symbolism: string[]
+    environmentalFactors: string
+  }
 }
 
 export interface MoodPattern {
@@ -44,8 +57,27 @@ Retorne APENAS um JSON válido no seguinte formato:
 }
 `
 
-export async function analyzeEmotionalContent(content: string): Promise<EmotionalAnalysis> {
+export async function analyzeEmotionalContent(
+  content: string, 
+  audioTranscription?: string, 
+  imageAnalysis?: string
+): Promise<EmotionalAnalysis> {
   try {
+    if (!openai) {
+      throw new Error('OpenAI API key not configured')
+    }
+
+    // Combine all content for comprehensive analysis
+    let combinedContent = content
+    
+    if (audioTranscription) {
+      combinedContent += `\n\nTranscrição do áudio: ${audioTranscription}`
+    }
+    
+    if (imageAnalysis) {
+      combinedContent += `\n\nAnálise da imagem: ${imageAnalysis}`
+    }
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -55,7 +87,7 @@ export async function analyzeEmotionalContent(content: string): Promise<Emotiona
         },
         {
           role: 'user',
-          content: `Analise este texto de diário: "${content}"`,
+          content: `Analise este conteúdo multimodal de diário: "${combinedContent}"`,
         },
       ],
       temperature: 0.3,
@@ -69,6 +101,15 @@ export async function analyzeEmotionalContent(content: string): Promise<Emotiona
 
     // Parse and validate the JSON response
     const analysis = JSON.parse(aiResponse) as EmotionalAnalysis
+    
+    // Add multimodal analysis if available
+    if (audioTranscription) {
+      analysis.audioAnalysis = await analyzeAudioTranscription(audioTranscription)
+    }
+    
+    if (imageAnalysis) {
+      analysis.imageAnalysis = await analyzeImageContent(imageAnalysis)
+    }
     
     // Validate required fields
     if (!analysis.dominantEmotion || typeof analysis.emotionIntensity !== 'number') {
@@ -179,6 +220,10 @@ export async function generateTherapeuticInsights(
   progressNotes: string[]
 }> {
   try {
+    if (!openai) {
+      throw new Error('OpenAI API key not configured')
+    }
+
     const combinedContent = recentEntries
       .map(entry => `Humor: ${entry.moodRating}/10 - ${entry.content}`)
       .join('\n\n')
@@ -221,6 +266,97 @@ Retorne um JSON com:
       recommendedTechniques: ['Registro de pensamentos', 'Técnicas de relaxamento'],
       focusAreas: ['Autoconhecimento', 'Gestão emocional'],
       progressNotes: ['Continuar monitoramento regular'],
+    }
+  }
+}
+
+async function analyzeAudioTranscription(transcription: string) {
+  try {
+    if (!openai) {
+      throw new Error('OpenAI API key not configured')
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Analise esta transcrição de áudio para identificar:
+          - Tom de voz inferido das palavras e estrutura
+          - Padrões de fala (hesitação, fluidez, etc.)
+          - Marcadores emocionais específicos do áudio
+          
+          Retorne um JSON com: {"voiceTone": "string", "speechPattern": "string", "emotionalMarkers": ["string"]}`
+        },
+        {
+          role: 'user',
+          content: transcription
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 300,
+    })
+
+    const result = JSON.parse(response.choices[0]?.message?.content || '{}')
+    return {
+      transcription,
+      voiceTone: result.voiceTone || 'neutro',
+      speechPattern: result.speechPattern || 'fluido',
+      emotionalMarkers: result.emotionalMarkers || []
+    }
+  } catch (error) {
+    console.error('Error analyzing audio transcription:', error)
+    return {
+      transcription,
+      voiceTone: 'neutro',
+      speechPattern: 'fluido',
+      emotionalMarkers: []
+    }
+  }
+}
+
+async function analyzeImageContent(imageAnalysis: string) {
+  try {
+    if (!openai) {
+      throw new Error('OpenAI API key not configured')
+    }
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Com base na análise visual fornecida, extraia insights sobre:
+          - Humor visual predominante
+          - Psicologia das cores presentes
+          - Simbolismo identificado
+          - Fatores ambientais relevantes
+          
+          Retorne um JSON com: {"visualMood": "string", "colorPsychology": "string", "symbolism": ["string"], "environmentalFactors": "string"}`
+        },
+        {
+          role: 'user',
+          content: imageAnalysis
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 300,
+    })
+
+    const result = JSON.parse(response.choices[0]?.message?.content || '{}')
+    return {
+      visualMood: result.visualMood || 'neutro',
+      colorPsychology: result.colorPsychology || 'cores neutras',
+      symbolism: result.symbolism || [],
+      environmentalFactors: result.environmentalFactors || 'ambiente neutro'
+    }
+  } catch (error) {
+    console.error('Error analyzing image content:', error)
+    return {
+      visualMood: 'neutro',
+      colorPsychology: 'cores neutras',
+      symbolism: [],
+      environmentalFactors: 'ambiente neutro'
     }
   }
 }
