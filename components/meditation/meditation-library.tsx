@@ -25,11 +25,39 @@ import {
   Target,
   BarChart3
 } from 'lucide-react'
-import { 
-  MeditationAudio,
-  MeditationCategory,
-  MeditationLibraryService
-} from '@/lib/meditation-library-service'
+
+// Type definitions (moved from service to avoid server imports in client)
+export interface MeditationAudio {
+  id: string
+  title: string
+  description?: string
+  categoryId: string
+  duration: number
+  difficulty: 'iniciante' | 'intermediario' | 'avancado'
+  instructor: string
+  audioUrl: string
+  thumbnailUrl?: string
+  benefits?: string[]
+  techniques?: string[]
+  tags?: string[]
+  language: string
+  playCount: number
+  averageRating: number
+  ratingCount: number
+  isPopular: boolean
+  isFeatured: boolean
+  status: string
+}
+
+export interface MeditationCategory {
+  id: string
+  name: string
+  description?: string
+  icon: string
+  color: string
+  displayOrder: number
+  isActive: boolean
+}
 
 interface MeditationLibraryProps {
   userId: number
@@ -95,15 +123,20 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
 
   const loadInitialData = async () => {
     try {
-      const [categoriesData, popularData, recommendedData] = await Promise.all([
-        MeditationLibraryService.getCategories(),
-        MeditationLibraryService.getPopularAudios(3),
-        MeditationLibraryService.getRecommendedAudios(userId, 3)
+      // Use API endpoints instead of direct service calls
+      const [categoriesRes, popularRes, recommendedRes] = await Promise.all([
+        fetch('/api/patient/meditation-library?type=categories'),
+        fetch('/api/patient/meditation-library?type=popular&limit=3'),
+        fetch(`/api/patient/meditation-library?type=recommended&userId=${userId}&limit=3`)
       ])
-
-      setCategories(categoriesData)
-      setPopularMeditations(popularData)
-      setRecommendedMeditations(recommendedData)
+      
+      const categoriesData = await categoriesRes.json()
+      const popularData = await popularRes.json()
+      const recommendedData = await recommendedRes.json()
+      
+      if (categoriesData.success) setCategories(categoriesData.data)
+      if (popularData.success) setPopularMeditations(popularData.data)
+      if (recommendedData.success) setRecommendedMeditations(recommendedData.data)
     } catch (error) {
       console.error('Erro ao carregar dados iniciais:', error)
     }
@@ -121,9 +154,16 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
         ...(durationRange !== 'all' && getDurationFilter(durationRange))
       }
 
-      const result = await MeditationLibraryService.getAudios(filters, currentPage, 20)
-      setMeditations(result.audios)
-      setTotalPages(result.pagination.totalPages)
+      const result = await fetch('/api/patient/meditation-library?' + new URLSearchParams({
+        page: currentPage.toString(),
+        limit: '20',
+        ...filters
+      })).then(res => res.json())
+      
+      if (result.success) {
+        setMeditations(result.data.audios)
+        setTotalPages(result.data.pagination.totalPages)
+      }
     } catch (error) {
       console.error('Erro ao carregar meditações:', error)
     } finally {
@@ -148,8 +188,10 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
 
   const startMeditation = async (meditation: MeditationAudio) => {
     try {
-      // Incrementar contador de reprodução
-      await MeditationLibraryService.incrementPlayCount(meditation.id)
+      // Incrementar contador de reprodução via API
+      await fetch(`/api/patient/meditation-library/${meditation.id}/play`, {
+        method: 'POST'
+      })
       
       setSelectedMeditation(meditation)
       setIsPlayerOpen(true)
@@ -160,7 +202,11 @@ export function MeditationLibraryComponent({ userId }: MeditationLibraryProps) {
 
   const handleToggleFavorite = async (audioId: string) => {
     try {
-      const isFavorite = await MeditationLibraryService.toggleFavorite(userId, audioId)
+      const response = await fetch(`/api/patient/meditation-library/${audioId}/favorite`, {
+        method: 'POST'
+      })
+      const result = await response.json()
+      const isFavorite = result.success ? result.data.isFavorite : false
       
       // Atualizar estado local
       setMeditations(prev => 

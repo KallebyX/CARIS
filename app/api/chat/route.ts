@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs"
-import prismadb from "@/lib/prismadb"
+import { db } from "@/db"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 
 export async function POST(req: NextRequest) {
@@ -21,20 +21,9 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Content is required", { status: 400 })
     }
 
-    const senderId = userId
-
-    const message = await prismadb.message.create({
-      data: {
-        senderId,
-        receiverId,
-        content,
-      },
-    })
-
-    const realtimeService = RealtimeNotificationService.getInstance()
-    await realtimeService.notifyNewChatMessage(senderId, receiverId, content)
-
-    return NextResponse.json(message)
+    // TODO: Implement chat messaging system with appropriate database table
+    // The chat functionality needs a proper messages table in the schema
+    return new NextResponse("Chat functionality not yet implemented", { status: 501 })
   } catch (error) {
     console.log("[CHAT_POST]", error)
     return new NextResponse("Internal Error", { status: 500 })
