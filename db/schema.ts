@@ -183,6 +183,67 @@ export const meditationSessionsRelations = relations(meditationSessions, ({ one 
   }),
 }))
 
+// Tabela de consentimentos LGPD/GDPR
+export const userConsents = pgTable('user_consents', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  consentType: varchar('consent_type', { length: 100 }).notNull(), // 'data_processing', 'marketing', 'analytics', etc.
+  consentGiven: boolean('consent_given').notNull(),
+  consentDate: timestamp('consent_date').notNull().defaultNow(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  revokedAt: timestamp('revoked_at'),
+  version: varchar('version', { length: 10 }).notNull().default('1.0'), // versão dos termos
+  purpose: text('purpose').notNull(), // finalidade do tratamento
+  legalBasis: varchar('legal_basis', { length: 50 }).notNull(), // base legal
+  dataRetentionPeriod: integer('data_retention_period'), // em dias
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// Tabela de auditoria para compliance
+export const auditLogs = pgTable('audit_logs', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id),
+  action: varchar('action', { length: 100 }).notNull(), // 'create', 'read', 'update', 'delete', 'export', 'anonymize'
+  resourceType: varchar('resource_type', { length: 50 }).notNull(), // 'user', 'diary_entry', 'session', etc.
+  resourceId: varchar('resource_id', { length: 50 }),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  metadata: text('metadata'), // JSON com dados adicionais
+  timestamp: timestamp('timestamp').notNull().defaultNow(),
+  severity: varchar('severity', { length: 20 }).notNull().default('info'), // 'info', 'warning', 'critical'
+  complianceRelated: boolean('compliance_related').notNull().default(false),
+})
+
+// Tabela de exportações de dados
+export const dataExports = pgTable('data_exports', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  requestedAt: timestamp('requested_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  format: varchar('format', { length: 10 }).notNull(), // 'json', 'csv'
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // 'pending', 'processing', 'completed', 'failed'
+  filePath: text('file_path'), // caminho do arquivo gerado
+  fileSize: integer('file_size'), // tamanho em bytes
+  expiresAt: timestamp('expires_at'), // quando o arquivo expira
+  downloadCount: integer('download_count').notNull().default(0),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  errorMessage: text('error_message'),
+})
+
+// Tabela de configurações de privacidade do usuário
+export const userPrivacySettings = pgTable('user_privacy_settings', {
+  userId: integer('user_id').references(() => users.id).primaryKey(),
+  dataProcessingConsent: boolean('data_processing_consent').notNull().default(false),
+  marketingConsent: boolean('marketing_consent').notNull().default(false),
+  analyticsConsent: boolean('analytics_consent').notNull().default(false),
+  shareDataWithPsychologist: boolean('share_data_with_psychologist').notNull().default(true),
+  allowDataExport: boolean('allow_data_export').notNull().default(true),
+  anonymizeAfterDeletion: boolean('anonymize_after_deletion').notNull().default(true),
+  dataRetentionPreference: integer('data_retention_preference').default(2555), // em dias, padrão 7 anos
+  notificationPreferences: text('notification_preferences'), // JSON
+=======
 // Tabela de insights clínicos gerados por IA
 export const clinicalInsights = pgTable('clinical_insights', {
   id: serial('id').primaryKey(),
@@ -323,6 +384,9 @@ export const audioSources = pgTable('audio_sources', {
 })
 
 // Relações para as novas tabelas
+export const userConsentsRelations = relations(userConsents, ({ one }) => ({
+  user: one(users, {
+    fields: [userConsents.userId],
 export const clinicalInsightsRelations = relations(clinicalInsights, ({ one }) => ({
   patient: one(users, {
     fields: [clinicalInsights.patientId],
@@ -338,6 +402,10 @@ export const clinicalInsightsRelations = relations(clinicalInsights, ({ one }) =
   }),
 }))
 
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+
 export const clinicalAlertsRelations = relations(clinicalAlerts, ({ one }) => ({
   patient: one(users, {
     fields: [clinicalAlerts.patientId],
@@ -352,6 +420,10 @@ export const clinicalAlertsRelations = relations(clinicalAlerts, ({ one }) => ({
     references: [users.id],
   }),
 }))
+
+export const dataExportsRelations = relations(dataExports, ({ one }) => ({
+  user: one(users, {
+    fields: [dataExports.userId],
 
 export const progressReportsRelations = relations(progressReports, ({ one }) => ({
   patient: one(users, {
@@ -379,6 +451,15 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
   receiver: one(users, {
     fields: [chatMessages.receiverId],
+
+    references: [users.id],
+  }),
+}))
+
+
+export const userPrivacySettingsRelations = relations(userPrivacySettings, ({ one }) => ({
+  user: one(users, {
+    fields: [userPrivacySettings.userId],
     references: [users.id],
   }),
 }))

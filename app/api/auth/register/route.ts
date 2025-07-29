@@ -5,6 +5,8 @@ import { NextResponse, NextRequest } from "next/server"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { z } from "zod"
+import { initializePrivacySettings, recordConsent, CONSENT_TYPES, LEGAL_BASIS } from "@/lib/consent"
+import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -16,6 +18,16 @@ const registerSchema = z.object({
   bio: z.string().optional(),
   // Campos específicos para pacientes  
   psychologistId: z.number().optional(),
+  // Consentimentos obrigatórios
+  dataProcessingConsent: z.boolean().refine(val => val === true, {
+    message: "Consentimento para processamento de dados é obrigatório"
+  }),
+  termsAccepted: z.boolean().refine(val => val === true, {
+    message: "Aceitação dos termos de uso é obrigatória"
+  }),
+  // Consentimentos opcionais
+  marketingConsent: z.boolean().optional().default(false),
+  analyticsConsent: z.boolean().optional().default(false),
 })
 
 export async function POST(request: NextRequest) {
@@ -27,7 +39,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid input", issues: parsedBody.error.issues }, { status: 400 })
     }
 
-    const { email, password, name, role, crp, bio, psychologistId } = parsedBody.data
+    const { 
+      email, 
+      password, 
+      name, 
+      role, 
+      crp, 
+      bio, 
+      psychologistId,
+      dataProcessingConsent,
+      termsAccepted,
+      marketingConsent,
+      analyticsConsent 
+    } = parsedBody.data
 
     // Verificar se o usuário já existe
     const existingUser = await db.query.users.findFirst({
@@ -40,14 +64,29 @@ export async function POST(request: NextRequest) {
 
     // Hash da senha
     const hashedPassword = await bcrypt.hash(password, 10)
+    const { ipAddress, userAgent } = getRequestInfo(request)
 
     // Criar usuário
     const [newUser] = await db.insert(users).values({
       name,
       email,
-      password_hash: hashedPassword,
+      password: hashedPassword,
       role,
     }).returning()
+
+    // Log de criação do usuário
+    await logAuditEvent({
+      userId: newUser.id,
+      action: AUDIT_ACTIONS.CREATE,
+      resourceType: AUDIT_RESOURCES.USER,
+      resourceId: newUser.id.toString(),
+      metadata: {
+        role,
+        registrationMethod: 'web_form',
+      },
+      ipAddress,
+      userAgent,
+    })
 
     // Criar perfil específico baseado no role
     if (role === "psychologist") {
@@ -56,15 +95,75 @@ export async function POST(request: NextRequest) {
         crp: crp || null,
         bio: bio || null,
       })
+
+      await logAuditEvent({
+        userId: newUser.id,
+        action: AUDIT_ACTIONS.CREATE,
+        resourceType: AUDIT_RESOURCES.PSYCHOLOGIST_PROFILE,
+        resourceId: newUser.id.toString(),
+        metadata: { crp: !!crp, bio: !!bio },
+        ipAddress,
+        userAgent,
+      })
     } else if (role === "patient") {
       await db.insert(patientProfiles).values({
         userId: newUser.id,
         psychologistId: psychologistId || null,
         currentCycle: "Criar",
       })
+
+      await logAuditEvent({
+        userId: newUser.id,
+        action: AUDIT_ACTIONS.CREATE,
+        resourceType: AUDIT_RESOURCES.PATIENT_PROFILE,
+        resourceId: newUser.id.toString(),
+        metadata: { assignedPsychologist: !!psychologistId },
+        ipAddress,
+        userAgent,
+      })
     }
 
-    // TODO: Criar configurações padrão quando user_settings schema estiver alinhado
+    // Inicializar configurações de privacidade
+    await initializePrivacySettings(newUser.id)
+
+    // Registrar consentimentos obrigatórios
+    await recordConsent({
+      userId: newUser.id,
+      consentType: CONSENT_TYPES.DATA_PROCESSING,
+      consentGiven: dataProcessingConsent,
+      purpose: 'Funcionamento básico da plataforma de saúde mental',
+      legalBasis: LEGAL_BASIS.CONSENT,
+      version: '1.0',
+      ipAddress,
+      userAgent,
+    })
+
+    // Registrar consentimentos opcionais se fornecidos
+    if (marketingConsent !== undefined) {
+      await recordConsent({
+        userId: newUser.id,
+        consentType: CONSENT_TYPES.MARKETING,
+        consentGiven: marketingConsent,
+        purpose: 'Envio de comunicações de marketing e novidades da plataforma',
+        legalBasis: LEGAL_BASIS.CONSENT,
+        version: '1.0',
+        ipAddress,
+        userAgent,
+      })
+    }
+
+    if (analyticsConsent !== undefined) {
+      await recordConsent({
+        userId: newUser.id,
+        consentType: CONSENT_TYPES.ANALYTICS,
+        consentGiven: analyticsConsent,
+        purpose: 'Análise de uso da plataforma para melhorias',
+        legalBasis: LEGAL_BASIS.LEGITIMATE_INTERESTS,
+        version: '1.0',
+        ipAddress,
+        userAgent,
+      })
+    }
 
     // Gerar token JWT
     const token = jwt.sign(
@@ -72,6 +171,20 @@ export async function POST(request: NextRequest) {
       process.env.JWT_SECRET!, 
       { expiresIn: "7d" }
     )
+
+    // Log de login após registro
+    await logAuditEvent({
+      userId: newUser.id,
+      action: AUDIT_ACTIONS.LOGIN,
+      resourceType: AUDIT_RESOURCES.USER,
+      resourceId: newUser.id.toString(),
+      metadata: {
+        loginMethod: 'registration',
+        sessionDuration: '7d',
+      },
+      ipAddress,
+      userAgent,
+    })
 
     const response = NextResponse.json({
       message: "User created successfully",
@@ -95,6 +208,20 @@ export async function POST(request: NextRequest) {
     return response
   } catch (error) {
     console.error("Registration error:", error)
+    
+    // Log de erro no registro
+    const { ipAddress, userAgent } = getRequestInfo(request)
+    await logAuditEvent({
+      action: 'registration_failed',
+      resourceType: AUDIT_RESOURCES.USER,
+      severity: 'critical',
+      metadata: {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      },
+      ipAddress,
+      userAgent,
+    })
+
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
