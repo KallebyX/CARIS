@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { AvatarUpload } from "@/components/ui/avatar-upload"
 import { BillingManagement } from "@/components/settings/billing-management"
+import { CalendarManagement } from "@/components/settings/calendar-management"
 import { Eye, EyeOff } from "lucide-react"
 
 interface UserSettings {
@@ -246,10 +247,11 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="account">Conta</TabsTrigger>
           <TabsTrigger value="notifications">Notificações</TabsTrigger>
+          <TabsTrigger value="calendar">Calendário</TabsTrigger>
           <TabsTrigger value="billing">Pagamentos</TabsTrigger>
         </TabsList>
 
@@ -457,6 +459,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="calendar">
+          <CalendarManagement />
         </TabsContent>
 
         <TabsContent value="billing">

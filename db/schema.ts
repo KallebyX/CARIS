@@ -76,8 +76,15 @@ export const sessions = pgTable("sessions", {
   type: text("type").notNull().default('therapy'), // 'therapy', 'consultation', 'group'
   status: text("status").notNull().default('scheduled'), // 'scheduled', 'confirmed', 'completed', 'cancelled'
   notes: text("notes"),
+
+  // Calendar integration fields
+  googleCalendarEventId: text("google_calendar_event_id"),
+  outlookCalendarEventId: text("outlook_calendar_event_id"),
+  timezone: text("timezone"),
+
   sessionValue: decimal("session_value", { precision: 8, scale: 2 }),
   paymentStatus: text("payment_status").default("pending"), // 'pending', 'paid', 'refunded'
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -313,6 +320,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   patientProfile: one(patientProfiles, {
     fields: [users.id],
     references: [patientProfiles.userId],
+  }),
+  settings: one(userSettings, {
+    fields: [users.id],
+    references: [userSettings.userId],
   }),
   diaryEntries: many(diaryEntries),
   userAchievements: many(userAchievements),
@@ -1023,6 +1034,30 @@ export const progressReportsRelations = relations(progressReports, ({ one }) => 
   }),
 }))
 
+
+// User Settings for Calendar and Notifications
+export const userSettings = pgTable("user_settings", {
+  userId: integer("user_id")
+    .references(() => users.id)
+    .primaryKey(),
+  timezone: text("timezone").default("America/Sao_Paulo"),
+  // Calendar integrations
+  googleCalendarEnabled: boolean("google_calendar_enabled").default(false),
+  googleCalendarAccessToken: text("google_calendar_access_token"),
+  googleCalendarRefreshToken: text("google_calendar_refresh_token"),
+  outlookCalendarEnabled: boolean("outlook_calendar_enabled").default(false),
+  outlookCalendarAccessToken: text("outlook_calendar_access_token"),
+  outlookCalendarRefreshToken: text("outlook_calendar_refresh_token"),
+  // Reminder preferences
+  emailRemindersEnabled: boolean("email_reminders_enabled").default(true),
+  smsRemindersEnabled: boolean("sms_reminders_enabled").default(false),
+  reminderBefore24h: boolean("reminder_before_24h").default(true),
+  reminderBefore1h: boolean("reminder_before_1h").default(true),
+  reminderBefore15min: boolean("reminder_before_15min").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 export const audioSourcesRelations = relations(audioSources, ({ one }) => ({
   addedByUser: one(users, {
     fields: [audioSources.addedBy],
@@ -1066,9 +1101,15 @@ export const chatBackupsRelations = relations(chatBackups, ({ one }) => ({
     fields: [chatBackups.roomId],
     references: [chatRooms.id],
 
+
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, {
     fields: [userSettings.userId],
+
+    references: [users.id],
+  }),
+}))
+
 
     references: [users.id],
   }),
