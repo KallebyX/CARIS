@@ -3,8 +3,11 @@ import type { Metadata } from "next"
 
 =======
 
+=======
+
 // Temporarily disabled due to network issues in build environment
 // import { Inter, Lora } from 'next/font/google'
+
 
 
 import "./globals.css"
@@ -15,9 +18,12 @@ import Script from "next/script"
 
 =======
 
+=======
+
 // Temporarily disabled due to network issues in build environment
 // const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 // const lora = Lora({ subsets: ["latin"], variable: "--font-lora", style: "italic" })
+
 
 
 

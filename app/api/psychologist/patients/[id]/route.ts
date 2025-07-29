@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/db"
-import { users, diaryEntries } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { users, diaryEntries, customFieldValues, progressMetrics, therapeuticGoals } from "@/db/schema"
+import { eq, and, gte } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +30,35 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Paciente não encontrado ou não associado" }, { status: 404 })
     }
 
+    // Buscar campos customizados
+    const customFields = await db.query.customFieldValues.findMany({
+      where: eq(customFieldValues.patientId, patientId),
+      with: {
+        customField: true,
+      },
+    })
+
+    // Buscar métricas de progresso recentes
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const recentMetrics = await db.query.progressMetrics.findMany({
+      where: and(
+        eq(progressMetrics.patientId, patientId),
+        gte(progressMetrics.calculatedAt, thirtyDaysAgo)
+      ),
+      orderBy: (metrics, { desc }) => [desc(metrics.calculatedAt)],
+    })
+
+    // Buscar metas terapêuticas
+    const goals = await db.query.therapeuticGoals.findMany({
+      where: eq(therapeuticGoals.patientId, patientId),
+      with: {
+        milestones: true,
+      },
+      orderBy: (goals, { desc }) => [desc(goals.createdAt)],
+    })
+
     const emotionalDataRaw = await db.query.diaryEntries.findMany({
       where: eq(diaryEntries.patientId, patientId),
       orderBy: (diaryEntries, { asc }) => [asc(diaryEntries.entryDate)],
@@ -43,7 +72,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       evento: entry.content?.substring(0, 30) + "...",
     }))
 
-    return NextResponse.json({ patient, emotionalMapData })
+    return NextResponse.json({ 
+      patient, 
+      emotionalMapData,
+      customFields,
+      recentMetrics,
+      goals
+    })
   } catch (error) {
     console.error(`Erro ao buscar paciente ${patientId}:`, error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })

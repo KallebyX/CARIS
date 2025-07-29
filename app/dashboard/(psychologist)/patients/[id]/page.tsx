@@ -10,6 +10,9 @@ import { ArrowLeft, Edit, Mail, Calendar, FileText, Brain, BarChart3, MessageSqu
 import Link from "next/link"
 import { EmotionalMap } from "@/components/emotional-map"
 import { ChatLayout } from "@/components/chat/chat-layout"
+import { ProgressDashboard } from "@/components/patient-management/progress-dashboard"
+import { GoalsManager } from "@/components/patient-management/goals-manager"
+import { ReportsGenerator } from "@/components/patient-management/reports-generator"
 
 interface PatientData {
   patient: {
@@ -131,7 +134,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
       </Card>
 
       <Tabs defaultValue="emotional-map" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
           <TabsTrigger value="overview">
             <FileText className="w-4 h-4 mr-2" />
             Prontuário
@@ -139,6 +142,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <TabsTrigger value="emotional-map">
             <Map className="w-4 h-4 mr-2" />
             Mapa Emocional
+          </TabsTrigger>
+          <TabsTrigger value="progress">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Progresso
+          </TabsTrigger>
+          <TabsTrigger value="goals">
+            <Shield className="w-4 h-4 mr-2" />
+            Metas
           </TabsTrigger>
           <TabsTrigger value="diary">
             <Brain className="w-4 h-4 mr-2" />
@@ -148,9 +159,9 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             <Calendar className="w-4 h-4 mr-2" />
             Sessões
           </TabsTrigger>
-          <TabsTrigger value="progress">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Progresso
+          <TabsTrigger value="reports">
+            <FileText className="w-4 h-4 mr-2" />
+            Relatórios
           </TabsTrigger>
           <TabsTrigger value="chat">
             <MessageSquare className="w-4 h-4 mr-2" />
@@ -159,6 +170,24 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         </TabsList>
         <TabsContent value="emotional-map">
           <EmotionalMap data={emotionalMapData} />
+        </TabsContent>
+        <TabsContent value="progress">
+          <ProgressDashboard 
+            patientId={patient.id} 
+            patientName={patient.name}
+          />
+        </TabsContent>
+        <TabsContent value="goals">
+          <GoalsManager 
+            patientId={patient.id} 
+            patientName={patient.name}
+          />
+        </TabsContent>
+        <TabsContent value="reports">
+          <ReportsGenerator 
+            patientId={patient.id} 
+            patientName={patient.name}
+          />
         </TabsContent>
         {/* Other tabs content here */}
         <TabsContent value="chat">
