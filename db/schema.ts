@@ -1,3 +1,4 @@
+import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json } from "drizzle-orm/pg-core"
 import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, jsonb } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
@@ -7,8 +8,11 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   password: text("password_hash").notNull(),
-  role: text("role").notNull(), // 'psychologist', 'patient', 'admin'
+  role: text("role").notNull(), // 'psychologist', 'patient', 'admin', 'clinic_owner', 'clinic_admin'
   avatarUrl: text("avatar_url"),
+  isGlobalAdmin: boolean("is_global_admin").default(false), // Super admin for platform
+  status: text("status").notNull().default("active"), // 'active', 'suspended', 'inactive'
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -20,6 +24,13 @@ export const psychologistProfiles = pgTable("psychologist_profiles", {
     .primaryKey(),
   crp: varchar("crp", { length: 20 }),
   bio: text("bio"),
+  specialties: json("specialties"), // Array de especialidades
+  experience: text("experience"),
+  education: text("education"),
+  languages: json("languages"), // Array de idiomas
+  hourlyRate: decimal("hourly_rate", { precision: 8, scale: 2 }),
+  isVerified: boolean("is_verified").default(false),
+  verifiedAt: timestamp("verified_at"),
 })
 
 // Perfis de pacientes
@@ -29,13 +40,21 @@ export const patientProfiles = pgTable("patient_profiles", {
     .primaryKey(),
   psychologistId: integer("psychologist_id")
     .references(() => users.id),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id),
   birthDate: timestamp("birth_date"),
   currentCycle: text("current_cycle"),
+  emergencyContact: json("emergency_contact"), // Nome, telefone, etc.
+  medicalHistory: text("medical_history"),
+  preferences: json("preferences"), // Preferências de terapia
 })
 
 // Sessões
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id)
+    .notNull(),
   psychologistId: integer("psychologist_id")
     .references(() => users.id)
     .notNull(),
@@ -47,6 +66,8 @@ export const sessions = pgTable("sessions", {
   type: text("type").notNull().default('therapy'), // 'therapy', 'consultation', 'group'
   status: text("status").notNull().default('scheduled'), // 'scheduled', 'confirmed', 'completed', 'cancelled'
   notes: text("notes"),
+  sessionValue: decimal("session_value", { precision: 8, scale: 2 }),
+  paymentStatus: text("payment_status").default("pending"), // 'pending', 'paid', 'refunded'
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -105,6 +126,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   }),
   diaryEntries: many(diaryEntries),
   userAchievements: many(userAchievements),
+  ownedClinics: many(clinics),
+  clinicMemberships: many(clinicUsers),
+  auditLogs: many(auditLogs),
 }))
 
 export const psychologistProfilesRelations = relations(psychologistProfiles, ({ one }) => ({
@@ -123,9 +147,22 @@ export const patientProfilesRelations = relations(patientProfiles, ({ one }) => 
     fields: [patientProfiles.psychologistId],
     references: [users.id],
   }),
+
+  clinic: one(clinics, {
+    fields: [patientProfiles.clinicId],
+    references: [clinics.id],
+  }),
+  sessions: many(sessions),
+  diaryEntries: many(diaryEntries),
+
+
 }))
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [sessions.clinicId],
+    references: [clinics.id],
+  }),
   psychologist: one(users, {
     fields: [sessions.psychologistId],
     references: [users.id],
@@ -182,6 +219,159 @@ export const meditationSessionsRelations = relations(meditationSessions, ({ one 
     references: [users.id],
   }),
 }))
+
+// ==== MULTI-CLINIC TABLES ====
+
+// Clínicas/Organizações
+export const clinics = pgTable("clinics", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  logo: text("logo_url"),
+  website: varchar("website", { length: 255 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  cnpj: varchar("cnpj", { length: 18 }),
+  ownerId: integer("owner_id")
+    .references(() => users.id)
+    .notNull(),
+  status: text("status").notNull().default("active"), // 'active', 'suspended', 'inactive'
+  planType: text("plan_type").notNull().default("basic"), // 'basic', 'professional', 'enterprise'
+  maxUsers: integer("max_users").notNull().default(10),
+  maxPsychologists: integer("max_psychologists").notNull().default(5),
+  maxPatients: integer("max_patients").notNull().default(50),
+  settings: json("settings"), // Configurações gerais da clínica
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Usuários das clínicas (many-to-many relationship)
+export const clinicUsers = pgTable("clinic_users", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id)
+    .notNull(),
+  userId: integer("user_id")
+    .references(() => users.id)
+    .notNull(),
+  role: text("role").notNull(), // 'owner', 'admin', 'psychologist', 'patient', 'staff'
+  permissions: json("permissions"), // Permissões específicas do usuário na clínica
+  status: text("status").notNull().default("active"), // 'active', 'suspended', 'pending'
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Assinaturas/Planos
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id)
+    .notNull(),
+  planType: text("plan_type").notNull(), // 'basic', 'professional', 'enterprise'
+  status: text("status").notNull(), // 'active', 'cancelled', 'past_due', 'trialing'
+  currentPeriodStart: timestamp("current_period_start").notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  trialEnd: timestamp("trial_end"),
+  cancelledAt: timestamp("cancelled_at"),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("BRL"),
+  paymentMethod: text("payment_method"), // 'credit_card', 'bank_slip', 'pix'
+  externalId: varchar("external_id", { length: 255 }), // ID no sistema de pagamento
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Pagamentos
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  subscriptionId: integer("subscription_id")
+    .references(() => subscriptions.id)
+    .notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).notNull().default("BRL"),
+  status: text("status").notNull(), // 'pending', 'paid', 'failed', 'refunded'
+  paymentMethod: text("payment_method").notNull(),
+  externalId: varchar("external_id", { length: 255 }), // ID no sistema de pagamento
+  paidAt: timestamp("paid_at"),
+  failedAt: timestamp("failed_at"),
+  refundedAt: timestamp("refunded_at"),
+  metadata: json("metadata"), // Metadados do pagamento
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+// Configurações por clínica
+export const clinicSettings = pgTable("clinic_settings", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id)
+    .notNull(),
+  category: varchar("category", { length: 100 }).notNull(), // 'general', 'appearance', 'notifications', 'features'
+  key: varchar("key", { length: 100 }).notNull(),
+  value: json("value").notNull(),
+  description: text("description"),
+  isPublic: boolean("is_public").default(false), // Se a configuração é visível para usuários
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Logs de auditoria
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id),
+  userId: integer("user_id")
+    .references(() => users.id)
+    .notNull(),
+  action: varchar("action", { length: 100 }).notNull(), // 'create', 'update', 'delete', 'login', 'logout'
+  resource: varchar("resource", { length: 100 }).notNull(), // 'user', 'patient', 'session', 'payment'
+  resourceId: integer("resource_id"),
+  oldValues: json("old_values"),
+  newValues: json("new_values"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+// Relatórios financeiros (cache para performance)
+export const financialReports = pgTable("financial_reports", {
+  id: serial("id").primaryKey(),
+  clinicId: integer("clinic_id")
+    .references(() => clinics.id)
+    .notNull(),
+  reportType: varchar("report_type", { length: 50 }).notNull(), // 'monthly', 'quarterly', 'yearly'
+  period: varchar("period", { length: 20 }).notNull(), // '2024-01', '2024-Q1', '2024'
+  totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }).notNull().default("0"),
+  totalSessions: integer("total_sessions").notNull().default(0),
+  newPatients: integer("new_patients").notNull().default(0),
+  activePatients: integer("active_patients").notNull().default(0),
+  churnRate: decimal("churn_rate", { precision: 5, scale: 2 }).default("0"), // Percentage
+  metrics: json("metrics"), // Métricas detalhadas
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+})
+
+// ==== RELATIONS FOR MULTI-CLINIC TABLES ====
+
+export const clinicsRelations = relations(clinics, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [clinics.ownerId],
+    references: [users.id],
+  }),
+  clinicUsers: many(clinicUsers),
+  subscriptions: many(subscriptions),
+  settings: many(clinicSettings),
+  auditLogs: many(auditLogs),
+  financialReports: many(financialReports),
+}))
+
+export const clinicUsersRelations = relations(clinicUsers, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [clinicUsers.clinicId],
+    references: [clinics.id],
+  }),
+  user: one(users, {
+    fields: [clinicUsers.userId],
 
 // Tabela de consentimentos LGPD/GDPR
 export const userConsents = pgTable('user_consents', {
@@ -243,7 +433,7 @@ export const userPrivacySettings = pgTable('user_privacy_settings', {
   anonymizeAfterDeletion: boolean('anonymize_after_deletion').notNull().default(true),
   dataRetentionPreference: integer('data_retention_preference').default(2555), // em dias, padrão 7 anos
   notificationPreferences: text('notification_preferences'), // JSON
-=======
+
 // Tabela de insights clínicos gerados por IA
 export const clinicalInsights = pgTable('clinical_insights', {
   id: serial('id').primaryKey(),
@@ -421,6 +611,37 @@ export const clinicalAlertsRelations = relations(clinicalAlerts, ({ one }) => ({
   }),
 }))
 
+
+export const subscriptionsRelations = relations(subscriptions, ({ one, many }) => ({
+  clinic: one(clinics, {
+    fields: [subscriptions.clinicId],
+    references: [clinics.id],
+  }),
+  payments: many(payments),
+}))
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  subscription: one(subscriptions, {
+    fields: [payments.subscriptionId],
+    references: [subscriptions.id],
+  }),
+}))
+
+export const clinicSettingsRelations = relations(clinicSettings, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [clinicSettings.clinicId],
+    references: [clinics.id],
+  }),
+}))
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [auditLogs.clinicId],
+    references: [clinics.id],
+  }),
+  user: one(users, {
+    fields: [auditLogs.userId],
+
 export const dataExportsRelations = relations(dataExports, ({ one }) => ({
   user: one(users, {
     fields: [dataExports.userId],
@@ -485,13 +706,21 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   }),
   psychologist: one(users, {
     fields: [tasks.psychologistId],
+
     references: [users.id],
   }),
 }))
+
+
+export const financialReportsRelations = relations(financialReports, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [financialReports.clinicId],
+    references: [clinics.id],
 
 export const sosUsagesRelations = relations(sosUsages, ({ one }) => ({
   patient: one(users, {
     fields: [sosUsages.patientId],
     references: [users.id],
+
   }),
 }))
