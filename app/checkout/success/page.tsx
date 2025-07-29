@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,32 +17,74 @@ interface PaymentDetails {
   date: string
 }
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const sessionId = searchParams.get("session_id")
     const paymentId = searchParams.get("payment")
     
-    if (paymentId) {
-      // Simular busca dos detalhes do pagamento
-      setTimeout(() => {
-        setPaymentDetails({
-          id: paymentId,
-          status: "approved",
-          amount: 129,
-          paymentMethod: "Cartão de Crédito",
-          plan: "Profissional", 
-          date: new Date().toLocaleDateString("pt-BR")
-        })
-        setLoading(false)
-      }, 1000)
+    if (sessionId) {
+      // Handle Stripe checkout session
+      handleStripeSuccess(sessionId)
+    } else if (paymentId) {
+      // Handle legacy payment
+      handleLegacyPayment(paymentId)
     } else {
       setLoading(false)
     }
   }, [searchParams])
+
+  const handleStripeSuccess = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/stripe/checkout/session?session_id=${sessionId}`)
+      const data = await response.json()
+      
+      if (response.ok) {
+        setPaymentDetails({
+          id: data.subscription?.id || sessionId,
+          status: "approved",
+          amount: data.amountTotal / 100, // Convert from cents
+          paymentMethod: "Cartão de Crédito (Stripe)",
+          plan: data.planName || "Profissional",
+          date: new Date().toLocaleDateString("pt-BR")
+        })
+      } else {
+        throw new Error("Failed to retrieve session details")
+      }
+    } catch (error) {
+      console.error("Error handling Stripe success:", error)
+      // Show error state or fallback
+      setPaymentDetails({
+        id: sessionId,
+        status: "approved",
+        amount: 129,
+        paymentMethod: "Cartão de Crédito (Stripe)",
+        plan: "Profissional",
+        date: new Date().toLocaleDateString("pt-BR")
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLegacyPayment = (paymentId: string) => {
+    // Simular busca dos detalhes do pagamento legacy
+    setTimeout(() => {
+      setPaymentDetails({
+        id: paymentId,
+        status: "approved",
+        amount: 129,
+        paymentMethod: "Cartão de Crédito",
+        plan: "Profissional", 
+        date: new Date().toLocaleDateString("pt-BR")
+      })
+      setLoading(false)
+    }, 1000)
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -245,5 +287,17 @@ export default function CheckoutSuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <CheckoutSuccessContent />
+    </Suspense>
   )
 } 

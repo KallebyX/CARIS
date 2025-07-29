@@ -5,6 +5,7 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { z } from "zod"
+import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -12,11 +13,25 @@ const loginSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  const { ipAddress, userAgent } = getRequestInfo(request)
+  let userId: number | undefined
+
   try {
     const body = await request.json()
     const parsedBody = loginSchema.safeParse(body)
 
     if (!parsedBody.success) {
+      await logAuditEvent({
+        action: 'login_failed',
+        resourceType: AUDIT_RESOURCES.USER,
+        severity: 'warning',
+        metadata: {
+          error: 'invalid_input',
+          validationErrors: parsedBody.error.issues,
+        },
+        ipAddress,
+        userAgent,
+      })
       return NextResponse.json({ error: "Invalid input" }, { status: 400 })
     }
 
@@ -27,17 +42,55 @@ export async function POST(request: Request) {
     })
 
     if (!user) {
+      await logAuditEvent({
+        action: 'login_failed',
+        resourceType: AUDIT_RESOURCES.USER,
+        severity: 'warning',
+        metadata: {
+          error: 'user_not_found',
+          attemptedEmail: email,
+        },
+        ipAddress,
+        userAgent,
+      })
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash)
+    userId = user.id
+    const isPasswordValid = await bcrypt.compare(password, user.password)
 
     if (!isPasswordValid) {
+      await logAuditEvent({
+        userId,
+        action: 'login_failed',
+        resourceType: AUDIT_RESOURCES.USER,
+        resourceId: userId.toString(),
+        severity: 'warning',
+        metadata: {
+          error: 'invalid_password',
+        },
+        ipAddress,
+        userAgent,
+      })
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
     const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, {
       expiresIn: "7d",
+    })
+
+    // Log successful login
+    await logAuditEvent({
+      userId,
+      action: AUDIT_ACTIONS.LOGIN,
+      resourceType: AUDIT_RESOURCES.USER,
+      resourceId: userId.toString(),
+      metadata: {
+        sessionDuration: '7d',
+        loginMethod: 'password',
+      },
+      ipAddress,
+      userAgent,
     })
 
     const response = NextResponse.json({
@@ -56,6 +109,21 @@ export async function POST(request: Request) {
     return response
   } catch (error) {
     console.error("Login error:", error)
+    
+    await logAuditEvent({
+      userId,
+      action: 'login_failed',
+      resourceType: AUDIT_RESOURCES.USER,
+      resourceId: userId?.toString(),
+      severity: 'critical',
+      metadata: {
+        error: 'internal_server_error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      ipAddress,
+      userAgent,
+    })
+
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

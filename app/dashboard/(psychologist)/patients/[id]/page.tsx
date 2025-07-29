@@ -29,19 +29,19 @@ interface PatientData {
   emotionalMapData: any[]
 }
 
-export default function PatientDetailPage({ params }: { params: { id: string } }) {
+export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [data, setData] = useState<PatientData | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<{ id: number; role: "psychologist" | "patient" } | null>(null)
 
   useEffect(() => {
-    if (params.id) {
-      const fetchData = async () => {
-        try {
-          const [patientRes, userRes] = await Promise.all([
-            fetch(`/api/psychologist/patients/${params.id}`),
-            fetch("/api/users/me"),
-          ])
+    const fetchData = async () => {
+      try {
+        const { id } = await params
+        const [patientRes, userRes] = await Promise.all([
+          fetch(`/api/psychologist/patients/${id}`),
+          fetch("/api/users/me"),
+        ])
 
           if (patientRes.ok) {
             const patientData = await patientRes.json()
@@ -63,8 +63,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
         }
       }
       fetchData()
-    }
-  }, [params.id])
+  }, [params])
 
   if (loading) {
     return <div>Carregando perfil do paciente...</div>

@@ -5,7 +5,7 @@ import { getUserIdFromRequest } from '@/lib/auth'
 import { eq, and } from 'drizzle-orm'
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const sessionId = params.id
+    const { id: sessionId } = await params
 
     const session = await db
       .select()
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const sessionId = params.id
+    const { id: sessionId } = await params
     const body = await request.json()
     const {
       rating,
@@ -129,7 +129,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const sessionId = params.id
+    const { id: sessionId } = await params
 
     // Verificar se a sessão existe e pertence ao usuário
     const existingSession = await db

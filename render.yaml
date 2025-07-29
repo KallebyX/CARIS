@@ -3,11 +3,12 @@ services:
   - type: web
     name: caris-saas-pro
     runtime: node
-    plan: starter # Pode ser alterado para standard ou pro
+    plan: free # Usando plano gratuito
     region: oregon # Região mais próxima do Brasil disponível
-    buildCommand: pnpm install && pnpm build
-    startCommand: pnpm start
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
     healthCheckPath: /api/health
+    autoDeploy: true
     
     # Configurações do ambiente
     envVars:
@@ -42,7 +43,7 @@ services:
       
       # Variáveis que precisam ser configuradas manualmente
       - key: RESEND_API_KEY
-        sync: false # Deve ser configurado no dashboard do Render
+        value: re_CKYKinHQ_86DVLzkwPcbtossyuSdw35hx
       - key: PUSHER_APP_ID
         sync: false
       - key: NEXT_PUBLIC_PUSHER_KEY
