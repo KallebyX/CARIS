@@ -23,10 +23,10 @@ import {
   Download,
   Share
 } from 'lucide-react'
-import { MeditationPractice } from '@/lib/meditation-library'
+import { MeditationAudio } from '@/lib/meditation-library-service'
 
 interface MeditationPlayerProps {
-  meditation: MeditationPractice
+  meditation: MeditationAudio
   onComplete?: (sessionData: any) => void
   onRating?: (rating: number) => void
   autoPlay?: boolean
@@ -80,8 +80,8 @@ export function MeditationPlayer({
     if (audioRef.current) {
       const audio = audioRef.current
       
-      // Simular URL de áudio (em produção seria meditation.audioUrl)
-      audio.src = `/audio/meditations/${meditation.id}.mp3`
+      // Usar URL real do áudio se disponível
+      audio.src = meditation.audioUrl || `/audio/meditations/${meditation.id}.mp3`
       
       const handleLoadedMetadata = () => {
         setPlayerState(prev => ({ 
@@ -98,9 +98,11 @@ export function MeditationPlayer({
         }))
         
         // Atualizar passo atual baseado no tempo
-        const stepDuration = audio.duration / meditation.guidedSteps.length
-        const currentStep = Math.floor(audio.currentTime / stepDuration)
-        setSessionData(prev => ({ ...prev, currentStep }))
+        if (meditation.guidedSteps && meditation.guidedSteps.length > 0) {
+          const stepDuration = audio.duration / meditation.guidedSteps.length
+          const currentStep = Math.floor(audio.currentTime / stepDuration)
+          setSessionData(prev => ({ ...prev, currentStep }))
+        }
       }
       
       const handleEnded = () => {
@@ -112,10 +114,16 @@ export function MeditationPlayer({
         setPlayerState(prev => ({ ...prev, isLoading: true }))
       }
       
+      const handleError = (e: Event) => {
+        console.error('Erro ao carregar áudio:', e)
+        setPlayerState(prev => ({ ...prev, isLoading: false }))
+      }
+      
       audio.addEventListener('loadedmetadata', handleLoadedMetadata)
       audio.addEventListener('timeupdate', handleTimeUpdate)
       audio.addEventListener('ended', handleEnded)
       audio.addEventListener('loadstart', handleLoadStart)
+      audio.addEventListener('error', handleError)
       
       if (autoPlay) {
         audio.play().catch(console.error)
@@ -127,9 +135,10 @@ export function MeditationPlayer({
         audio.removeEventListener('timeupdate', handleTimeUpdate)
         audio.removeEventListener('ended', handleEnded)
         audio.removeEventListener('loadstart', handleLoadStart)
+        audio.removeEventListener('error', handleError)
       }
     }
-  }, [meditation.id, autoPlay])
+  }, [meditation.id, meditation.audioUrl, autoPlay])
 
   // Controlar volume
   useEffect(() => {
@@ -207,6 +216,10 @@ export function MeditationPlayer({
   const progressPercentage = playerState.duration ? (playerState.currentTime / playerState.duration) * 100 : 0
 
   const getCurrentStep = () => {
+    if (!meditation.guidedSteps || meditation.guidedSteps.length === 0) {
+      return "Acompanhe a meditação e respire naturalmente."
+    }
+    
     if (sessionData.currentStep < meditation.guidedSteps.length) {
       return meditation.guidedSteps[sessionData.currentStep]
     }
@@ -226,7 +239,7 @@ export function MeditationPlayer({
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="outline">
                   <Clock className="w-3 h-3 mr-1" />
-                  {meditation.duration} min
+                  {Math.floor(meditation.duration / 60)} min
                 </Badge>
                 <Badge variant="outline">
                   <User className="w-3 h-3 mr-1" />
@@ -379,7 +392,7 @@ export function MeditationPlayer({
       </Card>
 
       {/* Passo Atual da Meditação */}
-      {sessionData.showSteps && (
+      {sessionData.showSteps && meditation.guidedSteps && meditation.guidedSteps.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
