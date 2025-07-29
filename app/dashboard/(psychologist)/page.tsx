@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Calendar, Plus, BookOpen } from "lucide-react"
+import { Users, Calendar, Plus, BookOpen, Brain } from "lucide-react"
 import Link from "next/link"
 
 interface DashboardData {
@@ -63,6 +63,12 @@ export default function DashboardPage() {
           <p className="text-gray-600">Bem-vindo de volta!</p>
         </div>
         <div className="flex space-x-3">
+          <Button className="bg-purple-600 hover:bg-purple-700" asChild>
+            <Link href="/dashboard/ai-assistant">
+              <Brain className="w-4 h-4 mr-2" />
+              Assistente IA
+            </Link>
+          </Button>
           <Button className="bg-[#2D9B9B] hover:bg-[#238B8B]" asChild>
             <Link href="/dashboard/patients/new">
               <Plus className="w-4 h-4 mr-2" />
