@@ -94,6 +94,11 @@ export const diaryEntries = pgTable("diary_entries", {
   content: text("content"),
   cycle: text("cycle"),
   emotions: text("emotions"), // jsonb
+  // Multimodal content
+  audioUrl: text("audio_url"),
+  audioTranscription: text("audio_transcription"),
+  imageUrl: text("image_url"),
+  imageDescription: text("image_description"),
   // AI Analysis fields
   aiAnalyzed: boolean("ai_analyzed").default(false),
   dominantEmotion: text("dominant_emotion"),
@@ -103,6 +108,9 @@ export const diaryEntries = pgTable("diary_entries", {
   aiInsights: text("ai_insights"), // JSON string
   suggestedActions: text("suggested_actions"), // JSON string
   plutchikCategories: text("plutchik_categories"), // JSON string
+  // Multimodal AI analysis
+  imageAnalysis: text("image_analysis"), // JSON string for OpenAI Vision results
+  audioAnalysis: text("audio_analysis"), // JSON string for audio emotion analysis
 })
 
 // Conquistas

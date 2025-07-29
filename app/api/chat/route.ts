@@ -1,4 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
+
+export async function POST(req: NextRequest) {
+  // TODO: Implement chat functionality when messages table is added to schema
+  return new NextResponse("Chat functionality not implemented yet", { status: 501 })
+
 import { db } from "@/db"
 import { chatMessages, chatRooms, users, messageReadReceipts } from "@/db/schema"
 import { eq, and, or, desc, asc } from "drizzle-orm"
@@ -248,7 +253,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("[CHAT_POST]", error)
     return new NextResponse("Internal Error", { status: 500 })
-=======
+
     const body = await req.json()
     const { receiverId, content } = body
 
@@ -279,6 +284,7 @@ export async function POST(req: NextRequest) {
     console.error("[CHAT_POST]", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
+
 }
 
 export async function GET(req: NextRequest) {

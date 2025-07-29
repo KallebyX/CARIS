@@ -74,6 +74,11 @@ const entrySchema = z.object({
   }),
   cycle: z.enum(["criar", "cuidar", "crescer", "curar"]),
   emotions: z.array(z.string()).optional(),
+  // Multimodal fields
+  audioUrl: z.string().optional(),
+  audioTranscription: z.string().optional(),
+  imageUrl: z.string().optional(),
+  imageDescription: z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -112,13 +117,17 @@ export async function POST(req: NextRequest) {
     const json = await req.json()
     const body = entrySchema.parse(json)
 
-    const { moodRating, intensityRating, content, cycle, emotions } = body
+    const { moodRating, intensityRating, content, cycle, emotions, audioUrl, audioTranscription, imageUrl, imageDescription } = body
 
     // Análise de IA do conteúdo emocional (async, não bloqueia a resposta)
     let aiAnalysis = null
     const hasAiConsent = await hasValidConsent(userId, CONSENT_TYPES.AI_ANALYSIS)
     
     try {
+
+      if (content && content.length > 10) {
+        aiAnalysis = await analyzeEmotionalContent(content, audioTranscription, imageDescription)
+
       if (content && content.length > 10 && hasAiConsent) {
         aiAnalysis = await analyzeEmotionalContent(content)
         
@@ -134,6 +143,7 @@ export async function POST(req: NextRequest) {
           ipAddress,
           userAgent,
         })
+
       }
     } catch (error) {
       console.error('AI analysis failed:', error)
@@ -158,6 +168,11 @@ export async function POST(req: NextRequest) {
       content,
       cycle,
       emotions: emotions ? JSON.stringify(emotions) : null,
+      // Multimodal content
+      audioUrl: audioUrl || null,
+      audioTranscription: audioTranscription || null,
+      imageUrl: imageUrl || null,
+      imageDescription: imageDescription || null,
       // Campos de IA
       aiAnalyzed: aiAnalysis ? true : false,
       dominantEmotion: aiAnalysis?.dominantEmotion || null,
@@ -167,6 +182,9 @@ export async function POST(req: NextRequest) {
       aiInsights: aiAnalysis?.insights ? JSON.stringify(aiAnalysis.insights) : null,
       suggestedActions: aiAnalysis?.suggestedActions ? JSON.stringify(aiAnalysis.suggestedActions) : null,
       plutchikCategories: aiAnalysis?.plutchikCategories ? JSON.stringify(aiAnalysis.plutchikCategories) : null,
+      // Multimodal AI analysis
+      imageAnalysis: aiAnalysis?.imageAnalysis ? JSON.stringify(aiAnalysis.imageAnalysis) : null,
+      audioAnalysis: aiAnalysis?.audioAnalysis ? JSON.stringify(aiAnalysis.audioAnalysis) : null,
     }).returning()
 
     // Award gamification points for diary entry
