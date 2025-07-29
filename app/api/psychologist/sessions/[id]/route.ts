@@ -22,14 +22,15 @@ const updateSessionSchema = z.object({
  * GET /api/psychologist/sessions/[id]
  * Busca uma sessão específica
  */
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const psychologistId = await getUserIdFromRequest(request)
   if (!psychologistId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
 
   try {
-    const sessionId = Number.parseInt(params.id)
+    const { id } = await params
+    const sessionId = Number.parseInt(id)
     if (isNaN(sessionId)) {
       return NextResponse.json({ error: "ID da sessão inválido" }, { status: 400 })
     }
@@ -72,14 +73,15 @@ export async function GET(request: Request, { params }: { params: { id: string }
  * PUT /api/psychologist/sessions/[id]
  * Atualiza uma sessão específica
  */
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const psychologistId = await getUserIdFromRequest(request)
   if (!psychologistId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
 
   try {
-    const sessionId = Number.parseInt(params.id)
+    const { id } = await params
+    const sessionId = Number.parseInt(id)
     if (isNaN(sessionId)) {
       return NextResponse.json({ error: "ID da sessão inválido" }, { status: 400 })
     }
@@ -216,14 +218,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
  * DELETE /api/psychologist/sessions/[id]
  * Remove uma sessão específica
  */
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const psychologistId = await getUserIdFromRequest(request)
   if (!psychologistId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
 
   try {
-    const sessionId = Number.parseInt(params.id)
+    const { id } = await params
+    const sessionId = Number.parseInt(id)
     if (isNaN(sessionId)) {
       return NextResponse.json({ error: "ID da sessão inválido" }, { status: 400 })
     }

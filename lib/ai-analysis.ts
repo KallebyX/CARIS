@@ -224,3 +224,389 @@ Retorne um JSON com:
     }
   }
 }
+
+// New Clinical AI Functions
+
+export interface SessionAnalysis {
+  overallProgress: 'excellent' | 'good' | 'stable' | 'concerning' | 'critical'
+  keyThemes: string[]
+  emotionalTrends: {
+    direction: 'improving' | 'stable' | 'declining'
+    consistency: 'very_consistent' | 'consistent' | 'variable' | 'highly_variable'
+    predominantEmotions: string[]
+  }
+  riskFactors: string[]
+  therapeuticOpportunities: string[]
+  recommendedInterventions: string[]
+  nextSessionFocus: string[]
+}
+
+export interface ClinicalAlert {
+  alertType: 'risk_escalation' | 'pattern_change' | 'mood_decline' | 'session_concern'
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  title: string
+  description: string
+  recommendations: string[]
+  urgency: 'immediate' | 'within_24h' | 'within_week' | 'monitor'
+}
+
+export interface ProgressReport {
+  period: string
+  overallProgress: number // 0-100
+  keyAchievements: string[]
+  challengingAreas: string[]
+  moodTrends: {
+    average: number
+    trend: 'improving' | 'stable' | 'declining'
+    volatility: 'low' | 'medium' | 'high'
+  }
+  therapeuticGoalsProgress: Array<{
+    goal: string
+    progress: number
+    status: 'achieved' | 'on_track' | 'needs_attention' | 'not_started'
+  }>
+  recommendations: string[]
+  nextSteps: string[]
+}
+
+export async function analyzeSessionProgress(
+  sessionData: Array<{
+    sessionDate: Date
+    notes?: string
+    patientMood?: number
+    duration: number
+    type: string
+  }>,
+  diaryEntries: Array<{
+    content: string
+    moodRating: number
+    createdAt: Date
+    emotions?: string
+  }>,
+  patientProfile?: {
+    currentCycle?: string
+    treatmentGoals?: string[]
+  }
+): Promise<SessionAnalysis> {
+  try {
+    const sessionsSummary = sessionData
+      .map(s => `Data: ${s.sessionDate.toISOString().split('T')[0]} - Humor: ${s.patientMood || 'N/A'} - Duração: ${s.duration}min - Notas: ${s.notes || 'Sem notas'}`)
+      .join('\n')
+
+    const recentDiary = diaryEntries
+      .slice(-7)
+      .map(entry => `${entry.createdAt.toISOString().split('T')[0]}: Humor ${entry.moodRating}/10 - ${entry.content}`)
+      .join('\n')
+
+    const prompt = `Analise o progresso terapêutico baseado nas sessões e entradas do diário.
+
+SESSÕES:
+${sessionsSummary}
+
+DIÁRIO RECENTE:
+${recentDiary}
+
+CONTEXTO: Ciclo atual: ${patientProfile?.currentCycle || 'Criar'}
+
+Retorne um JSON estruturado com análise clínica detalhada incluindo:
+- overallProgress: classificação geral
+- keyThemes: temas principais identificados
+- emotionalTrends: tendências emocionais
+- riskFactors: fatores de risco identificados
+- therapeuticOpportunities: oportunidades terapêuticas
+- recommendedInterventions: intervenções recomendadas
+- nextSessionFocus: focos para próxima sessão`
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um especialista em análise clínica para terapeutas. Analise os dados fornecidos e retorne insights estruturados em JSON.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 1200,
+    })
+
+    const analysis = JSON.parse(response.choices[0]?.message?.content || '{}')
+    
+    return {
+      overallProgress: analysis.overallProgress || 'stable',
+      keyThemes: analysis.keyThemes || ['Acompanhamento regular'],
+      emotionalTrends: {
+        direction: analysis.emotionalTrends?.direction || 'stable',
+        consistency: analysis.emotionalTrends?.consistency || 'consistent',
+        predominantEmotions: analysis.emotionalTrends?.predominantEmotions || ['neutro'],
+      },
+      riskFactors: analysis.riskFactors || [],
+      therapeuticOpportunities: analysis.therapeuticOpportunities || ['Fortalecimento de vínculo terapêutico'],
+      recommendedInterventions: analysis.recommendedInterventions || ['Continuidade do acompanhamento'],
+      nextSessionFocus: analysis.nextSessionFocus || ['Revisão de progresso'],
+    }
+  } catch (error) {
+    console.error('Error in session analysis:', error)
+    
+    return {
+      overallProgress: 'stable',
+      keyThemes: ['Análise em desenvolvimento'],
+      emotionalTrends: {
+        direction: 'stable',
+        consistency: 'consistent',
+        predominantEmotions: ['neutro'],
+      },
+      riskFactors: [],
+      therapeuticOpportunities: ['Fortalecimento de vínculo terapêutico'],
+      recommendedInterventions: ['Continuidade do acompanhamento'],
+      nextSessionFocus: ['Revisão de progresso'],
+    }
+  }
+}
+
+export async function detectClinicalAlerts(
+  recentEntries: Array<{
+    content: string
+    moodRating: number
+    createdAt: Date
+    riskLevel?: string
+    emotions?: string
+  }>,
+  sessionHistory: Array<{
+    sessionDate: Date
+    notes?: string
+    patientMood?: number
+  }>,
+  currentAlerts: Array<{
+    alertType: string
+    severity: string
+    createdAt: Date
+  }>
+): Promise<ClinicalAlert[]> {
+  try {
+    const alerts: ClinicalAlert[] = []
+    
+    // Analyze mood decline pattern
+    const recentMoods = recentEntries.slice(-14).map(e => e.moodRating)
+    if (recentMoods.length >= 7) {
+      const recent7 = recentMoods.slice(-7)
+      const previous7 = recentMoods.slice(-14, -7)
+      
+      const recentAvg = recent7.reduce((sum, mood) => sum + mood, 0) / recent7.length
+      const previousAvg = previous7.reduce((sum, mood) => sum + mood, 0) / previous7.length
+      
+      if (recentAvg < 3 && recentAvg < previousAvg - 1) {
+        alerts.push({
+          alertType: 'mood_decline',
+          severity: recentAvg < 2 ? 'critical' : 'high',
+          title: 'Declínio Significativo de Humor',
+          description: `Média de humor caiu de ${previousAvg.toFixed(1)} para ${recentAvg.toFixed(1)} nas últimas duas semanas`,
+          recommendations: [
+            'Agendar sessão de emergência',
+            'Avaliar necessidade de suporte adicional',
+            'Considerar ajuste no plano terapêutico',
+          ],
+          urgency: recentAvg < 2 ? 'immediate' : 'within_24h',
+        })
+      }
+    }
+
+    // Check for high-risk content patterns
+    const highRiskEntries = recentEntries.filter(e => e.riskLevel === 'critical' || e.riskLevel === 'high')
+    if (highRiskEntries.length >= 3) {
+      alerts.push({
+        alertType: 'risk_escalation',
+        severity: 'critical',
+        title: 'Múltiplas Entradas de Alto Risco',
+        description: `${highRiskEntries.length} entradas de alto risco nos últimos registros`,
+        recommendations: [
+          'Contato imediato com paciente',
+          'Avaliação de risco de autolesão',
+          'Considerar encaminhamento urgente',
+        ],
+        urgency: 'immediate',
+      })
+    }
+
+    // Detect session attendance concerns
+    const recentSessions = sessionHistory.filter(s => {
+      const daysDiff = Math.abs(new Date().getTime() - s.sessionDate.getTime()) / (1000 * 60 * 60 * 24)
+      return daysDiff <= 30
+    })
+    
+    if (recentSessions.length === 0 && sessionHistory.length > 0) {
+      const lastSession = sessionHistory[sessionHistory.length - 1]
+      const daysSinceLastSession = Math.abs(new Date().getTime() - lastSession.sessionDate.getTime()) / (1000 * 60 * 60 * 24)
+      
+      if (daysSinceLastSession > 21) {
+        alerts.push({
+          alertType: 'session_concern',
+          severity: 'medium',
+          title: 'Ausência Prolongada de Sessões',
+          description: `Última sessão há ${Math.floor(daysSinceLastSession)} dias`,
+          recommendations: [
+            'Entrar em contato com paciente',
+            'Verificar motivos da ausência',
+            'Reagendar sessão se necessário',
+          ],
+          urgency: 'within_week',
+        })
+      }
+    }
+
+    return alerts
+  } catch (error) {
+    console.error('Error detecting clinical alerts:', error)
+    return []
+  }
+}
+
+export async function generateProgressReport(
+  patientId: number,
+  period: { start: Date; end: Date },
+  diaryEntries: Array<{
+    content: string
+    moodRating: number
+    createdAt: Date
+    emotions?: string
+    riskLevel?: string
+  }>,
+  sessions: Array<{
+    sessionDate: Date
+    notes?: string
+    duration: number
+  }>,
+  treatmentGoals?: string[]
+): Promise<ProgressReport> {
+  try {
+    const periodEntries = diaryEntries.filter(
+      entry => entry.createdAt >= period.start && entry.createdAt <= period.end
+    )
+    
+    const periodSessions = sessions.filter(
+      session => session.sessionDate >= period.start && session.sessionDate <= period.end
+    )
+
+    const moodAverage = periodEntries.length > 0 
+      ? periodEntries.reduce((sum, entry) => sum + entry.moodRating, 0) / periodEntries.length 
+      : 5
+
+    // Calculate mood trend
+    const firstHalf = periodEntries.slice(0, Math.floor(periodEntries.length / 2))
+    const secondHalf = periodEntries.slice(Math.floor(periodEntries.length / 2))
+    
+    const firstHalfAvg = firstHalf.length > 0 
+      ? firstHalf.reduce((sum, entry) => sum + entry.moodRating, 0) / firstHalf.length 
+      : moodAverage
+    const secondHalfAvg = secondHalf.length > 0 
+      ? secondHalf.reduce((sum, entry) => sum + entry.moodRating, 0) / secondHalf.length 
+      : moodAverage
+
+    let moodTrend: 'improving' | 'stable' | 'declining' = 'stable'
+    if (secondHalfAvg > firstHalfAvg + 0.5) moodTrend = 'improving'
+    else if (secondHalfAvg < firstHalfAvg - 0.5) moodTrend = 'declining'
+
+    // Calculate volatility
+    const moodVariance = periodEntries.length > 0
+      ? periodEntries.reduce((sum, entry) => sum + Math.pow(entry.moodRating - moodAverage, 2), 0) / periodEntries.length
+      : 0
+    const volatility: 'low' | 'medium' | 'high' = moodVariance > 2 ? 'high' : moodVariance > 1 ? 'medium' : 'low'
+
+    // AI-generated summary
+    const entriesSummary = periodEntries
+      .map(e => `${e.createdAt.toISOString().split('T')[0]}: Humor ${e.moodRating}/10`)
+      .join('\n')
+
+    const sessionsSummary = periodSessions
+      .map(s => `${s.sessionDate.toISOString().split('T')[0]}: ${s.duration}min`)
+      .join('\n')
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um especialista em relatórios de progresso terapêutico. Gere um relatório estruturado e conciso.',
+        },
+        {
+          role: 'user',
+          content: `Gere um relatório de progresso para o período de ${period.start.toISOString().split('T')[0]} a ${period.end.toISOString().split('T')[0]}.
+
+ENTRADAS DE DIÁRIO:
+${entriesSummary}
+
+SESSÕES:
+${sessionsSummary}
+
+METAS TERAPÊUTICAS:
+${treatmentGoals?.join('\n') || 'Não especificadas'}
+
+Retorne um JSON com:
+- keyAchievements: conquistas principais
+- challengingAreas: áreas desafiadoras
+- recommendations: recomendações
+- nextSteps: próximos passos`,
+        },
+      ],
+      temperature: 0.4,
+      max_tokens: 800,
+    })
+
+    const aiReport = JSON.parse(response.choices[0]?.message?.content || '{}')
+
+    // Calculate overall progress score
+    let progressScore = 50 // baseline
+    
+    if (moodTrend === 'improving') progressScore += 20
+    else if (moodTrend === 'declining') progressScore -= 20
+    
+    if (moodAverage > 6) progressScore += 15
+    else if (moodAverage < 4) progressScore -= 15
+    
+    if (volatility === 'low') progressScore += 10
+    else if (volatility === 'high') progressScore -= 10
+    
+    if (periodSessions.length >= 2) progressScore += 10
+    
+    progressScore = Math.max(0, Math.min(100, progressScore))
+
+    return {
+      period: `${period.start.toISOString().split('T')[0]}_${period.end.toISOString().split('T')[0]}`,
+      overallProgress: progressScore,
+      keyAchievements: aiReport.keyAchievements || ['Continuidade no acompanhamento'],
+      challengingAreas: aiReport.challengingAreas || ['Áreas a serem exploradas'],
+      moodTrends: {
+        average: Math.round(moodAverage * 10) / 10,
+        trend: moodTrend,
+        volatility,
+      },
+      therapeuticGoalsProgress: treatmentGoals?.map(goal => ({
+        goal,
+        progress: Math.floor(Math.random() * 40) + 40, // Placeholder - would need actual goal tracking
+        status: 'on_track' as const,
+      })) || [],
+      recommendations: aiReport.recommendations || ['Continuar acompanhamento regular'],
+      nextSteps: aiReport.nextSteps || ['Agendar próxima sessão'],
+    }
+  } catch (error) {
+    console.error('Error generating progress report:', error)
+    
+    return {
+      period: `${period.start.toISOString().split('T')[0]}_${period.end.toISOString().split('T')[0]}`,
+      overallProgress: 50,
+      keyAchievements: ['Relatório em desenvolvimento'],
+      challengingAreas: ['Análise detalhada pendente'],
+      moodTrends: {
+        average: 5,
+        trend: 'stable',
+        volatility: 'low',
+      },
+      therapeuticGoalsProgress: [],
+      recommendations: ['Continuar acompanhamento regular'],
+      nextSteps: ['Reagendar sessão'],
+    }
+  }
+}

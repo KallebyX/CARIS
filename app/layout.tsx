@@ -1,13 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Lora } from 'next/font/google'
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import Script from "next/script"
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
-const lora = Lora({ subsets: ["latin"], variable: "--font-lora", style: "italic" })
 
 export const metadata: Metadata = {
   title: "CÁRIS - Clareza Existencial",
@@ -37,7 +33,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className={`${inter.variable} ${lora.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           {children}
           <Toaster />
