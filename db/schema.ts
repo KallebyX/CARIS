@@ -584,6 +584,9 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
 export const sosUsagesRelations = relations(sosUsages, ({ one }) => ({
   patient: one(users, {
     fields: [sosUsages.patientId],
+    references: [users.id],
+  }),
+}))
 
 // Tabela de salas de chat
 export const chatRooms = pgTable('chat_rooms', {
@@ -609,6 +612,8 @@ export const chatMessages = pgTable('chat_messages', {
   editedAt: timestamp('edited_at'),
   deletedAt: timestamp('deleted_at'),
   metadata: text('metadata'), // JSON para dados adicionais
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
 
 // ==== MULTI-CLINIC TABLES ====
 
