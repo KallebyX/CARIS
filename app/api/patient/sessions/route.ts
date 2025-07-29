@@ -24,6 +24,10 @@ export async function GET(request: NextRequest) {
         patientId: sessions.patientId,
         psychologistId: sessions.psychologistId,
         psychologistName: users.name,
+        // Calendar integration fields
+        googleCalendarEventId: sessions.googleCalendarEventId,
+        outlookCalendarEventId: sessions.outlookCalendarEventId,
+        timezone: sessions.timezone,
       })
       .from(sessions)
       .leftJoin(users, eq(sessions.psychologistId, users.id))
