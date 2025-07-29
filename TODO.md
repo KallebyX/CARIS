@@ -143,6 +143,8 @@
 - [ ] **Monitoramento** - Health checks e observabilidade
 
 ### 🧪 Qualidade e Deploy
+- [ ] **📋 REVISÃO COMPLETA** - Testes abrangentes de todas funcionalidades (CRÍTICO)
+- [ ] **🎵 Biblioteca de áudios** - Meditações em português gratuitas e de qualidade
 - [ ] **Suite de testes** - Testes automatizados completos
 - [ ] **Pipeline CI/CD** - Deploy automatizado
 - [ ] **Documentação** - Documentação técnica e de usuário
@@ -151,11 +153,13 @@
 
 ## 🎯 Próximos Passos Imediatos
 
-1. **Assistente Clínico com IA** - Começar implementação do sistema de IA clínica
-2. **Gamificação** - Implementar sistema de pontos e conquistas
-3. **Calendário** - Integração com Google Calendar e Outlook
-4. **Chat Seguro** - Sistema de mensagens criptografadas
-5. **Compliance LGPD** - Recursos de privacidade e proteção de dados
+1. **🔍 REVISÃO COMPLETA** - Testar todas funcionalidades implementadas (CRÍTICO)
+2. **🎵 Pesquisa de Áudios** - Encontrar meditações em português gratuitas
+3. **🤖 Assistente Clínico com IA** - Implementar sistema de IA clínica
+4. **🎮 Gamificação** - Sistema de pontos e conquistas
+5. **📅 Calendário** - Integração com Google Calendar e Outlook
+6. **💬 Chat Seguro** - Sistema de mensagens criptografadas
+7. **🔒 Compliance LGPD** - Recursos de privacidade e proteção de dados
 
 ## 📈 Métricas de Progresso
 
