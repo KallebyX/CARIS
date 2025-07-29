@@ -414,7 +414,18 @@ export const generatedReportsRelations = relations(generatedReports, ({ one }) =
     fields: [generatedReports.patientId],
     references: [users.id],
   }),
-=======
+}))
+
+// User Relations
+export const usersRelations = relations(users, ({ one, many }) => ({
+  psychologistProfile: one(psychologistProfiles, {
+    fields: [users.id],
+    references: [psychologistProfiles.userId],
+  }),
+  patientProfile: one(patientProfiles, {
+    fields: [users.id], 
+    references: [patientProfiles.userId],
+  }),
 
   pointActivities: many(pointActivities),
   userChallengeProgress: many(userChallengeProgress),
@@ -573,6 +584,9 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
 export const sosUsagesRelations = relations(sosUsages, ({ one }) => ({
   patient: one(users, {
     fields: [sosUsages.patientId],
+    references: [users.id],
+  }),
+}))
 
 // Tabela de salas de chat
 export const chatRooms = pgTable('chat_rooms', {
@@ -598,6 +612,8 @@ export const chatMessages = pgTable('chat_messages', {
   editedAt: timestamp('edited_at'),
   deletedAt: timestamp('deleted_at'),
   metadata: text('metadata'), // JSON para dados adicionais
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
 
 // ==== MULTI-CLINIC TABLES ====
 

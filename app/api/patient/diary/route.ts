@@ -124,10 +124,6 @@ export async function POST(req: NextRequest) {
     const hasAiConsent = await hasValidConsent(userId, CONSENT_TYPES.AI_ANALYSIS)
     
     try {
-
-      if (content && content.length > 10) {
-        aiAnalysis = await analyzeEmotionalContent(content, audioTranscription, imageDescription)
-
       if (content && content.length > 10 && hasAiConsent) {
         aiAnalysis = await analyzeEmotionalContent(content)
         
@@ -143,7 +139,6 @@ export async function POST(req: NextRequest) {
           ipAddress,
           userAgent,
         })
-
       }
     } catch (error) {
       console.error('AI analysis failed:', error)
