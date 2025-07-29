@@ -1,46 +1,11 @@
 import { NextResponse } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
+import { StripeService, getAllPlans, formatPrice } from "@/lib/stripe"
+import { db } from "@/db"
+import { subscriptions, customers, invoices, payments } from "@/db/schema"
+import { eq, desc } from "drizzle-orm"
 
-// Simulação de dados de billing - em produção viria do Stripe
-const mockBillingData = {
-  currentPlan: {
-    name: "Profissional",
-    price: 99.9,
-    interval: "monthly",
-    renewsAt: "2025-08-15",
-    status: "active",
-  },
-  invoices: [
-    {
-      id: "inv_001",
-      date: "2025-01-15",
-      amount: 99.9,
-      status: "paid",
-      downloadUrl: "/api/invoices/inv_001/download",
-    },
-    {
-      id: "inv_002",
-      date: "2024-12-15",
-      amount: 99.9,
-      status: "paid",
-      downloadUrl: "/api/invoices/inv_002/download",
-    },
-    {
-      id: "inv_003",
-      date: "2024-11-15",
-      amount: 99.9,
-      status: "paid",
-      downloadUrl: "/api/invoices/inv_003/download",
-    },
-  ],
-  paymentMethod: {
-    type: "card",
-    last4: "4242",
-    brand: "visa",
-    expiresAt: "12/2027",
-  },
-}
-
+// Updated billing route to use Stripe
 export async function GET(request: Request) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) {
@@ -48,8 +13,67 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Em produção, buscar dados reais do Stripe
-    return NextResponse.json(mockBillingData)
+    // Get user's subscription from database
+    const subscription = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.userId, userId),
+      with: {
+        customer: true,
+      },
+    })
+
+    if (!subscription) {
+      return NextResponse.json({
+        currentPlan: null,
+        invoices: [],
+        paymentMethod: null,
+        hasActiveSubscription: false,
+      })
+    }
+
+    // Get latest subscription data from Stripe
+    const stripeSubscription = await StripeService.getSubscription(subscription.stripeSubscriptionId)
+    
+    // Get customer invoices
+    const userInvoices = await db.query.invoices.findMany({
+      where: eq(invoices.userId, userId),
+      orderBy: [desc(invoices.createdAt)],
+      limit: 10,
+    })
+
+    // Get payment methods
+    const paymentMethods = await StripeService.getCustomerPaymentMethods(
+      subscription.customer.stripeCustomerId
+    )
+
+    const currentPlan = {
+      name: subscription.planName,
+      price: stripeSubscription.items.data[0]?.price.unit_amount || 0,
+      interval: stripeSubscription.items.data[0]?.price.recurring?.interval || "month",
+      renewsAt: new Date(stripeSubscription.current_period_end * 1000).toISOString().split('T')[0],
+      status: stripeSubscription.status,
+    }
+
+    const billingInvoices = userInvoices.map(invoice => ({
+      id: invoice.id,
+      date: invoice.createdAt.toISOString().split('T')[0],
+      amount: invoice.amountDue / 100, // Convert from cents
+      status: invoice.status,
+      downloadUrl: invoice.hostedInvoiceUrl || `/api/invoices/${invoice.id}/download`,
+    }))
+
+    const paymentMethod = paymentMethods.length > 0 ? {
+      type: "card",
+      last4: paymentMethods[0].card?.last4 || "0000",
+      brand: paymentMethods[0].card?.brand || "unknown",
+      expiresAt: `${paymentMethods[0].card?.exp_month}/${paymentMethods[0].card?.exp_year}`,
+    } : null
+
+    return NextResponse.json({
+      currentPlan,
+      invoices: billingInvoices,
+      paymentMethod,
+      hasActiveSubscription: stripeSubscription.status === 'active',
+    })
   } catch (error) {
     console.error("Erro ao buscar dados de billing:", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
@@ -65,26 +89,62 @@ export async function POST(request: Request) {
   try {
     const { action, planId } = await request.json()
 
+    // Get user's subscription
+    const subscription = await db.query.subscriptions.findFirst({
+      where: eq(subscriptions.userId, userId),
+      with: {
+        customer: true,
+      },
+    })
+
+    if (!subscription) {
+      return NextResponse.json({ error: "Assinatura não encontrada" }, { status: 404 })
+    }
+
     if (action === "change_plan") {
-      // Em produção, integrar com Stripe para mudança de plano
+      // Get plan details
+      const plans = getAllPlans()
+      const newPlan = plans.find(p => p.id === planId)
+      
+      if (!newPlan) {
+        return NextResponse.json({ error: "Plano inválido" }, { status: 400 })
+      }
+
+      // Create Stripe checkout session for plan change
+      const successUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing&success=plan_changed`
+      const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?tab=billing`
+
+      const session = await StripeService.createCheckoutSession(
+        subscription.customer.stripeCustomerId,
+        newPlan.stripePriceIdMonthly,
+        planId as any,
+        successUrl,
+        cancelUrl
+      )
+
       return NextResponse.json({
-        message: "Plano alterado com sucesso",
-        redirectUrl: "/dashboard/settings?tab=billing&success=plan_changed",
+        message: "Redirecionando para alteração de plano",
+        redirectUrl: session.url,
       })
     }
 
     if (action === "cancel_subscription") {
-      // Em produção, cancelar assinatura no Stripe
+      // Cancel subscription in Stripe
+      await StripeService.cancelSubscription(subscription.stripeSubscriptionId, false)
+
       return NextResponse.json({
-        message: "Assinatura cancelada com sucesso",
-        cancellationDate: "2025-08-15",
+        message: "Assinatura será cancelada no fim do período atual",
+        cancellationDate: subscription.currentPeriodEnd,
       })
     }
 
     if (action === "update_payment_method") {
-      // Em produção, atualizar método de pagamento no Stripe
+      // Create setup intent for updating payment method
+      const setupIntent = await StripeService.createSetupIntent(subscription.customer.stripeCustomerId)
+      
       return NextResponse.json({
-        message: "Método de pagamento atualizado com sucesso",
+        message: "Redirecionando para atualização de método de pagamento",
+        clientSecret: setupIntent.client_secret,
       })
     }
 

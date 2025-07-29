@@ -64,6 +64,7 @@
     "@radix-ui/react-tooltip": "^1.1.6",
     "@sendgrid/mail": "^8.1.5",
     "@sentry/nextjs": "^9.42.0",
+    "@stripe/stripe-js": "^7.6.1",
     "@tanstack/react-query": "^5.83.0",
     "@types/d3": "^7.4.3",
     "@types/pg": "^8.11.10",
@@ -116,7 +117,14 @@
     "recharts": "^2.15.0",
     "resend": "^4.0.1",
     "simple-peer": "^9.11.1",
+
+    "sonner": "latest",
+    "sql.js": "latest",
+    "sqlite3": "latest",
+    "stripe": "^18.3.0",
+=======
     "sonner": "^1.7.3",
+
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "twilio": "^5.4.2",

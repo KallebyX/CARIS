@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+import { getUserIdFromRequest } from "@/lib/auth"
+
+
 import { auth } from "@clerk/nextjs"
+
 import { db } from "@/db"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 
@@ -23,6 +27,13 @@ export async function GET(req: NextRequest) {
   try {
     const userId = await getUserIdFromRequest(req)
     if (!userId) {
+
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    
+    const body = await req.json()
+    const { receiverId, content } = body
+
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
@@ -33,6 +44,7 @@ export async function GET(req: NextRequest) {
     const offset = parseInt(searchParams.get("offset") || "0")
 
     let targetRoomId = roomId
+
 
     // If no roomId provided, find or create room with other user
     if (!roomId && otherUserId) {

@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { StripeCheckout } from "@/components/checkout/stripe-checkout"
 import { CheckoutForm } from "@/components/checkout/checkout-form"
 import { PlanSelector } from "@/components/checkout/plan-selector"
 import { PaymentMethods } from "@/components/checkout/payment-methods"
 import { OrderSummary } from "@/components/checkout/order-summary"
 import { CheckoutProgress } from "@/components/checkout/checkout-progress"
-import { ShieldCheck, CreditCard, Smartphone, Building2 } from "lucide-react"
+import { ShieldCheck, CreditCard, Smartphone, Building2, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Plan {
@@ -94,8 +96,113 @@ function CheckoutPageContent() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   
+  const [useStripe, setUseStripe] = useState(true) // Default to Stripe
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [userInfo, setUserInfo] = useState<{
+    id?: number
+    email?: string
+    name?: string
+  }>({})
+
+  // Check for cancellation or error parameters
+  useEffect(() => {
+    const cancelled = searchParams.get("cancelled")
+    const error = searchParams.get("error")
+    const upgrade = searchParams.get("upgrade")
+
+    if (cancelled) {
+      toast({
+        title: "Checkout Cancelado",
+        description: "Você cancelou o processo de pagamento. Seus dados foram preservados.",
+        variant: "destructive",
+      })
+    }
+
+    if (error) {
+      toast({
+        title: "Erro no Checkout",
+        description: "Ocorreu um erro durante o pagamento. Tente novamente.",
+        variant: "destructive",
+      })
+    }
+
+    if (upgrade) {
+      toast({
+        title: "Alterar Plano",
+        description: "Selecione seu novo plano abaixo.",
+      })
+    }
+
+    // Get user info from cookie or session
+    fetchUserInfo()
+  }, [searchParams, toast])
+
+  const fetchUserInfo = async () => {
+    try {
+      // This would normally come from your auth system
+      // For now, we'll use placeholder data
+      setUserInfo({
+        id: 1,
+        email: "user@example.com",
+        name: "Usuário Teste"
+      })
+    } catch (error) {
+      console.error("Error fetching user info:", error)
+    }
+  }
+
+  // If using Stripe (recommended), show the new Stripe checkout
+  if (useStripe) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
+              Finalize sua Assinatura
+            </h1>
+            <p className="text-slate-600">
+              Escolha seu plano e comece a transformar sua prática hoje mesmo
+            </p>
+          </div>
+
+          {/* Payment Method Toggle */}
+          <div className="max-w-md mx-auto mb-8">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-green-500" />
+                    <span className="font-medium">Stripe</span>
+                    <Badge className="bg-green-100 text-green-800">Recomendado</Badge>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setUseStripe(false)}
+                  >
+                    Usar Sistema Antigo
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  Pagamento mais seguro e confiável com processamento internacional
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <StripeCheckout 
+            userId={userInfo.id}
+            userEmail={userInfo.email}
+            userName={userInfo.name}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Legacy checkout system (keeping for backward compatibility)
   const [checkoutData, setCheckoutData] = useState<CheckoutData>({
     plan: null,
     paymentMethod: "",
@@ -153,7 +260,7 @@ function CheckoutPageContent() {
     setLoading(true)
     
     try {
-      // Integração com MercadoPago MCP
+      // Integração com MercadoPago MCP (Legacy)
       const response = await fetch("/api/checkout/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

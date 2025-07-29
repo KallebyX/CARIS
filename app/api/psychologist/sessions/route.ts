@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server"
+
+import { getUserIdFromRequest } from "@/lib/auth"
+import { db } from "@/db"
+=======
 import { auth } from "@clerk/nextjs"
 import { db } from "@/db"
 import { sessions } from "@/db/schema"
+
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 
 import { NextRequest, NextResponse } from "next/server"

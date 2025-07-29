@@ -1,5 +1,9 @@
 {
+
+  "id": "657c1c05-c89b-48ee-99f5-01d72eba39a8",
+=======
   "id": "08b95b61-3151-474f-a8d1-84939ab77d6f",
+
   "prevId": "ac0ac69a-c1ac-4b7e-9233-145f32035bc5",
   "version": "7",
   "dialect": "postgresql",
@@ -41,6 +45,96 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.customers": {
+      "name": "customers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "customers_user_id_users_id_fk": {
+          "name": "customers_user_id_users_id_fk",
+          "tableFrom": "customers",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "customers_user_id_unique": {
+          "name": "customers_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id"
+          ]
+        },
+        "customers_stripe_customer_id_unique": {
+          "name": "customers_stripe_customer_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "stripe_customer_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+=======
+
     "public.diary_entries": {
       "name": "diary_entries",
       "schema": "",
@@ -166,8 +260,13 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.invoices": {
+      "name": "invoices",
+=======
     "public.meditation_audio_ratings": {
       "name": "meditation_audio_ratings",
+
       "schema": "",
       "columns": {
         "id": {
@@ -183,6 +282,10 @@
           "primaryKey": false,
           "notNull": true
         },
+
+        "subscription_id": {
+          "name": "subscription_id",
+=======
         "audio_id": {
           "name": "audio_id",
           "type": "text",
@@ -197,10 +300,27 @@
         },
         "review": {
           "name": "review",
+
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+
+        "stripe_invoice_id": {
+          "name": "stripe_invoice_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invoice_number": {
+          "name": "invoice_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+=======
         "helpful_count": {
           "name": "helpful_count",
           "type": "integer",
@@ -283,16 +403,40 @@
         },
         "category_id": {
           "name": "category_id",
+
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
+
+        "amount_due": {
+          "name": "amount_due",
+=======
         "duration": {
           "name": "duration",
+
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
+
+        "amount_paid": {
+          "name": "amount_paid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'brl'"
+        },
+        "description": {
+          "name": "description",
+=======
         "difficulty": {
           "name": "difficulty",
           "type": "varchar(20)",
@@ -313,28 +457,58 @@
         },
         "thumbnail_url": {
           "name": "thumbnail_url",
+
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+
+        "invoice_url": {
+          "name": "invoice_url",
+=======
         "transcript": {
           "name": "transcript",
+
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+
+        "hosted_invoice_url": {
+          "name": "hosted_invoice_url",
+=======
         "guided_steps": {
           "name": "guided_steps",
+
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+
+        "invoice_pdf": {
+          "name": "invoice_pdf",
+=======
         "benefits": {
           "name": "benefits",
+
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+
+        "due_date": {
+          "name": "due_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "paid_at": {
+          "name": "paid_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+=======
         "techniques": {
           "name": "techniques",
           "type": "text",
@@ -458,6 +632,7 @@
           "notNull": true,
           "default": false
         },
+
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -471,6 +646,7 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+
         },
         "created_by": {
           "name": "created_by",
@@ -483,10 +659,19 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+
         }
       },
       "indexes": {},
       "foreignKeys": {
+
+        "invoices_user_id_users_id_fk": {
+          "name": "invoices_user_id_users_id_fk",
+          "tableFrom": "invoices",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+
         "meditation_audios_category_id_meditation_categories_id_fk": {
           "name": "meditation_audios_category_id_meditation_categories_id_fk",
           "tableFrom": "meditation_audios",
@@ -506,6 +691,7 @@
           "tableTo": "users",
           "columnsFrom": [
             "created_by"
+
           ],
           "columnsTo": [
             "id"
@@ -513,12 +699,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+
+        "invoices_subscription_id_subscriptions_id_fk": {
+          "name": "invoices_subscription_id_subscriptions_id_fk",
+          "tableFrom": "invoices",
+          "tableTo": "subscriptions",
+          "columnsFrom": [
+            "subscription_id"
+=======
         "meditation_audios_last_modified_by_users_id_fk": {
           "name": "meditation_audios_last_modified_by_users_id_fk",
           "tableFrom": "meditation_audios",
           "tableTo": "users",
           "columnsFrom": [
             "last_modified_by"
+
           ],
           "columnsTo": [
             "id"
@@ -528,6 +723,17 @@
         }
       },
       "compositePrimaryKeys": {},
+
+      "uniqueConstraints": {
+        "invoices_stripe_invoice_id_unique": {
+          "name": "invoices_stripe_invoice_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "stripe_invoice_id"
+          ]
+        }
+      },
+
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -601,6 +807,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -721,6 +928,35 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.patient_profiles": {
+      "name": "patient_profiles",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "psychologist_id": {
+          "name": "psychologist_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_cycle": {
+          "name": "current_cycle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+=======
     "public.meditation_track_audios": {
       "name": "meditation_track_audios",
       "schema": "",
@@ -775,16 +1011,26 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+
         }
       },
       "indexes": {},
       "foreignKeys": {
+
+        "patient_profiles_user_id_users_id_fk": {
+          "name": "patient_profiles_user_id_users_id_fk",
+          "tableFrom": "patient_profiles",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+=======
         "meditation_track_audios_track_id_meditation_tracks_id_fk": {
           "name": "meditation_track_audios_track_id_meditation_tracks_id_fk",
           "tableFrom": "meditation_track_audios",
           "tableTo": "meditation_tracks",
           "columnsFrom": [
             "track_id"
+
           ],
           "columnsTo": [
             "id"
@@ -792,12 +1038,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+
+        "patient_profiles_psychologist_id_users_id_fk": {
+          "name": "patient_profiles_psychologist_id_users_id_fk",
+          "tableFrom": "patient_profiles",
+          "tableTo": "users",
+          "columnsFrom": [
+            "psychologist_id"
+=======
         "meditation_track_audios_audio_id_meditation_audios_id_fk": {
           "name": "meditation_track_audios_audio_id_meditation_audios_id_fk",
           "tableFrom": "meditation_track_audios",
           "tableTo": "meditation_audios",
           "columnsFrom": [
             "audio_id"
+
           ],
           "columnsTo": [
             "id"
@@ -812,8 +1067,13 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.payment_failures": {
+      "name": "payment_failures",
+=======
     "public.meditation_tracks": {
       "name": "meditation_tracks",
+
       "schema": "",
       "columns": {
         "id": {
@@ -823,6 +1083,34 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_id": {
+          "name": "payment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_message": {
+          "name": "failure_message",
+=======
         "title": {
           "name": "title",
           "type": "varchar(255)",
@@ -867,17 +1155,36 @@
         },
         "thumbnail_url": {
           "name": "thumbnail_url",
+
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
+
+        "retry_count": {
+          "name": "retry_count",
+=======
         "display_order": {
           "name": "display_order",
+
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
+
+        "next_retry_at": {
+          "name": "next_retry_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+=======
         "is_active": {
           "name": "is_active",
           "type": "boolean",
@@ -912,6 +1219,7 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+
         },
         "created_at": {
           "name": "created_at",
@@ -926,16 +1234,39 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+
         },
         "created_by": {
           "name": "created_by",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+
         }
       },
       "indexes": {},
       "foreignKeys": {
+
+        "payment_failures_user_id_users_id_fk": {
+          "name": "payment_failures_user_id_users_id_fk",
+          "tableFrom": "payment_failures",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payment_failures_subscription_id_subscriptions_id_fk": {
+          "name": "payment_failures_subscription_id_subscriptions_id_fk",
+          "tableFrom": "payment_failures",
+          "tableTo": "subscriptions",
+          "columnsFrom": [
+            "subscription_id"
+=======
         "meditation_tracks_category_id_meditation_categories_id_fk": {
           "name": "meditation_tracks_category_id_meditation_categories_id_fk",
           "tableFrom": "meditation_tracks",
@@ -949,12 +1280,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+
+        "payment_failures_payment_id_payments_id_fk": {
+          "name": "payment_failures_payment_id_payments_id_fk",
+          "tableFrom": "payment_failures",
+          "tableTo": "payments",
+          "columnsFrom": [
+            "payment_id"
+=======
         "meditation_tracks_created_by_users_id_fk": {
           "name": "meditation_tracks_created_by_users_id_fk",
           "tableFrom": "meditation_tracks",
           "tableTo": "users",
           "columnsFrom": [
             "created_by"
+
           ],
           "columnsTo": [
             "id"
@@ -969,6 +1309,92 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.payments": {
+      "name": "payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_payment_intent_id": {
+          "name": "stripe_payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stripe_charge_id": {
+          "name": "stripe_charge_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'brl'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "receipt_url": {
+          "name": "receipt_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+=======
     "public.patient_profiles": {
       "name": "patient_profiles",
       "schema": "",
@@ -996,13 +1422,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+
         }
       },
       "indexes": {},
       "foreignKeys": {
+
+        "payments_user_id_users_id_fk": {
+          "name": "payments_user_id_users_id_fk",
+          "tableFrom": "payments",
+=======
         "patient_profiles_user_id_users_id_fk": {
           "name": "patient_profiles_user_id_users_id_fk",
           "tableFrom": "patient_profiles",
+
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -1013,12 +1446,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+
+        "payments_subscription_id_subscriptions_id_fk": {
+          "name": "payments_subscription_id_subscriptions_id_fk",
+          "tableFrom": "payments",
+          "tableTo": "subscriptions",
+          "columnsFrom": [
+            "subscription_id"
+=======
         "patient_profiles_psychologist_id_users_id_fk": {
           "name": "patient_profiles_psychologist_id_users_id_fk",
           "tableFrom": "patient_profiles",
           "tableTo": "users",
           "columnsFrom": [
             "psychologist_id"
+
           ],
           "columnsTo": [
             "id"
@@ -1028,7 +1470,19 @@
         }
       },
       "compositePrimaryKeys": {},
+
+      "uniqueConstraints": {
+        "payments_stripe_payment_intent_id_unique": {
+          "name": "payments_stripe_payment_intent_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "stripe_payment_intent_id"
+          ]
+        }
+      },
+=======
       "uniqueConstraints": {},
+
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1173,16 +1627,105 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.subscription_plans": {
+      "name": "subscription_plans",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_monthly": {
+          "name": "price_monthly",
+=======
     "public.user_achievements": {
       "name": "user_achievements",
       "schema": "",
       "columns": {
         "user_id": {
           "name": "user_id",
+
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
+
+        "price_yearly": {
+          "name": "price_yearly",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_price_id_monthly": {
+          "name": "stripe_price_id_monthly",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stripe_price_id_yearly": {
+          "name": "stripe_price_id_yearly",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "features": {
+          "name": "features",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_patients": {
+          "name": "max_patients",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_popular": {
+          "name": "is_popular",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+=======
         "achievement_id": {
           "name": "achievement_id",
           "type": "integer",
@@ -1191,6 +1734,7 @@
         },
         "unlocked_at": {
           "name": "unlocked_at",
+
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -1198,6 +1742,9 @@
         }
       },
       "indexes": {},
+
+      "foreignKeys": {},
+
       "foreignKeys": {
         "user_achievements_user_id_users_id_fk": {
           "name": "user_achievements_user_id_users_id_fk",
@@ -1226,41 +1773,140 @@
           "onUpdate": "no action"
         }
       },
+
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.subscriptions": {
+      "name": "subscriptions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+=======
     "public.user_meditation_favorites": {
       "name": "user_meditation_favorites",
       "schema": "",
       "columns": {
+
         "user_id": {
           "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "audio_id": {
-          "name": "audio_id",
+
+        "customer_id": {
+          "name": "customer_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
+        "stripe_subscription_id": {
+          "name": "stripe_subscription_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan_name": {
+          "name": "plan_name",
+=======
+        "audio_id": {
+          "name": "audio_id",
+
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+
+        "price_id": {
+          "name": "price_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_period_start": {
+          "name": "current_period_start",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_period_end": {
+          "name": "current_period_end",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cancel_at_period_end": {
+          "name": "cancel_at_period_end",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "canceled_at": {
+          "name": "canceled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+=======
+
         }
       },
       "indexes": {},
       "foreignKeys": {
+
+        "subscriptions_user_id_users_id_fk": {
+          "name": "subscriptions_user_id_users_id_fk",
+          "tableFrom": "subscriptions",
+=======
         "user_meditation_favorites_user_id_users_id_fk": {
           "name": "user_meditation_favorites_user_id_users_id_fk",
           "tableFrom": "user_meditation_favorites",
+
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -1271,12 +1917,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+
+        "subscriptions_customer_id_customers_id_fk": {
+          "name": "subscriptions_customer_id_customers_id_fk",
+          "tableFrom": "subscriptions",
+          "tableTo": "customers",
+          "columnsFrom": [
+            "customer_id"
+
         "user_meditation_favorites_audio_id_meditation_audios_id_fk": {
           "name": "user_meditation_favorites_audio_id_meditation_audios_id_fk",
           "tableFrom": "user_meditation_favorites",
           "tableTo": "meditation_audios",
           "columnsFrom": [
             "audio_id"
+
           ],
           "columnsTo": [
             "id"
@@ -1286,13 +1941,30 @@
         }
       },
       "compositePrimaryKeys": {},
+
+      "uniqueConstraints": {
+        "subscriptions_stripe_subscription_id_unique": {
+          "name": "subscriptions_stripe_subscription_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "stripe_subscription_id"
+          ]
+        }
+      },
+=======
       "uniqueConstraints": {},
+
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+
+    "public.user_achievements": {
+      "name": "user_achievements",
+=======
     "public.user_track_progress": {
       "name": "user_track_progress",
+
       "schema": "",
       "columns": {
         "user_id": {
@@ -1301,6 +1973,16 @@
           "primaryKey": false,
           "notNull": true
         },
+
+        "achievement_id": {
+          "name": "achievement_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unlocked_at": {
+          "name": "unlocked_at",
+=======
         "track_id": {
           "name": "track_id",
           "type": "text",
@@ -1336,10 +2018,12 @@
         },
         "last_accessed_at": {
           "name": "last_accessed_at",
+
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+
         },
         "completed_at": {
           "name": "completed_at",
@@ -1358,13 +2042,20 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+
         }
       },
       "indexes": {},
       "foreignKeys": {
+
+        "user_achievements_user_id_users_id_fk": {
+          "name": "user_achievements_user_id_users_id_fk",
+          "tableFrom": "user_achievements",
+=======
         "user_track_progress_user_id_users_id_fk": {
           "name": "user_track_progress_user_id_users_id_fk",
           "tableFrom": "user_track_progress",
+
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -1375,12 +2066,21 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+
+        "user_achievements_achievement_id_achievements_id_fk": {
+          "name": "user_achievements_achievement_id_achievements_id_fk",
+          "tableFrom": "user_achievements",
+          "tableTo": "achievements",
+          "columnsFrom": [
+            "achievement_id"
+=======
         "user_track_progress_track_id_meditation_tracks_id_fk": {
           "name": "user_track_progress_track_id_meditation_tracks_id_fk",
           "tableFrom": "user_track_progress",
           "tableTo": "meditation_tracks",
           "columnsFrom": [
             "track_id"
+
           ],
           "columnsTo": [
             "id"
