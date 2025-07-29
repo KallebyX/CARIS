@@ -220,6 +220,31 @@ export const meditationSessionsRelations = relations(meditationSessions, ({ one 
   }),
 }))
 
+// Tabela de salas de chat
+export const chatRooms = pgTable('chat_rooms', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  participantIds: text('participant_ids').notNull(), // JSON array de user IDs
+  roomType: text('room_type').notNull().default('private'), // 'private', 'group'
+  name: text('name'), // Para salas nomeadas
+  isEncrypted: boolean('is_encrypted').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// Tabela de mensagens do chat
+export const chatMessages = pgTable('chat_messages', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  roomId: text('room_id').references(() => chatRooms.id).notNull(),
+  senderId: integer('sender_id').references(() => users.id).notNull(),
+  content: text('content'), // Conteúdo criptografado
+  messageType: text('message_type').notNull().default('text'), // 'text', 'file', 'system'
+  encryptionVersion: text('encryption_version').notNull().default('aes-256'),
+  isTemporary: boolean('is_temporary').notNull().default(false),
+  expiresAt: timestamp('expires_at'), // Para mensagens temporárias
+  editedAt: timestamp('edited_at'),
+  deletedAt: timestamp('deleted_at'),
+  metadata: text('metadata'), // JSON para dados adicionais
+
 // ==== MULTI-CLINIC TABLES ====
 
 // Clínicas/Organizações
@@ -390,6 +415,93 @@ export const userConsents = pgTable('user_consents', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
+
+
+// Tabela de arquivos do chat
+export const chatFiles = pgTable('chat_files', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  messageId: text('message_id').references(() => chatMessages.id).notNull(),
+  originalName: text('original_name').notNull(),
+  fileName: text('file_name').notNull(), // Nome único no storage
+  filePath: text('file_path').notNull(),
+  fileSize: integer('file_size').notNull(),
+  mimeType: text('mime_type').notNull(),
+  isEncrypted: boolean('is_encrypted').notNull().default(true),
+  encryptionKey: text('encryption_key'), // Chave específica do arquivo
+  virusScanStatus: text('virus_scan_status').notNull().default('pending'), // 'pending', 'clean', 'infected'
+  virusScanResult: text('virus_scan_result'), // JSON com detalhes do scan
+  downloadCount: integer('download_count').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Tabela de recibos de leitura
+export const messageReadReceipts = pgTable('message_read_receipts', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  messageId: text('message_id').references(() => chatMessages.id).notNull(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  deliveredAt: timestamp('delivered_at'),
+  readAt: timestamp('read_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Tabela de chaves de criptografia por usuário
+export const userEncryptionKeys = pgTable('user_encryption_keys', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  publicKey: text('public_key').notNull(),
+  privateKeyEncrypted: text('private_key_encrypted').notNull(), // Chave privada criptografada com senha do usuário
+  keyVersion: text('key_version').notNull().default('v1'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  expiresAt: timestamp('expires_at'),
+})
+
+// Tabela de backups criptografados
+export const chatBackups = pgTable('chat_backups', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  roomId: text('room_id').references(() => chatRooms.id),
+  backupData: text('backup_data').notNull(), // Dados criptografados
+  backupType: text('backup_type').notNull().default('full'), // 'full', 'incremental'
+  encryptionKey: text('encryption_key').notNull(),
+  messageCount: integer('message_count').notNull().default(0),
+  fileCount: integer('file_count').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Relações para as novas tabelas
+export const chatRoomsRelations = relations(chatRooms, ({ many }) => ({
+  messages: many(chatMessages),
+  backups: many(chatBackups),
+}))
+
+export const chatMessagesRelations = relations(chatMessages, ({ one, many }) => ({
+  room: one(chatRooms, {
+    fields: [chatMessages.roomId],
+    references: [chatRooms.id],
+  }),
+  sender: one(users, {
+    fields: [chatMessages.senderId],
+    references: [users.id],
+  }),
+  files: many(chatFiles),
+  readReceipts: many(messageReadReceipts),
+}))
+
+export const chatFilesRelations = relations(chatFiles, ({ one }) => ({
+  message: one(chatMessages, {
+    fields: [chatFiles.messageId],
+    references: [chatMessages.id],
+  }),
+}))
+
+export const messageReadReceiptsRelations = relations(messageReadReceipts, ({ one }) => ({
+  message: one(chatMessages, {
+    fields: [messageReadReceipts.messageId],
+    references: [chatMessages.id],
+  }),
+  user: one(users, {
+    fields: [messageReadReceipts.userId],
 
 // Tabela de auditoria para compliance
 export const auditLogs = pgTable('audit_logs', {
@@ -677,13 +789,28 @@ export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
   }),
 }))
 
+export const userEncryptionKeysRelations = relations(userEncryptionKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [userEncryptionKeys.userId],
+
 
 export const userPrivacySettingsRelations = relations(userPrivacySettings, ({ one }) => ({
   user: one(users, {
     fields: [userPrivacySettings.userId],
+
     references: [users.id],
   }),
 }))
+
+
+export const chatBackupsRelations = relations(chatBackups, ({ one }) => ({
+  user: one(users, {
+    fields: [chatBackups.userId],
+    references: [users.id],
+  }),
+  room: one(chatRooms, {
+    fields: [chatBackups.roomId],
+    references: [chatRooms.id],
 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, {
