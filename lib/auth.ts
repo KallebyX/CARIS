@@ -23,3 +23,19 @@ export async function getUserIdFromRequest(request: NextRequest | Request) {
     return null
   }
 }
+
+/**
+ * Verifica se o token JWT é válido.
+ * @param token O token JWT a ser verificado.
+ * @returns O payload do token se válido, ou null se inválido.
+ */
+export async function verifyToken(token: string) {
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const { payload } = await jose.jwtVerify(token, secret)
+    return payload
+  } catch (error) {
+    console.error("Falha na verificação do token:", error)
+    return null
+  }
+}

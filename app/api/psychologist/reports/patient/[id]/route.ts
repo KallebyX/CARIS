@@ -13,7 +13,7 @@ import {
 import { eq, and, gte, desc, asc } from "drizzle-orm"
 import { verifyToken } from "@/lib/auth"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const token = request.cookies.get("token")?.value
     if (!token) {
@@ -25,7 +25,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    const patientId = Number.parseInt(params.id)
+    const { id } = await params
+    const patientId = Number.parseInt(id)
     const psychologistId = decoded.userId
 
     // Verificar se o paciente pertence ao psicólogo

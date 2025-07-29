@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { sos } from "@/db/schema"
+import { sosUsages } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { NextResponse } from "next/server"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
@@ -13,15 +13,16 @@ export async function POST(req: Request) {
       return new NextResponse("Missing fields", { status: 400 })
     }
 
-    const existingSOS = await db.select().from(sos).where(eq(sos.userId, userId))
+    const existingSOS = await db.select().from(sosUsages).where(eq(sosUsages.patientId, userId))
 
     if (existingSOS.length > 0) {
       return new NextResponse("SOS already registered", { status: 400 })
     }
 
-    await db.insert(sos).values({
-      userId: userId,
-      toolName: toolName,
+    await db.insert(sosUsages).values({
+      patientId: userId,
+      level: 'mild', // Padrão
+      notes: `SOS ativado: ${toolName}`,
     })
 
     // Buscar o psicólogo responsável

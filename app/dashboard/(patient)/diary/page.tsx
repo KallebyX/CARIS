@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"
-import { Brain, Sparkles, Send, Heart, Shield, TrendingUp, CopyIcon as CreateIcon } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { VoiceRecorder } from "@/components/ui/voice-recorder"
+import { PhotoUploader } from "@/components/ui/photo-uploader"
+import { Brain, Sparkles, Send, Heart, Shield, TrendingUp, CopyIcon as CreateIcon, Mic, Camera, Type } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
@@ -35,6 +38,14 @@ export default function DiaryPage() {
   const [selectedCycle, setSelectedCycle] = useState<string | null>(null)
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("text")
+
+  // Multimodal state
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [audioTranscription, setAudioTranscription] = useState("")
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [imageAnalysis, setImageAnalysis] = useState("")
 
   const handleNewPrompt = () => {
     const newPrompt = prompts[Math.floor(Math.random() * prompts.length)]
@@ -51,14 +62,64 @@ export default function DiaryPage() {
     setEntry("")
     setSelectedCycle(null)
     setSelectedEmotions([])
+    setAudioBlob(null)
+    setAudioTranscription("")
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setImageAnalysis("")
+    setActiveTab("text")
     handleNewPrompt()
   }
 
+  const handleAudioRecording = (blob: Blob, transcription?: string) => {
+    setAudioBlob(blob)
+    if (transcription) {
+      setAudioTranscription(transcription)
+      // Auto-fill text area if empty
+      if (!entry) {
+        setEntry(transcription)
+      }
+    }
+  }
+
+  const handlePhotoUpload = (file: File, preview: string) => {
+    setPhotoFile(file)
+    setPhotoPreview(preview)
+  }
+
+  const handlePhotoRemove = () => {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setImageAnalysis("")
+  }
+
+  const uploadFile = async (file: File, type: 'audio' | 'image'): Promise<string | null> => {
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('type', type)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return data.url
+      }
+      return null
+    } catch (error) {
+      console.error('File upload error:', error)
+      return null
+    }
+  }
+
   const handleSubmit = async () => {
-    if (!entry) {
+    if (!entry && !audioBlob && !photoFile) {
       toast({
         title: "Campo obrigatório",
-        description: "Por favor, escreva sua reflexão.",
+        description: "Por favor, adicione algum conteúdo (texto, áudio ou imagem).",
         variant: "destructive",
       })
       return
@@ -74,15 +135,32 @@ export default function DiaryPage() {
 
     setIsLoading(true)
 
-    const payload = {
-      moodRating: mood,
-      intensityRating: intensity,
-      content: entry,
-      cycle: selectedCycle.toLowerCase() as "criar" | "cuidar" | "crescer" | "curar",
-      emotions: selectedEmotions,
-    }
-
     try {
+      // Upload files first
+      let audioUrl = null
+      let imageUrl = null
+
+      if (audioBlob) {
+        const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' })
+        audioUrl = await uploadFile(audioFile, 'audio')
+      }
+
+      if (photoFile) {
+        imageUrl = await uploadFile(photoFile, 'image')
+      }
+
+      const payload = {
+        moodRating: mood,
+        intensityRating: intensity,
+        content: entry,
+        cycle: selectedCycle.toLowerCase() as "criar" | "cuidar" | "crescer" | "curar",
+        emotions: selectedEmotions,
+        audioUrl,
+        audioTranscription,
+        imageUrl,
+        imageDescription: imageAnalysis,
+      }
+
       const res = await fetch("/api/patient/diary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,7 +174,7 @@ export default function DiaryPage() {
 
       toast({
         title: "Sucesso!",
-        description: "Sua entrada no diário foi salva.",
+        description: "Sua entrada multimodal no diário foi salva.",
         className: "bg-teal-100 border-teal-200 text-teal-800",
       })
       resetForm()
@@ -114,8 +192,8 @@ export default function DiaryPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-800">Diário Emocional</h1>
-        <p className="text-slate-600">Um espaço seguro para suas reflexões.</p>
+        <h1 className="text-3xl font-bold text-slate-800">Diário Multimodal</h1>
+        <p className="text-slate-600">Expresse-se através de texto, voz e imagens.</p>
       </div>
 
       <Card className="overflow-hidden">
@@ -204,21 +282,56 @@ export default function DiaryPage() {
             </div>
           </div>
 
-          {/* Text Entry */}
+          {/* Multimodal Content */}
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <Label className="text-lg font-medium text-slate-700">Sua reflexão</Label>
-              <Button variant="ghost" size="sm" onClick={handleNewPrompt}>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Novo prompt
-              </Button>
-            </div>
-            <Textarea
-              placeholder={currentPrompt}
-              className="min-h-[200px] text-base"
-              value={entry}
-              onChange={(e) => setEntry(e.target.value)}
-            />
+            <Label className="text-lg font-medium text-slate-700">Escolha como expressar seus sentimentos</Label>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="text" className="flex items-center gap-2">
+                  <Type className="w-4 h-4" />
+                  Texto
+                </TabsTrigger>
+                <TabsTrigger value="voice" className="flex items-center gap-2">
+                  <Mic className="w-4 h-4" />
+                  Voz
+                </TabsTrigger>
+                <TabsTrigger value="photo" className="flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  Foto
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="text" className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-lg font-medium text-slate-700">Sua reflexão</Label>
+                  <Button variant="ghost" size="sm" onClick={handleNewPrompt}>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Novo prompt
+                  </Button>
+                </div>
+                <Textarea
+                  placeholder={currentPrompt}
+                  className="min-h-[200px] text-base"
+                  value={entry}
+                  onChange={(e) => setEntry(e.target.value)}
+                />
+              </TabsContent>
+
+              <TabsContent value="voice">
+                <VoiceRecorder
+                  onRecordingComplete={handleAudioRecording}
+                  onTranscriptionComplete={(transcription) => setAudioTranscription(transcription)}
+                />
+              </TabsContent>
+
+              <TabsContent value="photo">
+                <PhotoUploader
+                  onPhotoUpload={handlePhotoUpload}
+                  onPhotoRemove={handlePhotoRemove}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
 
           <Button
@@ -231,7 +344,7 @@ export default function DiaryPage() {
               "Salvando..."
             ) : (
               <>
-                <Send className="w-5 h-5 mr-2" /> Salvar Entrada
+                <Send className="w-5 h-5 mr-2" /> Salvar Entrada Multimodal
               </>
             )}
           </Button>
