@@ -47,6 +47,16 @@ export async function POST(req: NextRequest) {
       })
     }
 
+
+    const newSession = await db.insert(sessions).values({
+      psychologistId: parseInt(userId),
+      patientId: parseInt(patientId),
+      sessionDate: new Date(startTime),
+      durationMinutes: Math.floor((new Date(endTime).getTime() - new Date(startTime).getTime()) / (1000 * 60)),
+      type: 'online', // Default to online
+      status: 'agendada', // Default status
+      notes: notes,
+
     const [newSession] = await db.insert(sessions).values({
       psychologistId: parseInt(userId),
       patientId: parseInt(patientId),
@@ -55,10 +65,14 @@ export async function POST(req: NextRequest) {
       type: type || 'online',
       status: 'agendada',
       notes: notes || null,
+
     }).returning()
 
     const realtimeService = RealtimeNotificationService.getInstance()
     await realtimeService.notifySessionScheduled(userId, patientId, newSession)
+
+
+    return NextResponse.json(newSession[0])
 
     return NextResponse.json(newSession)
 
@@ -84,6 +98,7 @@ export async function POST(req: NextRequest) {
     // await realtimeService.notifySessionUpdate(newSession.id, "created", userId)
 
     return NextResponse.json({ success: true, data: newSession })
+
 
   } catch (error) {
     console.error("[SESSIONS_POST]", error)

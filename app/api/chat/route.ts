@@ -1,5 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+import { auth } from "@clerk/nextjs"
+import { db } from "@/db"
+import { RealtimeNotificationService } from "@/lib/realtime-notifications"
+
+
 export async function POST(req: NextRequest) {
   // TODO: Implement chat functionality when messages table is added to schema
   return new NextResponse("Chat functionality not implemented yet", { status: 501 })
@@ -265,6 +270,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Conteúdo da mensagem é obrigatório" }, { status: 400 })
     }
 
+
+    // TODO: Implement chat messaging system with appropriate database table
+    // The chat functionality needs a proper messages table in the schema
+    return new NextResponse("Chat functionality not yet implemented", { status: 501 })
+
     const [message] = await db
       .insert(chatMessages)
       .values({
@@ -280,6 +290,7 @@ export async function POST(req: NextRequest) {
     // await realtimeService.notifyNewChatMessage(userId, receiverId, content)
 
     return NextResponse.json({ success: true, data: message })
+
   } catch (error) {
     console.error("[CHAT_POST]", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
