@@ -1,15 +1,17 @@
-import * as dotenv from "dotenv"
-dotenv.config({ path: ".env.local" })
+import { defineConfig } from 'drizzle-kit';
+import { loadEnvConfig } from '@next/env';
 
-if (!process.env.POSTGRES_URL) {
-  throw new Error("POSTGRES_URL environment variable is not set")
-}
+// Load environment variables
+const projectDir = process.cwd();
+loadEnvConfig(projectDir);
 
-export default {
+export default defineConfig({
   schema: "./db/schema.ts",
-  out: "./db/migrations",
+  out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.POSTGRES_URL,
+    url: process.env.POSTGRES_URL || "postgresql://localhost:5432/caris"
   },
-}
+  verbose: true,
+  strict: true,
+});

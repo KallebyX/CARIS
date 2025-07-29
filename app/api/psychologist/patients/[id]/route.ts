@@ -4,13 +4,14 @@ import { users, diaryEntries } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const psychologistId = await getUserIdFromRequest(request)
   if (!psychologistId) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
 
-  const patientId = Number.parseInt(params.id, 10)
+  const { id } = await params
+  const patientId = Number.parseInt(id, 10)
   if (isNaN(patientId)) {
     return NextResponse.json({ error: "ID de paciente inválido" }, { status: 400 })
   }
