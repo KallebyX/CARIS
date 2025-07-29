@@ -416,7 +416,19 @@ async function analyzeImageContent(imageAnalysis: string) {
       throw new Error('OpenAI API key not configured')
     }
 
+    const prompt = `Analise este conteúdo de imagem para uma entrada de diário emocional: ${imageAnalysis}
+    
+    Retorne um JSON com:
+    - emotionalIndicators: lista de indicadores emocionais visuais
+    - moodIndication: indicação do humor geral
+    - riskFactors: fatores de risco identificados
+    - recommendations: recomendações baseadas na análise`
 
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: 'system',
           content: 'Você é um especialista em análise clínica para terapeutas. Analise os dados fornecidos e retorne insights estruturados em JSON.',
         },
         {

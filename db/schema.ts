@@ -414,7 +414,18 @@ export const generatedReportsRelations = relations(generatedReports, ({ one }) =
     fields: [generatedReports.patientId],
     references: [users.id],
   }),
-=======
+}))
+
+// User Relations
+export const usersRelations = relations(users, ({ one, many }) => ({
+  psychologistProfile: one(psychologistProfiles, {
+    fields: [users.id],
+    references: [psychologistProfiles.userId],
+  }),
+  patientProfile: one(patientProfiles, {
+    fields: [users.id], 
+    references: [patientProfiles.userId],
+  }),
 
   pointActivities: many(pointActivities),
   userChallengeProgress: many(userChallengeProgress),

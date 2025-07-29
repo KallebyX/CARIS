@@ -105,6 +105,24 @@ function CheckoutPageContent() {
     name?: string
   }>({})
 
+  // Legacy checkout system state (keeping for backward compatibility)
+  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
+    plan: null,
+    paymentMethod: "",
+    customerData: {
+      name: "",
+      email: "",
+      document: "",
+      phone: ""
+    },
+    billingData: {
+      address: "",
+      city: "",
+      state: "",
+      zipCode: ""
+    }
+  })
+
   // Check for cancellation or error parameters
   useEffect(() => {
     const cancelled = searchParams.get("cancelled")
@@ -137,6 +155,18 @@ function CheckoutPageContent() {
     // Get user info from cookie or session
     fetchUserInfo()
   }, [searchParams, toast])
+
+  useEffect(() => {
+    // Verificar se há um plano pré-selecionado na URL
+    const planId = searchParams.get("plan")
+    if (planId) {
+      const selectedPlan = plans.find(p => p.id === planId)
+      if (selectedPlan) {
+        setCheckoutData(prev => ({ ...prev, plan: selectedPlan }))
+        setCurrentStep(2) // Pular para a seleção de método de pagamento
+      }
+    }
+  }, [searchParams])
 
   const fetchUserInfo = async () => {
     try {
@@ -201,36 +231,6 @@ function CheckoutPageContent() {
       </div>
     )
   }
-
-  // Legacy checkout system (keeping for backward compatibility)
-  const [checkoutData, setCheckoutData] = useState<CheckoutData>({
-    plan: null,
-    paymentMethod: "",
-    customerData: {
-      name: "",
-      email: "",
-      document: "",
-      phone: ""
-    },
-    billingData: {
-      address: "",
-      city: "",
-      state: "",
-      zipCode: ""
-    }
-  })
-
-  useEffect(() => {
-    // Verificar se há um plano pré-selecionado na URL
-    const planId = searchParams.get("plan")
-    if (planId) {
-      const selectedPlan = plans.find(p => p.id === planId)
-      if (selectedPlan) {
-        setCheckoutData(prev => ({ ...prev, plan: selectedPlan }))
-        setCurrentStep(2) // Pular para a seleção de método de pagamento
-      }
-    }
-  }, [searchParams])
 
   const handlePlanSelect = (plan: Plan) => {
     setCheckoutData(prev => ({ ...prev, plan }))
