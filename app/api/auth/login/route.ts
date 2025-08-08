@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     }
 
     userId = user.id
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash)
 
     if (!isPasswordValid) {
       await logAuditEvent({

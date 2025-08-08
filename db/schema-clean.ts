@@ -6,7 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  password_hash: text("password_hash").notNull(),
+  password: text("password_hash").notNull(),
   role: text("role").notNull(), // 'psychologist', 'patient', 'admin', 'clinic_owner', 'clinic_admin'
   avatarUrl: text("avatar_url"),
 
@@ -61,18 +61,6 @@ export const patientProfiles = pgTable("patient_profiles", {
   timezone: varchar("timezone", { length: 50 }).default("America/Sao_Paulo"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-})
-
-// Tabela de auditoria para compliance
-export const auditLogs = pgTable('audit_logs', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id),
-  action: varchar('action', { length: 100 }).notNull(), // 'create', 'read', 'update', 'delete', 'export', 'anonymize'
-  resourceType: varchar('resource_type', { length: 50 }).notNull(), // 'user', 'diary_entry', 'session', etc.
-  resourceId: varchar('resource_id', { length: 50 }),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 // Configurações do usuário
@@ -218,12 +206,5 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   clinic: one(clinics, {
     fields: [sessions.clinicId],
     references: [clinics.id],
-  }),
-}))
-
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
-  user: one(users, {
-    fields: [auditLogs.userId],
-    references: [users.id],
   }),
 }))

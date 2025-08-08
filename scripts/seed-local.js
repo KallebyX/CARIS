@@ -3,9 +3,10 @@ const bcrypt = require("bcryptjs")
 
 const client = new Client({
   host: "localhost",
-  port: 5445,
+  port: 5432,
   database: "caris",
-  user: "kalleby"
+  user: "postgres",
+  password: "password"
 })
 
 async function seed() {

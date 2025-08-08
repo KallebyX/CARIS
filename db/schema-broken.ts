@@ -62,7 +62,6 @@ export const patientProfiles = pgTable("patient_profiles", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
-
 // Tabela de auditoria para compliance
 export const auditLogs = pgTable('audit_logs', {
   id: serial('id').primaryKey(),
@@ -73,6 +72,7 @@ export const auditLogs = pgTable('audit_logs', {
   ipAddress: varchar('ip_address', { length: 45 }),
   userAgent: text('user_agent'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 })
 
 // Configurações do usuário
@@ -218,12 +218,5 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   clinic: one(clinics, {
     fields: [sessions.clinicId],
     references: [clinics.id],
-  }),
-}))
-
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
-  user: one(users, {
-    fields: [auditLogs.userId],
-    references: [users.id],
   }),
 }))
