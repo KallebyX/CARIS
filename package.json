@@ -16,7 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-rds-data": "latest",
     "@azure/msal-node": "^3.6.4",
-    "@clerk/nextjs": "latest",
+    "@clerk/nextjs": "6.28.1",
     "@cloudflare/workers-types": "latest",
     "@electric-sql/pglite": "latest",
     "@emotion/is-prop-valid": "latest",
