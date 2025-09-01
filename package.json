@@ -14,7 +14,7 @@
     "postbuild": "npm run render:setup"
   },
   "dependencies": {
-    "@aws-sdk/client-rds-data": "latest",
+    "@aws-sdk/client-rds-data": "3.859.0",
     "@azure/msal-node": "^3.6.4",
     "@clerk/nextjs": "latest",
     "@cloudflare/workers-types": "latest",
