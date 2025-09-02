@@ -17,7 +17,7 @@
     "@aws-sdk/client-rds-data": "3.859.0",
     "@azure/msal-node": "^3.6.4",
     "@clerk/nextjs": "latest",
-    "@cloudflare/workers-types": "4.20250805.0",
+    "@cloudflare/workers-types": "4.20250812.0",
     "@electric-sql/pglite": "latest",
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.1",
