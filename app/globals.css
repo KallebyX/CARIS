@@ -146,3 +146,6 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--caris-teal) / 0.8);
 }
+
+/* Import mobile-specific styles */
+@import '../styles/mobile.css';

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Palette, TrendingUp } from 'lucide-react'
+import { useIsMobile, useIsTablet } from '@/lib/responsive-utils'
 
 ChartJS.register(
   RadialLinearScale,
@@ -61,6 +62,9 @@ const PLUTCHIK_COLORS = {
 }
 
 export function PlutchikRadar({ data, period = 'month', onPeriodChange }: PlutchikRadarProps) {
+  const isMobile = useIsMobile()
+  const isTablet = useIsTablet()
+
   // Preparar dados para o radar chart
   const chartData = React.useMemo(() => {
     const emotionMap = new Map(data.map(d => [d.emotion.toLowerCase(), d]))
@@ -104,14 +108,22 @@ export function PlutchikRadar({ data, period = 'month', onPeriodChange }: Plutch
     }
   }, [data])
 
-  const options = {
+  const options = React.useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: (isMobile ? 'bottom' : 'top') as const,
+        labels: {
+          font: {
+            size: isMobile ? 10 : 12
+          },
+          padding: isMobile ? 8 : 10,
+          boxWidth: isMobile ? 30 : 40
+        }
       },
       tooltip: {
+        enabled: true,
         callbacks: {
           label: function(context: any) {
             const emotion = context.label
@@ -134,18 +146,26 @@ export function PlutchikRadar({ data, period = 'month', onPeriodChange }: Plutch
         pointLabels: {
           display: true,
           font: {
-            size: 12
-          }
+            size: isMobile ? 9 : (isTablet ? 10 : 12)
+          },
+          padding: isMobile ? 5 : 8
         },
         suggestedMin: 0,
         suggestedMax: 10,
         ticks: {
-          display: true,
-          stepSize: 2
+          display: !isMobile, // Hide tick labels on mobile for cleaner look
+          stepSize: 2,
+          font: {
+            size: isMobile ? 8 : 10
+          }
         }
       },
     },
-  }
+    interaction: {
+      mode: 'nearest' as const,
+      intersect: false,
+    },
+  }), [isMobile, isTablet])
 
   // Calcular estatísticas
   const stats = React.useMemo(() => {
@@ -186,15 +206,15 @@ export function PlutchikRadar({ data, period = 'month', onPeriodChange }: Plutch
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="w-5 h-5" />
-            Mapa Emocional Plutchik
+      <CardHeader className={isMobile ? 'p-4' : ''}>
+        <div className={`flex items-center ${isMobile ? 'flex-col gap-3' : 'justify-between'}`}>
+          <CardTitle className={`flex items-center gap-2 ${isMobile ? 'text-base' : ''}`}>
+            <Palette className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} />
+            {isMobile ? 'Mapa Emocional' : 'Mapa Emocional Plutchik'}
           </CardTitle>
           {onPeriodChange && (
             <Select value={period} onValueChange={onPeriodChange}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className={isMobile ? 'w-full' : 'w-32'}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -205,44 +225,46 @@ export function PlutchikRadar({ data, period = 'month', onPeriodChange }: Plutch
             </Select>
           )}
         </div>
-        
+
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-            <div>
-              <div className="font-medium">Emoção Dominante</div>
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{ 
-                    backgroundColor: PLUTCHIK_COLORS[stats.dominantEmotion.emotion as keyof typeof PLUTCHIK_COLORS] || '#708090' 
+          <div className={`grid gap-3 text-sm mt-4 ${
+            isMobile ? 'grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'
+          }`}>
+            <div className={isMobile ? 'text-xs' : ''}>
+              <div className="font-medium text-gray-500">Emoção Dominante</div>
+              <div className="flex items-center gap-2 mt-1">
+                <div
+                  className="w-3 h-3 rounded-full shrink-0"
+                  style={{
+                    backgroundColor: PLUTCHIK_COLORS[stats.dominantEmotion.emotion as keyof typeof PLUTCHIK_COLORS] || '#708090'
                   }}
                 />
-                {stats.dominantEmotion.emotion}
+                <span className="font-semibold truncate">{stats.dominantEmotion.emotion}</span>
               </div>
             </div>
-            
-            <div>
-              <div className="font-medium">Balanço Emocional</div>
-              <div className={`font-semibold ${stats.emotionalBalance >= 50 ? 'text-green-600' : 'text-orange-600'}`}>
-                {stats.emotionalBalance}% positivo
+
+            <div className={isMobile ? 'text-xs' : ''}>
+              <div className="font-medium text-gray-500">Balanço</div>
+              <div className={`font-semibold mt-1 ${stats.emotionalBalance >= 50 ? 'text-green-600' : 'text-orange-600'}`}>
+                {stats.emotionalBalance}% +
               </div>
             </div>
-            
-            <div>
-              <div className="font-medium">Intensidade Média</div>
-              <div className="font-semibold">{stats.avgIntensity}/10</div>
+
+            <div className={isMobile ? 'text-xs' : ''}>
+              <div className="font-medium text-gray-500">Intensidade</div>
+              <div className="font-semibold mt-1">{stats.avgIntensity}/10</div>
             </div>
-            
-            <div>
-              <div className="font-medium">Total de Registros</div>
-              <div className="font-semibold">{stats.totalFrequency}</div>
+
+            <div className={isMobile ? 'text-xs' : ''}>
+              <div className="font-medium text-gray-500">Registros</div>
+              <div className="font-semibold mt-1">{stats.totalFrequency}</div>
             </div>
           </div>
         )}
       </CardHeader>
-      
-      <CardContent>
-        <div className="h-96 mb-6">
+
+      <CardContent className={isMobile ? 'p-4 pt-0' : ''}>
+        <div className={`mb-6 ${isMobile ? 'h-64' : isTablet ? 'h-80' : 'h-96'}`}>
           <Radar data={chartData} options={options} />
         </div>
         
@@ -250,44 +272,54 @@ export function PlutchikRadar({ data, period = 'month', onPeriodChange }: Plutch
           <div className="space-y-4">
             {stats.improvingEmotions.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-green-500" />
+                <div className={`flex items-center gap-2 mb-2 ${isMobile ? 'text-sm' : ''}`}>
+                  <TrendingUp className={isMobile ? 'w-3 h-3' : 'w-4 h-4'} className="text-green-500" />
                   <span className="font-medium">Emoções em Melhora</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {stats.improvingEmotions.map(emotion => (
-                    <Badge key={emotion.emotion} variant="secondary" className="bg-green-100 text-green-800">
+                    <Badge
+                      key={emotion.emotion}
+                      variant="secondary"
+                      className={`bg-green-100 text-green-800 ${isMobile ? 'text-xs' : ''}`}
+                    >
                       {emotion.emotion}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
-            
+
             {stats.decliningEmotions.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-red-500 rotate-180" />
+                <div className={`flex items-center gap-2 mb-2 ${isMobile ? 'text-sm' : ''}`}>
+                  <TrendingUp className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-red-500 rotate-180`} />
                   <span className="font-medium">Emoções em Declínio</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {stats.decliningEmotions.map(emotion => (
-                    <Badge key={emotion.emotion} variant="secondary" className="bg-red-100 text-red-800">
+                    <Badge
+                      key={emotion.emotion}
+                      variant="secondary"
+                      className={`bg-red-100 text-red-800 ${isMobile ? 'text-xs' : ''}`}
+                    >
                       {emotion.emotion}
                     </Badge>
                   ))}
                 </div>
               </div>
             )}
-            
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <div className="font-medium text-blue-900 mb-2">Sobre o Modelo Plutchik</div>
-              <div className="text-sm text-blue-800">
-                O modelo de Plutchik identifica 8 emoções básicas organizadas em pares opostos:
-                Alegria ↔ Tristeza, Confiança ↔ Aversão, Medo ↔ Raiva, Surpresa ↔ Expectativa.
-                Esta análise ajuda a compreender o padrão emocional e identificar áreas para trabalho terapêutico.
+
+            {!isMobile && (
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                <div className="font-medium text-blue-900 mb-2">Sobre o Modelo Plutchik</div>
+                <div className="text-sm text-blue-800">
+                  O modelo de Plutchik identifica 8 emoções básicas organizadas em pares opostos:
+                  Alegria ↔ Tristeza, Confiança ↔ Aversão, Medo ↔ Raiva, Surpresa ↔ Expectativa.
+                  Esta análise ajuda a compreender o padrão emocional e identificar áreas para trabalho terapêutico.
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </CardContent>

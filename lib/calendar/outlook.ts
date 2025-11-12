@@ -171,4 +171,24 @@ export class OutlookCalendarService {
       throw error;
     }
   }
+
+  async listEvents(startDateTime: string, endDateTime: string) {
+    try {
+      const graphClient = this.getGraphClient();
+
+      const events = await graphClient
+        .me.calendarView.query({
+          startDateTime: startDateTime,
+          endDateTime: endDateTime,
+        })
+        .select('subject,start,end,attendees,body,id')
+        .orderby('start/dateTime')
+        .get();
+
+      return events.value || [];
+    } catch (error) {
+      console.error('Error listing Outlook Calendar events:', error);
+      throw error;
+    }
+  }
 }
