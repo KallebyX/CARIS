@@ -1,0 +1,459 @@
+/**
+ * Mobile-Specific Styles for CÁRIS Platform
+ *
+ * This file contains mobile-first optimizations including:
+ * - Touch target sizes
+ * - Safe area insets for iOS notch
+ * - Text size adjustments
+ * - Touch action optimizations
+ * - Mobile-specific utilities
+ */
+
+/* ============================================
+   Root Variables for Mobile
+   ============================================ */
+:root {
+  /* Touch target minimum size (Apple/Google guidelines) */
+  --touch-target-min: 44px;
+
+  /* Safe area insets for iOS devices with notch */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  /* Mobile spacing */
+  --mobile-padding: 1rem;
+  --mobile-gap: 0.75rem;
+}
+
+/* ============================================
+   iOS Specific Styles
+   ============================================ */
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Smooth scrolling for iOS */
+body {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area padding for iOS devices with notch */
+@supports (padding: max(0px)) {
+  .safe-area-top {
+    padding-top: max(var(--mobile-padding), var(--safe-area-top));
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(var(--mobile-padding), var(--safe-area-bottom));
+  }
+
+  .safe-area-left {
+    padding-left: max(var(--mobile-padding), var(--safe-area-left));
+  }
+
+  .safe-area-right {
+    padding-right: max(var(--mobile-padding), var(--safe-area-right));
+  }
+
+  .safe-area-inset {
+    padding-top: max(var(--mobile-padding), var(--safe-area-top));
+    padding-right: max(var(--mobile-padding), var(--safe-area-right));
+    padding-bottom: max(var(--mobile-padding), var(--safe-area-bottom));
+    padding-left: max(var(--mobile-padding), var(--safe-area-left));
+  }
+}
+
+/* ============================================
+   Touch Target Optimization
+   ============================================ */
+
+/* Minimum touch target size */
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Buttons, links, and interactive elements */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* Ensure proper spacing between touch targets */
+  button + button,
+  a + a {
+    margin-left: 0.5rem;
+  }
+}
+
+/* ============================================
+   Touch Action Optimization
+   ============================================ */
+
+/* Prevent accidental zooming on double-tap */
+.no-zoom {
+  touch-action: manipulation;
+}
+
+/* Enable fast tap without 300ms delay */
+a, button, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Disable touch callout on iOS (long press menu) */
+.no-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Enable scrolling for specific areas */
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Horizontal scrolling */
+.touch-scroll-x {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ============================================
+   Mobile Layout Utilities
+   ============================================ */
+
+/* Full width on mobile */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Stack elements vertically on mobile */
+  .mobile-stack {
+    flex-direction: column;
+  }
+
+  /* Hide on mobile */
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  /* Show only on mobile */
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Mobile padding */
+  .mobile-padding {
+    padding: var(--mobile-padding);
+  }
+
+  /* Mobile gap */
+  .mobile-gap {
+    gap: var(--mobile-gap);
+  }
+}
+
+/* Show only on desktop */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   Mobile Navigation
+   ============================================ */
+
+/* Bottom navigation bar */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  padding-bottom: var(--safe-area-bottom);
+  z-index: 50;
+}
+
+/* Account for bottom nav height in content */
+@media (max-width: 768px) {
+  .has-bottom-nav {
+    padding-bottom: calc(4rem + var(--safe-area-bottom));
+  }
+}
+
+/* ============================================
+   Mobile Input Optimization
+   ============================================ */
+
+/* Larger input fields on mobile */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: var(--touch-target-min);
+  }
+
+  /* Remove iOS input shadows and borders */
+  input,
+  textarea,
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+}
+
+/* ============================================
+   Mobile Modal and Dialog
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Full screen modals on mobile */
+  .mobile-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  /* Bottom sheet style modal */
+  .mobile-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 90vh;
+    border-radius: 1rem 1rem 0 0;
+    padding-bottom: var(--safe-area-bottom);
+  }
+}
+
+/* ============================================
+   Mobile Cards and Containers
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Remove card borders/shadows on mobile for edge-to-edge design */
+  .mobile-edge-to-edge {
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    margin-left: calc(-1 * var(--mobile-padding));
+    margin-right: calc(-1 * var(--mobile-padding));
+  }
+
+  /* Compact card spacing */
+  .mobile-compact {
+    padding: 0.75rem;
+  }
+}
+
+/* ============================================
+   Mobile Typography
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Adjust heading sizes for mobile */
+  .mobile-heading-1 {
+    font-size: 1.875rem; /* 30px */
+    line-height: 2.25rem;
+  }
+
+  .mobile-heading-2 {
+    font-size: 1.5rem; /* 24px */
+    line-height: 2rem;
+  }
+
+  .mobile-heading-3 {
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.75rem;
+  }
+
+  /* Body text */
+  .mobile-body {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.25rem;
+  }
+
+  /* Small text */
+  .mobile-small {
+    font-size: 0.75rem; /* 12px */
+    line-height: 1rem;
+  }
+}
+
+/* ============================================
+   Mobile Gestures
+   ============================================ */
+
+/* Pull to refresh indicator area */
+.pull-to-refresh {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Swipeable items */
+.swipeable {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================
+   Mobile Performance
+   ============================================ */
+
+/* GPU acceleration for smooth animations */
+.mobile-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Optimize scrolling performance */
+.mobile-scroll-optimized {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+/* ============================================
+   Mobile Accessibility
+   ============================================ */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  button, a {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   Mobile Focus States
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Larger focus rings for touch devices */
+  *:focus-visible {
+    outline: 3px solid #06b6d4;
+    outline-offset: 2px;
+  }
+
+  /* Remove focus styles on touch (only keyboard) */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* ============================================
+   Mobile Landscape Orientation
+   ============================================ */
+
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce vertical padding in landscape */
+  .landscape-compact {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Hide less important elements in landscape */
+  .landscape-hidden {
+    display: none;
+  }
+}
+
+/* ============================================
+   PWA Specific Styles
+   ============================================ */
+
+/* When app is in standalone mode (installed PWA) */
+@media (display-mode: standalone) {
+  /* Additional top padding for status bar */
+  .pwa-header {
+    padding-top: calc(1rem + var(--safe-area-top));
+  }
+
+  /* Hide browser-specific elements */
+  .pwa-hide {
+    display: none;
+  }
+}
+
+/* ============================================
+   Mobile Utilities
+   ============================================ */
+
+/* Prevent text selection on mobile for certain elements */
+.mobile-no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Highlight taps */
+.mobile-tap-highlight {
+  -webkit-tap-highlight-color: rgba(6, 182, 212, 0.2);
+  tap-highlight-color: rgba(6, 182, 212, 0.2);
+}
+
+/* Prevent overscroll bounce */
+.mobile-no-bounce {
+  overscroll-behavior: contain;
+}
+
+/* Enable momentum scrolling */
+.mobile-momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+}

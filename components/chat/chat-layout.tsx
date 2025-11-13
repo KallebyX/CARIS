@@ -7,19 +7,23 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { 
-  Shield, 
-  Search, 
-  Download, 
+import {
+  Shield,
+  Search,
+  Download,
   Upload,
   Key,
   AlertTriangle,
   CheckCircle,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  X
 } from "lucide-react"
 import { ChatEncryption, KeyManager, type SecureChatMessage } from "@/lib/encryption"
 import Pusher from "pusher-js"
 import { toast } from "sonner"
+import { useIsMobile } from "@/lib/responsive-utils"
+import { useSwipe } from "@/hooks/use-touch-gestures"
 
 interface SecureChatLayoutProps {
   counterpartId: number
@@ -28,11 +32,11 @@ interface SecureChatLayoutProps {
   roomId?: string
 }
 
-export function SecureChatLayout({ 
-  counterpartId, 
-  counterpartName, 
+export function SecureChatLayout({
+  counterpartId,
+  counterpartName,
   currentUser,
-  roomId: initialRoomId 
+  roomId: initialRoomId
 }: SecureChatLayoutProps) {
   const [messages, setMessages] = useState<SecureChatMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,6 +46,21 @@ export function SecureChatLayout({
   const [encryptionStatus, setEncryptionStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredMessages, setFilteredMessages] = useState<SecureChatMessage[]>([])
+  const [showSearch, setShowSearch] = useState(false)
+
+  // Mobile optimizations
+  const isMobile = useIsMobile()
+
+  // Swipe gesture for mobile (swipe right to go back)
+  const swipeRef = useSwipe<HTMLDivElement>({
+    onSwipeRight: () => {
+      if (isMobile && typeof window !== 'undefined') {
+        window.history.back()
+      }
+    },
+  }, {
+    threshold: 100,
+  })
 
   // Initialize encryption
   useEffect(() => {
@@ -306,97 +325,130 @@ export function SecureChatLayout({
   }
 
   return (
-    <Card className="h-[70vh] flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-800">
-              Chat com {counterpartName}
-            </h2>
-            <p className="text-sm text-slate-500">
-              Comunicação segura com criptografia end-to-end
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Encryption Status */}
-            <Badge 
-              variant={encryptionStatus === 'ready' ? 'default' : 'secondary'}
-              className="flex items-center gap-1"
-            >
-              {encryptionStatus === 'loading' && <Loader2 className="w-3 h-3 animate-spin" />}
-              {encryptionStatus === 'ready' && <Shield className="w-3 h-3" />}
-              {encryptionStatus === 'error' && <AlertTriangle className="w-3 h-3" />}
-              
-              {encryptionStatus === 'loading' && 'Carregando...'}
-              {encryptionStatus === 'ready' && 'Criptografado'}
-              {encryptionStatus === 'error' && 'Erro'}
-            </Badge>
+    <div ref={swipeRef} className={isMobile ? "h-screen flex flex-col bg-white" : ""}>
+      <Card className={isMobile ? "h-full flex flex-col border-0 rounded-none shadow-none" : "h-[70vh] flex flex-col"}>
+        {/* Header */}
+        <div className={`border-b space-y-3 ${isMobile ? 'p-3 sticky top-0 bg-white z-10 safe-area-top' : 'p-4'}`}>
+          <div className="flex items-center justify-between gap-2">
+            {/* Mobile back button */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="shrink-0"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+            )}
 
-            {/* Export Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={exportConversation}
-              disabled={loading || messages.length === 0}
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+            <div className="flex-1 min-w-0">
+              <h2 className={`font-semibold text-slate-800 truncate ${isMobile ? 'text-base' : 'text-lg'}`}>
+                {counterpartName}
+              </h2>
+              {!isMobile && (
+                <p className="text-sm text-slate-500">
+                  Comunicação segura com criptografia end-to-end
+                </p>
+              )}
+            </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-          <Input
-            placeholder="Buscar mensagens..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-8"
-          />
-        </div>
-      </div>
+            <div className="flex items-center gap-2">
+              {/* Encryption Status */}
+              <Badge
+                variant={encryptionStatus === 'ready' ? 'default' : 'secondary'}
+                className={`flex items-center gap-1 ${isMobile ? 'text-xs px-2 py-0.5' : ''}`}
+              >
+                {encryptionStatus === 'loading' && <Loader2 className="w-3 h-3 animate-spin" />}
+                {encryptionStatus === 'ready' && <Shield className="w-3 h-3" />}
+                {encryptionStatus === 'error' && <AlertTriangle className="w-3 h-3" />}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-2">
-              <Loader2 className="w-8 h-8 animate-spin text-slate-400 mx-auto" />
-              <p className="text-slate-500">Carregando histórico...</p>
+                {!isMobile && (
+                  <>
+                    {encryptionStatus === 'loading' && 'Carregando...'}
+                    {encryptionStatus === 'ready' && 'Criptografado'}
+                    {encryptionStatus === 'error' && 'Erro'}
+                  </>
+                )}
+              </Badge>
+
+              {/* Search toggle for mobile */}
+              {isMobile ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSearch(!showSearch)}
+                  className="shrink-0"
+                >
+                  {showSearch ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportConversation}
+                  disabled={loading || messages.length === 0}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
-        )}
-        
-        {error && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center space-y-2">
-              <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
-              <p className="text-red-500">{error}</p>
-            </div>
-          </div>
-        )}
-        
-        {!loading && !error && (
-          <SecureChatMessages 
-            messages={searchQuery ? filteredMessages : messages}
-            currentUserId={currentUser.id}
-            encryptionKey={encryptionKey || undefined}
-            onDeleteMessage={handleDeleteMessage}
-            onDownloadFile={handleDownloadFile}
-          />
-        )}
-      </div>
 
-      {/* Input */}
-      <div className="p-4 border-t bg-slate-50">
-        <SecureChatInput 
-          onSendMessage={handleSendMessage}
-          isEncrypted={encryptionStatus === 'ready'}
-          disabled={loading || encryptionStatus !== 'ready'}
-        />
-      </div>
-    </Card>
+          {/* Search */}
+          {(!isMobile || showSearch) && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar mensagens..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`pl-10 ${isMobile ? 'h-10 text-base' : 'h-8'}`}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Messages */}
+        <div className={`flex-1 overflow-y-auto ${isMobile ? 'p-3' : 'p-4'}`}>
+          {loading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-2">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-400 mx-auto" />
+                <p className="text-slate-500">Carregando histórico...</p>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-2">
+                <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
+                <p className="text-red-500">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && (
+            <SecureChatMessages
+              messages={searchQuery ? filteredMessages : messages}
+              currentUserId={currentUser.id}
+              encryptionKey={encryptionKey || undefined}
+              onDeleteMessage={handleDeleteMessage}
+              onDownloadFile={handleDownloadFile}
+            />
+          )}
+        </div>
+
+        {/* Input */}
+        <div className={`border-t bg-slate-50 ${isMobile ? 'p-3 pb-safe-bottom' : 'p-4'}`}>
+          <SecureChatInput
+            onSendMessage={handleSendMessage}
+            isEncrypted={encryptionStatus === 'ready'}
+            disabled={loading || encryptionStatus !== 'ready'}
+          />
+        </div>
+      </Card>
+    </div>
   )
 }

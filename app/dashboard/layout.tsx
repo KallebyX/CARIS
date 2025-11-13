@@ -28,6 +28,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useLogout } from "@/hooks/use-logout"
 import { NotificationCenter } from "@/components/notifications/notification-center"
+import { MobileNav, MobileNavSpacer } from "@/components/mobile-nav"
+import { useIsMobile } from "@/lib/responsive-utils"
 
 interface User {
   id: number
@@ -48,6 +50,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter()
   const { toast } = useToast()
   const { logout, isLoggingOut } = useLogout()
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     fetchUserData()
@@ -110,6 +113,29 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return commonItems
   }
 
+  // Get mobile navigation items (limited to 5 most important)
+  const getMobileNavigationItems = () => {
+    if (user?.role === "psychologist") {
+      return [
+        { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
+        { href: "/dashboard/patients", icon: Users, label: "Pacientes" },
+        { href: "/dashboard/schedule", icon: Calendar, label: "Agenda" },
+        { href: "/dashboard/reports", icon: BarChart3, label: "Relatórios" },
+        { href: "/dashboard/settings", icon: Settings, label: "Config" },
+      ]
+    } else if (user?.role === "patient") {
+      return [
+        { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
+        { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
+        { href: "/dashboard/emotional-map", icon: Brain, label: "Emoções" },
+        { href: "/dashboard/sessions", icon: Calendar, label: "Sessões" },
+        { href: "/dashboard/settings", icon: Settings, label: "Config" },
+      ]
+    }
+
+    return []
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -123,6 +149,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const navigationItems = getNavigationItems()
+  const mobileNavigationItems = getMobileNavigationItems()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -231,8 +258,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6">{children}</main>
+        <main className={`p-4 sm:p-6 ${isMobile ? 'pb-20' : ''}`}>
+          {children}
+          {/* Spacer for mobile navigation */}
+          {isMobile && <MobileNavSpacer />}
+        </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && user && (
+        <MobileNav items={mobileNavigationItems} />
+      )}
     </div>
   )
 }

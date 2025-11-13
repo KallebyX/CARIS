@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -37,17 +38,82 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  /**
+   * Shows loading spinner and disables button
+   */
+  isLoading?: boolean
+  /**
+   * Text to announce to screen readers when loading
+   */
+  loadingText?: string
+  /**
+   * Icon to display before children
+   */
+  leftIcon?: React.ReactNode
+  /**
+   * Icon to display after children
+   */
+  rightIcon?: React.ReactNode
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({
+    className,
+    variant,
+    size,
+    asChild = false,
+    isLoading = false,
+    loadingText,
+    leftIcon,
+    rightIcon,
+    disabled,
+    children,
+    type = "button",
+    "aria-label": ariaLabel,
+    ...props
+  }, ref) => {
     const Comp = asChild ? Slot : "button"
+
+    // Determine if button has accessible label
+    const hasAccessibleLabel = ariaLabel || (typeof children === 'string' && children.length > 0)
+
+    // For icon-only buttons, ensure aria-label is provided
+    if (size === "icon" && !hasAccessibleLabel && !asChild) {
+      console.warn('Icon buttons should have an aria-label for accessibility')
+    }
+
+    const content = (
+      <>
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+        ) : leftIcon ? (
+          <span aria-hidden="true">{leftIcon}</span>
+        ) : null}
+        {children}
+        {!isLoading && rightIcon ? (
+          <span aria-hidden="true">{rightIcon}</span>
+        ) : null}
+      </>
+    )
+
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        type={type}
+        className={cn(buttonVariants({ variant, size, className }))}
+        disabled={disabled || isLoading}
+        aria-label={ariaLabel}
+        aria-disabled={disabled || isLoading}
+        aria-busy={isLoading}
         {...props}
-      />
+      >
+        {content}
+        {isLoading && (
+          <span className="sr-only">
+            {loadingText || 'Loading...'}
+          </span>
+        )}
+      </Comp>
     )
   }
 )

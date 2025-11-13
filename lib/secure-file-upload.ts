@@ -107,31 +107,164 @@ export class SecureFileUpload {
   }
 
   /**
-   * Basic virus scanning (placeholder for integration with antivirus service)
+   * Validate file type using magic bytes (file signature)
+   * More secure than trusting MIME type alone
    */
-  static async scanFile(fileBuffer: ArrayBuffer): Promise<{ 
-    status: 'clean' | 'infected' | 'error', 
-    details?: string 
+  static validateMagicBytes(fileBuffer: ArrayBuffer, expectedMimeType: string): {
+    valid: boolean
+    detectedType?: string
+    error?: string
+  } {
+    const bytes = new Uint8Array(fileBuffer)
+
+    // Magic bytes signatures for allowed file types
+    const magicBytes: Record<string, { signature: number[][], extensions: string[] }> = {
+      'image/jpeg': {
+        signature: [[0xFF, 0xD8, 0xFF]],
+        extensions: ['.jpg', '.jpeg']
+      },
+      'image/png': {
+        signature: [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
+        extensions: ['.png']
+      },
+      'image/gif': {
+        signature: [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]], // GIF87a and GIF89a
+        extensions: ['.gif']
+      },
+      'image/webp': {
+        signature: [[0x52, 0x49, 0x46, 0x46]], // RIFF at start, WebP at offset 8
+        extensions: ['.webp']
+      },
+      'application/pdf': {
+        signature: [[0x25, 0x50, 0x44, 0x46]], // %PDF
+        extensions: ['.pdf']
+      },
+      'text/plain': {
+        signature: [], // Text files don't have magic bytes
+        extensions: ['.txt']
+      },
+      'audio/mpeg': {
+        signature: [[0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xF2], [0x49, 0x44, 0x33]], // MP3 or ID3
+        extensions: ['.mp3']
+      },
+      'audio/wav': {
+        signature: [[0x52, 0x49, 0x46, 0x46]], // RIFF
+        extensions: ['.wav']
+      },
+      'audio/ogg': {
+        signature: [[0x4F, 0x67, 0x67, 0x53]], // OggS
+        extensions: ['.ogg']
+      },
+      'video/mp4': {
+        signature: [[0x66, 0x74, 0x79, 0x70]], // ftyp at offset 4
+        extensions: ['.mp4']
+      },
+      'application/msword': {
+        signature: [[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]], // MS Office
+        extensions: ['.doc']
+      },
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {
+        signature: [[0x50, 0x4B, 0x03, 0x04]], // ZIP (DOCX is ZIP)
+        extensions: ['.docx']
+      },
+    }
+
+    // Check if expected MIME type is supported
+    if (!magicBytes[expectedMimeType]) {
+      return {
+        valid: false,
+        error: 'Tipo de arquivo não suportado para validação'
+      }
+    }
+
+    const expected = magicBytes[expectedMimeType]
+
+    // Text files don't have magic bytes, trust MIME type
+    if (expected.signature.length === 0) {
+      return { valid: true, detectedType: expectedMimeType }
+    }
+
+    // Check each possible signature
+    for (const signature of expected.signature) {
+      let matches = true
+      const offset = expectedMimeType === 'video/mp4' ? 4 : 0 // MP4 signature at offset 4
+
+      for (let i = 0; i < signature.length; i++) {
+        if (bytes[offset + i] !== signature[i]) {
+          matches = false
+          break
+        }
+      }
+
+      if (matches) {
+        // Additional check for WebP
+        if (expectedMimeType === 'image/webp') {
+          const webpSignature = [0x57, 0x45, 0x42, 0x50] // WEBP at offset 8
+          let isWebP = true
+          for (let i = 0; i < webpSignature.length; i++) {
+            if (bytes[8 + i] !== webpSignature[i]) {
+              isWebP = false
+              break
+            }
+          }
+          if (!isWebP) {
+            return {
+              valid: false,
+              error: 'Arquivo não é WebP válido (falha na verificação de assinatura)'
+            }
+          }
+        }
+
+        return {
+          valid: true,
+          detectedType: expectedMimeType
+        }
+      }
+    }
+
+    return {
+      valid: false,
+      error: 'Assinatura do arquivo não corresponde ao tipo declarado'
+    }
+  }
+
+  /**
+   * Enhanced virus scanning with magic bytes validation
+   */
+  static async scanFile(fileBuffer: ArrayBuffer, declaredMimeType: string): Promise<{
+    status: 'clean' | 'infected' | 'error',
+    details?: string
   }> {
     try {
+      // First, validate magic bytes
+      const magicBytesCheck = this.validateMagicBytes(fileBuffer, declaredMimeType)
+      if (!magicBytesCheck.valid) {
+        return {
+          status: 'infected',
+          details: `Validação de tipo falhou: ${magicBytesCheck.error}`
+        }
+      }
+
       // In a real implementation, this would integrate with:
       // - ClamAV
       // - VirusTotal API
       // - AWS GuardDuty
       // - Microsoft Defender
-      
+
       // For now, implement basic heuristics
       const suspiciousPatterns = [
         // Executable signatures
         new Uint8Array([0x4D, 0x5A]), // MZ header (PE executable)
         new Uint8Array([0x7F, 0x45, 0x4C, 0x46]), // ELF header
         new Uint8Array([0xCE, 0xFA, 0xED, 0xFE]), // Mach-O header
-        // Script patterns that could be dangerous
+        new Uint8Array([0xCA, 0xFE, 0xBA, 0xBE]), // Java class file
+        // Script patterns that could be dangerous in files
         new Uint8Array([0x3C, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74]), // <script
+        new Uint8Array([0x3C, 0x69, 0x66, 0x72, 0x61, 0x6D, 0x65]), // <iframe
       ]
 
       const fileArray = new Uint8Array(fileBuffer)
-      
+
       for (const pattern of suspiciousPatterns) {
         if (this.containsPattern(fileArray, pattern)) {
           return {
@@ -150,12 +283,87 @@ export class SecureFileUpload {
         }
       }
 
+      // Check file size sanity
+      if (fileBuffer.byteLength === 0) {
+        return {
+          status: 'infected',
+          details: 'Arquivo vazio'
+        }
+      }
+
+      // For images, validate structure more deeply
+      if (declaredMimeType.startsWith('image/')) {
+        const imageValidation = await this.validateImageStructure(fileBuffer, declaredMimeType)
+        if (!imageValidation.valid) {
+          return {
+            status: 'infected',
+            details: imageValidation.error
+          }
+        }
+      }
+
       return { status: 'clean' }
     } catch (error) {
       console.error('Virus scan error:', error)
-      return { 
-        status: 'error', 
-        details: 'Erro durante verificação de segurança' 
+      return {
+        status: 'error',
+        details: 'Erro durante verificação de segurança'
+      }
+    }
+  }
+
+  /**
+   * Validate image file structure
+   */
+  static async validateImageStructure(fileBuffer: ArrayBuffer, mimeType: string): Promise<{
+    valid: boolean
+    error?: string
+  }> {
+    try {
+      // For browser environments, use Image API for validation
+      if (typeof window !== 'undefined' && window.Image) {
+        const blob = new Blob([fileBuffer], { type: mimeType })
+        const url = URL.createObjectURL(blob)
+
+        return new Promise((resolve) => {
+          const img = new Image()
+
+          img.onload = () => {
+            URL.revokeObjectURL(url)
+            // Check if image has reasonable dimensions
+            if (img.width > 10000 || img.height > 10000) {
+              resolve({
+                valid: false,
+                error: 'Dimensões da imagem excedem limites permitidos'
+              })
+            } else if (img.width === 0 || img.height === 0) {
+              resolve({
+                valid: false,
+                error: 'Imagem com dimensões inválidas'
+              })
+            } else {
+              resolve({ valid: true })
+            }
+          }
+
+          img.onerror = () => {
+            URL.revokeObjectURL(url)
+            resolve({
+              valid: false,
+              error: 'Imagem corrompida ou inválida'
+            })
+          }
+
+          img.src = url
+        })
+      }
+
+      // Server-side validation would use sharp or similar
+      return { valid: true }
+    } catch (error) {
+      return {
+        valid: false,
+        error: 'Erro ao validar estrutura da imagem'
       }
     }
   }

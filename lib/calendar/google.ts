@@ -154,11 +154,30 @@ export class GoogleCalendarService {
       this.oauth2Client.setCredentials({
         refresh_token: refreshToken,
       });
-      
+
       const { credentials } = await this.oauth2Client.refreshAccessToken();
       return credentials.access_token;
     } catch (error) {
       console.error('Error refreshing Google Calendar access token:', error);
+      throw error;
+    }
+  }
+
+  async listEvents(timeMin: string, timeMax: string) {
+    try {
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+
+      const response = await calendar.events.list({
+        calendarId: 'primary',
+        timeMin: timeMin,
+        timeMax: timeMax,
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      return response.data.items || [];
+    } catch (error) {
+      console.error('Error listing Google Calendar events:', error);
       throw error;
     }
   }

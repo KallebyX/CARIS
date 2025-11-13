@@ -1,0 +1,1059 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CÁRIS API",
+    "version": "1.0.0",
+    "description": "Complete API documentation for the CÁRIS mental health platform. This API provides endpoints for patient care, psychologist tools, session management, real-time chat, meditation, gamification, and more.",
+    "contact": {
+      "name": "CÁRIS Support",
+      "email": "support@caris.health"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Development server"
+    },
+    {
+      "url": "https://app.caris.health/api",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "User authentication and authorization" },
+    { "name": "User", "description": "User profile and settings" },
+    { "name": "Patient", "description": "Patient-specific endpoints" },
+    { "name": "Psychologist", "description": "Psychologist-specific endpoints" },
+    { "name": "Admin", "description": "Administrative endpoints" },
+    { "name": "Chat", "description": "Real-time messaging" },
+    { "name": "Sessions", "description": "Therapy session management" },
+    { "name": "Diary", "description": "Patient diary entries" },
+    { "name": "Meditation", "description": "Meditation and mindfulness" },
+    { "name": "Gamification", "description": "Points, achievements, and challenges" },
+    { "name": "Payments", "description": "Subscription and billing" },
+    { "name": "Notifications", "description": "User notifications" },
+    { "name": "SOS", "description": "Emergency support system" },
+    { "name": "Compliance", "description": "GDPR/LGPD compliance" },
+    { "name": "Calendar", "description": "Calendar integration" }
+  ],
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "User login",
+        "description": "Authenticate a user with email and password. Returns a JWT token stored in HTTP-only cookie.",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 1 }
+                },
+                "required": ["email", "password"]
+              },
+              "example": {
+                "email": "patient@example.com",
+                "password": "SecurePassword123!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "User registration",
+        "description": "Register a new user account (patient or psychologist)",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 },
+                  "role": { "type": "string", "enum": ["patient", "psychologist"] }
+                },
+                "required": ["name", "email", "password", "role"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "User logout",
+        "description": "Logout current user and clear authentication cookie",
+        "tags": ["Authentication"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "summary": "Get current user",
+        "description": "Retrieve the authenticated user's profile information",
+        "tags": ["User"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "user": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/user/settings": {
+      "get": {
+        "summary": "Get user settings",
+        "description": "Retrieve user preferences and notification settings",
+        "tags": ["User"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User settings",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserSettings" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user settings",
+        "description": "Update user preferences and notification settings",
+        "tags": ["User"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserSettings" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "$ref": "#/components/responses/Success" }
+        }
+      }
+    },
+    "/patient/diary": {
+      "get": {
+        "summary": "Get diary entries",
+        "description": "Retrieve paginated diary entries for the authenticated patient with AI analysis",
+        "tags": ["Diary", "Patient"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10, "minimum": 1, "maximum": 100 },
+            "description": "Number of entries to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer", "default": 0, "minimum": 0 },
+            "description": "Number of entries to skip"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diary entries retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "entries": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/DiaryEntry" }
+                    },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create diary entry",
+        "description": "Create a new diary entry with optional multimodal content (audio, image). Automatically triggers AI emotional analysis.",
+        "tags": ["Diary", "Patient"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "moodRating": { "type": "integer", "minimum": 0, "maximum": 4 },
+                  "intensityRating": { "type": "integer", "minimum": 1, "maximum": 10 },
+                  "content": { "type": "string", "minLength": 1 },
+                  "cycle": { "type": "string", "enum": ["criar", "cuidar", "crescer", "curar"] },
+                  "emotions": { "type": "array", "items": { "type": "string" } },
+                  "audioUrl": { "type": "string", "format": "uri" },
+                  "audioTranscription": { "type": "string" },
+                  "imageUrl": { "type": "string", "format": "uri" },
+                  "imageDescription": { "type": "string" }
+                },
+                "required": ["moodRating", "intensityRating", "content", "cycle"]
+              },
+              "example": {
+                "moodRating": 3,
+                "intensityRating": 7,
+                "content": "Hoje me senti mais confiante e consegui enfrentar situações que antes me causavam ansiedade.",
+                "cycle": "crescer",
+                "emotions": ["confiança", "orgulho", "esperança"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Diary entry created successfully with AI analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "entry": { "$ref": "#/components/schemas/DiaryEntry" }
+                  }
+                }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/chat": {
+      "get": {
+        "summary": "Get chat messages",
+        "description": "Retrieve messages for a chat room. Creates room if it doesn't exist when using otherUserId.",
+        "tags": ["Chat"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Chat room ID (optional if otherUserId is provided)"
+          },
+          {
+            "name": "otherUserId",
+            "in": "query",
+            "schema": { "type": "integer" },
+            "description": "ID of the other user to chat with"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat messages retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "roomId": { "type": "string" },
+                        "messages": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ChatMessage" }
+                        },
+                        "participants": { "type": "array", "items": { "type": "integer" } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send chat message",
+        "description": "Send a new message in a chat room with real-time delivery via Pusher",
+        "tags": ["Chat"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roomId": { "type": "string" },
+                  "receiverId": { "type": "integer" },
+                  "content": { "type": "string" },
+                  "messageType": { "type": "string", "enum": ["text", "file"], "default": "text" },
+                  "isTemporary": { "type": "boolean", "default": false },
+                  "expiresAt": { "type": "string", "format": "date-time" }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": { "$ref": "#/components/schemas/ChatMessage" },
+                        "roomId": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions": {
+      "get": {
+        "summary": "Get therapy sessions",
+        "description": "Retrieve therapy sessions for the authenticated user (patient or psychologist)",
+        "tags": ["Sessions"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["scheduled", "confirmed", "completed", "cancelled"] },
+            "description": "Filter by session status"
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": { "type": "string", "format": "date" },
+            "description": "Filter sessions from this date"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": { "type": "string", "format": "date" },
+            "description": "Filter sessions until this date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "sessions": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Session" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create therapy session",
+        "description": "Schedule a new therapy session (psychologist only)",
+        "tags": ["Sessions"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patientId": { "type": "integer" },
+                  "scheduledAt": { "type": "string", "format": "date-time" },
+                  "duration": { "type": "integer", "default": 50 },
+                  "type": { "type": "string", "enum": ["therapy", "consultation", "group"], "default": "therapy" },
+                  "notes": { "type": "string" },
+                  "recurrencePattern": { "type": "string", "enum": ["weekly", "biweekly", "monthly"] }
+                },
+                "required": ["patientId", "scheduledAt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "session": { "$ref": "#/components/schemas/Session" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/patient/meditation-library": {
+      "get": {
+        "summary": "Get meditation library",
+        "description": "Retrieve available meditation audios with filtering and search",
+        "tags": ["Meditation", "Patient"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by category"
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["iniciante", "intermediario", "avancado"] },
+            "description": "Filter by difficulty level"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Search by title or description"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Meditation library retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "audios": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MeditationAudio" }
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/MeditationCategory" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gamification/points": {
+      "get": {
+        "summary": "Get user points and XP",
+        "description": "Retrieve gamification points, XP, level, and recent activities",
+        "tags": ["Gamification"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Points retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalXP": { "type": "integer" },
+                        "currentLevel": { "type": "integer" },
+                        "weeklyPoints": { "type": "integer" },
+                        "monthlyPoints": { "type": "integer" },
+                        "streak": { "type": "integer" },
+                        "recentActivities": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/PointActivity" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gamification/achievements": {
+      "get": {
+        "summary": "Get user achievements",
+        "description": "Retrieve unlocked and available achievements",
+        "tags": ["Gamification"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Achievements retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "unlocked": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Achievement" }
+                    },
+                    "available": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Achievement" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sos/activate": {
+      "post": {
+        "summary": "Activate SOS support",
+        "description": "Activate emergency support system with specified severity level",
+        "tags": ["SOS"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "level": { "type": "string", "enum": ["mild", "moderate", "severe", "emergency"] },
+                  "type": { "type": "string", "enum": ["breathing", "grounding", "emergency"] },
+                  "notes": { "type": "string" }
+                },
+                "required": ["level"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SOS activated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "sosUsage": { "$ref": "#/components/schemas/SOSUsage" },
+                    "recommendations": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/stats": {
+      "get": {
+        "summary": "Get platform statistics",
+        "description": "Retrieve comprehensive platform statistics (admin only)",
+        "tags": ["Admin"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Statistics retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "stats": {
+                      "type": "object",
+                      "properties": {
+                        "totalUsers": { "type": "integer" },
+                        "activeUsers": { "type": "integer" },
+                        "totalSessions": { "type": "integer" },
+                        "totalRevenue": { "type": "number" },
+                        "growthRate": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "summary": "Get user notifications",
+        "description": "Retrieve paginated notifications for the authenticated user",
+        "tags": ["Notifications"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "schema": { "type": "boolean", "default": false },
+            "description": "Return only unread notifications"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 },
+            "description": "Number of notifications to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "notifications": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Notification" }
+                    },
+                    "unreadCount": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compliance/data-export": {
+      "post": {
+        "summary": "Request data export",
+        "description": "Request a complete export of user data (GDPR/LGPD compliance)",
+        "tags": ["Compliance"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "format": { "type": "string", "enum": ["json", "csv"], "default": "json" }
+                },
+                "required": ["format"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Export request created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "exportId": { "type": "integer" },
+                    "status": { "type": "string" },
+                    "estimatedTime": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "token",
+        "description": "JWT token stored in HTTP-only cookie. Obtained from /api/auth/login"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "João Silva" },
+          "email": { "type": "string", "format": "email", "example": "joao@example.com" },
+          "role": { "type": "string", "enum": ["patient", "psychologist", "admin", "clinic_owner"], "example": "patient" },
+          "avatarUrl": { "type": "string", "format": "uri", "nullable": true },
+          "totalXP": { "type": "integer", "example": 1500 },
+          "currentLevel": { "type": "integer", "example": 5 },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserSettings": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "integer" },
+          "timezone": { "type": "string", "example": "America/Sao_Paulo" },
+          "theme": { "type": "string", "enum": ["light", "dark"], "default": "light" },
+          "language": { "type": "string", "example": "pt-BR" },
+          "notifications": { "type": "boolean", "default": true },
+          "emailNotifications": { "type": "boolean", "default": true },
+          "smsNotifications": { "type": "boolean", "default": false }
+        }
+      },
+      "DiaryEntry": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "patientId": { "type": "integer" },
+          "entryDate": { "type": "string", "format": "date-time" },
+          "moodRating": { "type": "integer", "minimum": 0, "maximum": 4 },
+          "intensityRating": { "type": "integer", "minimum": 1, "maximum": 10 },
+          "content": { "type": "string" },
+          "cycle": { "type": "string", "enum": ["criar", "cuidar", "crescer", "curar"] },
+          "emotions": { "type": "array", "items": { "type": "string" } },
+          "audioUrl": { "type": "string", "format": "uri", "nullable": true },
+          "imageUrl": { "type": "string", "format": "uri", "nullable": true },
+          "aiAnalyzed": { "type": "boolean" },
+          "dominantEmotion": { "type": "string", "nullable": true },
+          "emotionIntensity": { "type": "integer", "nullable": true },
+          "sentimentScore": { "type": "integer", "minimum": -100, "maximum": 100, "nullable": true },
+          "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"], "nullable": true },
+          "aiAnalysis": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "insights": { "type": "array", "items": { "type": "string" } },
+              "suggestedActions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "psychologistId": { "type": "integer" },
+          "patientId": { "type": "integer" },
+          "scheduledAt": { "type": "string", "format": "date-time" },
+          "duration": { "type": "integer", "description": "Duration in minutes", "example": 50 },
+          "type": { "type": "string", "enum": ["therapy", "consultation", "group"] },
+          "status": { "type": "string", "enum": ["scheduled", "confirmed", "completed", "cancelled"] },
+          "notes": { "type": "string", "nullable": true },
+          "isRecurring": { "type": "boolean" },
+          "recurrencePattern": { "type": "string", "enum": ["weekly", "biweekly", "monthly"], "nullable": true }
+        }
+      },
+      "ChatMessage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "roomId": { "type": "string" },
+          "senderId": { "type": "integer" },
+          "content": { "type": "string" },
+          "messageType": { "type": "string", "enum": ["text", "file", "system"] },
+          "isTemporary": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "readReceipts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "integer" },
+                "readAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          }
+        }
+      },
+      "MeditationAudio": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "categoryId": { "type": "string" },
+          "duration": { "type": "integer", "description": "Duration in seconds" },
+          "difficulty": { "type": "string", "enum": ["iniciante", "intermediario", "avancado"] },
+          "instructor": { "type": "string" },
+          "audioUrl": { "type": "string", "format": "uri" },
+          "thumbnailUrl": { "type": "string", "format": "uri", "nullable": true },
+          "playCount": { "type": "integer" },
+          "averageRating": { "type": "number", "minimum": 0, "maximum": 5 }
+        }
+      },
+      "MeditationCategory": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "icon": { "type": "string" },
+          "color": { "type": "string" }
+        }
+      },
+      "Achievement": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "icon": { "type": "string" },
+          "type": { "type": "string", "enum": ["activity", "milestone", "streak", "special"] },
+          "category": { "type": "string", "enum": ["diary", "meditation", "tasks", "sessions", "social"] },
+          "requirement": { "type": "integer" },
+          "xpReward": { "type": "integer" },
+          "rarity": { "type": "string", "enum": ["common", "rare", "epic", "legendary"] }
+        }
+      },
+      "PointActivity": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "activityType": { "type": "string" },
+          "points": { "type": "integer" },
+          "xp": { "type": "integer" },
+          "description": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SOSUsage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "patientId": { "type": "integer" },
+          "level": { "type": "string", "enum": ["mild", "moderate", "severe", "emergency"] },
+          "type": { "type": "string", "enum": ["breathing", "grounding", "emergency"] },
+          "completed": { "type": "boolean" },
+          "resolved": { "type": "boolean" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "type": { "type": "string" },
+          "title": { "type": "string" },
+          "message": { "type": "string" },
+          "isRead": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer" },
+          "offset": { "type": "integer" },
+          "hasMore": { "type": "boolean" },
+          "total": { "type": "integer" }
+        }
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" },
+          "message": { "type": "string" },
+          "code": { "type": "string" }
+        }
+      }
+    },
+    "responses": {
+      "Success": {
+        "description": "Successful operation",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/SuccessResponse" }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Bad request - Invalid input",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "error": "Invalid input",
+              "message": "The provided data is invalid"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Authentication required",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "error": "Unauthorized",
+              "message": "Authentication required"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Insufficient permissions",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "error": "Forbidden",
+              "message": "You don't have permission to access this resource"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "error": "Not found",
+              "message": "The requested resource was not found"
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": { "type": "string" },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": { "type": "array", "items": { "type": "string" } },
+                      "message": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": {
+              "error": "Internal server error",
+              "message": "An unexpected error occurred"
+            }
+          }
+        }
+      }
+    }
+  }
+}
