@@ -1601,3 +1601,43 @@ export const paymentFailuresRelations = relations(paymentFailures, ({ one }) => 
     references: [payments.id],
   }),
 }))
+
+// Webhook Events (for Stripe webhook idempotency and audit)
+export const webhookEvents = pgTable('webhook_events', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  stripeEventId: text('stripe_event_id').notNull().unique(),
+  eventType: text('event_type').notNull(),
+  eventData: json('event_data').notNull(),
+  processed: boolean('processed').notNull().default(false),
+  error: text('error'),
+  processedAt: timestamp('processed_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// Payment Audit Logs (for compliance and security)
+export const paymentAuditLogs = pgTable('payment_audit_logs', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: integer('user_id').references(() => users.id),
+  action: text('action').notNull(),
+  entity: text('entity').notNull(),
+  entityId: text('entity_id').notNull(),
+  metadata: json('metadata'),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// Security Events (for fraud detection and monitoring)
+export const securityEvents = pgTable('security_events', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  eventType: text('event_type').notNull(),
+  severity: text('severity').notNull(),
+  description: text('description').notNull(),
+  userId: integer('user_id').references(() => users.id),
+  metadata: json('metadata'),
+  resolved: boolean('resolved').notNull().default(false),
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: integer('resolved_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})

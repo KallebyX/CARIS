@@ -326,7 +326,7 @@ export function SecureChatLayout({
 
   return (
     <div ref={swipeRef} className={isMobile ? "h-screen flex flex-col bg-white" : ""}>
-      <Card className={isMobile ? "h-full flex flex-col border-0 rounded-none shadow-none" : "h-[70vh] flex flex-col"}>
+      <Card className={isMobile ? "h-full flex flex-col border-0 rounded-none shadow-none" : "min-h-[60vh] sm:min-h-[70vh] max-h-[90vh] flex flex-col"}>
         {/* Header */}
         <div className={`border-b space-y-3 ${isMobile ? 'p-3 sticky top-0 bg-white z-10 safe-area-top' : 'p-4'}`}>
           <div className="flex items-center justify-between gap-2">

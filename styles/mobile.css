@@ -385,7 +385,7 @@ a, button, input, select, textarea {
 @media (max-width: 768px) {
   /* Larger focus rings for touch devices */
   *:focus-visible {
-    outline: 3px solid #06b6d4;
+    outline: 3px solid hsl(var(--ring));
     outline-offset: 2px;
   }
 
