@@ -11,9 +11,7 @@ const API_CACHE = `${CACHE_VERSION}-api`;
 const STATIC_ASSETS = [
   '/',
   '/offline',
-  '/manifest.json',
-  '/placeholder-logo.svg',
-  '/placeholder-logo.png'
+  '/manifest.json'
 ];
 
 // API endpoints that can be cached

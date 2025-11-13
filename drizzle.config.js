@@ -10,7 +10,8 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.POSTGRES_URL || "postgresql://localhost:5432/caris"
+    // Use DIRECT_URL for migrations (bypasses connection pooler)
+    url: process.env.DIRECT_URL || process.env.POSTGRES_URL || "postgresql://localhost:5432/caris"
   },
   verbose: true,
   strict: true,

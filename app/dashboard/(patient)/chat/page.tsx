@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChatLayout } from "@/components/chat/chat-layout"
+import { SecureChatLayout } from "@/components/chat/chat-layout"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface ChatInfo {
@@ -67,7 +67,7 @@ export default function PatientChatPage() {
       <h1 className="text-3xl font-bold text-slate-800 mb-2">Chat Terapêutico</h1>
       <p className="text-slate-600 mb-6">Comunicação segura e direta com seu psicólogo entre as sessões.</p>
       {chatInfo && currentUser && (
-        <ChatLayout
+        <SecureChatLayout
           counterpartId={chatInfo.counterpartId}
           counterpartName={chatInfo.counterpartName}
           currentUser={currentUser}
