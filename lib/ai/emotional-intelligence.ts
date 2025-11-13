@@ -27,7 +27,7 @@ export interface MultiModalEmotion {
     emotionIntensity: number // 0-10
     confidence: number
     emotionSpectrum: Record<string, number>
-    modality Conflicts: string[]
+    modalityConflicts: string[]
   }
 }
 

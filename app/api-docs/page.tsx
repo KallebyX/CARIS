@@ -9,9 +9,6 @@ const SwaggerUI = dynamic(
   { ssr: false }
 )
 
-// Import Swagger UI styles
-import 'swagger-ui-react/swagger-ui.css'
-
 export default function ApiDocsPage() {
   const [spec, setSpec] = useState<any>(null)
   const [loading, setLoading] = useState(true)

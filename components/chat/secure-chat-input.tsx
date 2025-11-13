@@ -17,7 +17,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { SecureFileUpload } from "@/lib/secure-file-upload"
-import { MessageExpirationService } from "@/lib/message-expiration"
+import { EXPIRATION_OPTIONS } from "@/lib/message-expiration-utils"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 
@@ -216,7 +216,7 @@ export function SecureChatInput({
               <SelectValue placeholder="Selecionar duração" />
             </SelectTrigger>
             <SelectContent>
-              {Object.entries(MessageExpirationService.EXPIRATION_OPTIONS).map(([key, option]) => (
+              {Object.entries(EXPIRATION_OPTIONS).map(([key, option]) => (
                 <SelectItem key={key} value={key}>
                   {option.label}
                 </SelectItem>
@@ -319,7 +319,7 @@ export function SecureChatInput({
                       <SelectValue placeholder="Duração" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(MessageExpirationService.EXPIRATION_OPTIONS).map(([key, option]) => (
+                      {Object.entries(EXPIRATION_OPTIONS).map(([key, option]) => (
                         <SelectItem key={key} value={key}>
                           {option.label}
                         </SelectItem>

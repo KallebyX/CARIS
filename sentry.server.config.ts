@@ -45,39 +45,10 @@ if (isSentryEnabled) {
     // ================================================================
 
     integrations: [
-      // HTTP instrumentation for tracking API calls
-      Sentry.httpIntegration({
-        // Don't capture request/response bodies (may contain PII)
-        tracing: {
-          shouldCreateSpanForRequest: (url) => {
-            // Don't trace health checks
-            if (url.includes("/api/health")) return false
-            // Don't trace internal Next.js requests
-            if (url.includes("/_next/")) return false
-            return true
-          },
-        },
-      }),
-
-      // Node profiling for performance analysis
-      Sentry.nodeProfilingIntegration(),
-
-      // Prisma instrumentation (if using Prisma)
-      Sentry.prismaIntegration(),
-
-      // Postgres instrumentation
-      Sentry.postgresIntegration(),
-
       // Automatically capture console errors
       Sentry.captureConsoleIntegration({
         levels: ["error"],
       }),
-
-      // Context lines around errors
-      Sentry.contextLinesIntegration(),
-
-      // Module metadata
-      Sentry.modulesIntegration(),
     ],
 
     // ================================================================

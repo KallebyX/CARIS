@@ -277,6 +277,22 @@ async function analyzeAudioTranscription(transcription: string) {
       throw new Error('OpenAI API key not configured')
     }
 
+    // Placeholder implementation
+    return {
+      transcription,
+      emotions: [],
+      voiceTone: 'neutral'
+    }
+  } catch (error) {
+    console.error('Error analyzing audio transcription:', error)
+    return {
+      transcription,
+      emotions: [],
+      voiceTone: 'neutral'
+    }
+  }
+}
+
 // New Clinical AI Functions
 
 export interface SessionAnalysis {
@@ -631,45 +647,11 @@ export async function generateProgressReport(
       .map(s => `${s.sessionDate.toISOString().split('T')[0]}: ${s.duration}min`)
       .join('\n')
 
-
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-
-          content: `Com base na análise visual fornecida, extraia insights sobre:
-          - Humor visual predominante
-          - Psicologia das cores presentes
-          - Simbolismo identificado
-          - Fatores ambientais relevantes
-          
-          Retorne um JSON com: {"visualMood": "string", "colorPsychology": "string", "symbolism": ["string"], "environmentalFactors": "string"}`
-        },
-        {
-          role: 'user',
-          content: imageAnalysis
-        }
-      ],
-      temperature: 0.3,
-      max_tokens: 300,
-    })
-
-    const result = JSON.parse(response.choices[0]?.message?.content || '{}')
-    return {
-      visualMood: result.visualMood || 'neutro',
-      colorPsychology: result.colorPsychology || 'cores neutras',
-      symbolism: result.symbolism || [],
-      environmentalFactors: result.environmentalFactors || 'ambiente neutro'
-    }
-  } catch (error) {
-    console.error('Error analyzing image content:', error)
-    return {
-      visualMood: 'neutro',
-      colorPsychology: 'cores neutras',
-      symbolism: [],
-      environmentalFactors: 'ambiente neutro'
-
           content: 'Você é um especialista em relatórios de progresso terapêutico. Gere um relatório estruturado e conciso.',
         },
         {

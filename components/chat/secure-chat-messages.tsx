@@ -20,7 +20,7 @@ import {
   MoreVertical
 } from "lucide-react"
 import { SecureFileUpload } from "@/lib/secure-file-upload"
-import { MessageExpirationService } from "@/lib/message-expiration"
+import { getExpirationStatus as calculateExpirationStatus } from "@/lib/message-expiration-utils"
 import { ChatEncryption, type SecureChatMessage } from "@/lib/encryption"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -102,8 +102,8 @@ export function SecureChatMessages({
 
   const getExpirationStatus = (message: SecureChatMessage) => {
     if (!message.isTemporary || !message.expiresAt) return null
-    
-    return MessageExpirationService.getExpirationStatus(message.expiresAt)
+
+    return calculateExpirationStatus(message.expiresAt)
   }
 
   const handleCopyMessage = (content: string) => {

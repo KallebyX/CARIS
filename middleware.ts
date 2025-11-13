@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import * as jose from "jose"
-import { createHash, randomBytes } from "crypto"
 
 // ================================================================
 // SECURITY HEADERS CONFIGURATION
@@ -12,7 +11,10 @@ import { createHash, randomBytes } from "crypto"
  * Following OWASP security best practices
  */
 function applySecurityHeaders(response: NextResponse, request: NextRequest): NextResponse {
-  const nonce = randomBytes(16).toString("base64")
+  // Generate nonce using Web Crypto API (Edge Runtime compatible)
+  const nonceArray = new Uint8Array(16)
+  crypto.getRandomValues(nonceArray)
+  const nonce = Buffer.from(nonceArray).toString("base64")
   const isProduction = process.env.NODE_ENV === "production"
 
   // Content Security Policy (CSP)
@@ -90,20 +92,23 @@ function applySecurityHeaders(response: NextResponse, request: NextRequest): Nex
 // ================================================================
 
 /**
- * Generate CSRF token for a session
+ * Generate CSRF token for a session (using Web Crypto API for Edge Runtime compatibility)
  */
-function generateCSRFToken(sessionId: string): string {
+async function generateCSRFToken(sessionId: string): Promise<string> {
   const secret = process.env.CSRF_SECRET || process.env.JWT_SECRET!
-  const hash = createHash("sha256")
-    .update(`${sessionId}:${secret}`)
-    .digest("hex")
-  return hash
+  const data = `${sessionId}:${secret}`
+  const encoder = new TextEncoder()
+  const dataBuffer = encoder.encode(data)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return hashHex
 }
 
 /**
  * Verify CSRF token for state-changing operations
  */
-function verifyCSRFToken(request: NextRequest, sessionId: string): boolean {
+async function verifyCSRFToken(request: NextRequest, sessionId: string): Promise<boolean> {
   // Skip CSRF for GET, HEAD, OPTIONS
   if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     return true
@@ -118,7 +123,7 @@ function verifyCSRFToken(request: NextRequest, sessionId: string): boolean {
     return false
   }
 
-  const expectedToken = generateCSRFToken(sessionId)
+  const expectedToken = await generateCSRFToken(sessionId)
   return csrfToken === expectedToken
 }
 
@@ -229,7 +234,7 @@ export async function middleware(request: NextRequest) {
     // CSRF Protection for API routes
     if (pathname.startsWith("/api/")) {
       const sessionId = payload.userId?.toString() || payload.sub?.toString() || ""
-      if (!verifyCSRFToken(request, sessionId)) {
+      if (!(await verifyCSRFToken(request, sessionId))) {
         logSecurityEvent("csrf_validation_failed", request, {
           userId: payload.userId,
           path: pathname
@@ -264,7 +269,7 @@ export async function middleware(request: NextRequest) {
 
     // Add CSRF token to response for client use
     const sessionId = payload.userId?.toString() || payload.sub?.toString() || ""
-    const csrfToken = generateCSRFToken(sessionId)
+    const csrfToken = await generateCSRFToken(sessionId)
     response.cookies.set("csrf-token", csrfToken, {
       httpOnly: false, // Needs to be accessible by JavaScript
       secure: process.env.NODE_ENV === "production",

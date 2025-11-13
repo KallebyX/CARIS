@@ -195,7 +195,7 @@ export async function assessRelapseRisk(data: {
   stressors: string[]
   copingSkills: number // 0-10
   supportSystem: number // 0-10
-  medication Adherence?: number // 0-100%
+  medicationAdherence?: number // 0-100%
   previousRelapses: number
 }): Promise<RelapseRiskAssessment> {
   try {

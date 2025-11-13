@@ -53,7 +53,6 @@ const MeditationStats = dynamic(
   () => import('@/components/meditation/meditation-stats'),
   {
     loading: () => <div className="h-40 bg-gray-100 rounded animate-pulse"></div>,
-    ssr: false, // Don't render on server (client-only)
   }
 )
 
@@ -65,7 +64,6 @@ const MeditationCharts = dynamic(
   () => import('@/components/meditation/meditation-charts'),
   {
     loading: () => <div className="h-96 bg-gray-100 rounded animate-pulse"></div>,
-    ssr: false,
   }
 )
 
