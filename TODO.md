@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos os Issues Críticos Resolvidos + 7 Alta Prioridade
+**Status:** ✅ Todos os Issues Críticos Resolvidos + 9 Alta Prioridade
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 14 (7 Críticos + 7 Alta Prioridade)
-**Última Atualização:** 2025-11-18 - Centralized RBAC Middleware (HIGH-10)
+**Issues Resolvidos:** 16 (7 Críticos + 9 Alta Prioridade)
+**Última Atualização:** 2025-11-18 - Notification Persistence (HIGH-02)
 
 ---
 
@@ -128,33 +128,59 @@
 ## 🟠 ALTA PRIORIDADE (Implementar em 2 Semanas)
 
 ### HIGH-01: Índices de Banco Ausentes
-- **Status:** 🟡 Pendente
+- **Status:** ✅ **COMPLETO**
 - **Prioridade:** P1 - Alta
-- **Arquivo:** `/db/schema.ts`
+- **Arquivo:** `/db/schema.ts`, `/drizzle/0002_add_critical_indexes.sql`
 - **Problema:** Queries lentas, performance degrada com crescimento
-- **Índices Necessários:**
+- **Solução:**
+  1. ✅ Criado arquivo de migração com 13 índices críticos
+  2. ✅ Índices compostos para query patterns comuns
+  3. ✅ Partial indexes para filtros específicos (high-risk entries, soft-deletes)
+  4. ✅ Ordenação DESC para queries temporais
+- **Índices Criados:**
   ```sql
   CREATE INDEX idx_diary_patient_date ON diary_entries(patient_id, entry_date DESC);
-  CREATE INDEX idx_chat_room_created ON chat_messages(room_id, created_at);
-  CREATE INDEX idx_sessions_psych_scheduled ON sessions(psychologist_id, scheduled_at);
-  CREATE INDEX idx_mood_patient_date ON mood_tracking(patient_id, date);
-  CREATE INDEX idx_audit_user_timestamp ON audit_logs(user_id, timestamp);
+  CREATE INDEX idx_chat_room_created ON chat_messages(room_id, created_at DESC);
+  CREATE INDEX idx_sessions_psych_date ON sessions(psychologist_id, session_date DESC);
+  CREATE INDEX idx_sessions_patient_date ON sessions(patient_id, session_date DESC);
+  CREATE INDEX idx_mood_patient_date ON mood_tracking(patient_id, date DESC);
+  CREATE INDEX idx_audit_user_timestamp ON audit_logs(user_id, timestamp DESC);
+  CREATE INDEX idx_notifications_user_read ON notifications(user_id, is_read, created_at DESC);
+  CREATE INDEX idx_chat_sender ON chat_messages(sender_id, created_at DESC);
+  CREATE INDEX idx_patient_profiles_psych ON patient_profiles(psychologist_id);
+  CREATE INDEX idx_users_email ON users(email);
+  CREATE INDEX idx_consents_user_type ON consents(user_id, consent_type, consent_given);
+  CREATE INDEX idx_diary_patient_risk_date ON diary_entries(...) WHERE risk_level IN ('high', 'critical');
+  CREATE INDEX idx_chat_deleted ON chat_messages(...) WHERE deleted_at IS NULL;
   ```
-- **Estimativa:** 2-3 horas
+- **Tempo Real:** 2 horas
 - **Impacto:** Queries 10-100x mais rápidas
+- **Commit:** 527b52c
 
 ### HIGH-02: Tabela de Notificações Ausente
-- **Status:** 🟡 Pendente
+- **Status:** ✅ **COMPLETO**
 - **Prioridade:** P1 - Alta
 - **Problema:**
-  - Código de notificações existe
-  - Sem persistência em banco
-  - Não pode marcar como lida, sem histórico
+  - Tabela notifications existia mas serviços não persistiam
+  - Notificações em tempo real sem histórico
+  - Impossível marcar como lida, sem rastreamento
 - **Solução:**
-  1. Criar schema de notificações
-  2. Migração
-  3. Atualizar notification-service para persistir
-- **Estimativa:** 4 horas
+  1. ✅ Atualizado RealtimeNotificationService para persistir no database
+  2. ✅ Implementado getUnreadNotifications() com queries do DB
+  3. ✅ markNotificationAsRead() e markAllNotificationsAsRead() agora persistem
+  4. ✅ Atualizado NotificationService para salvar todas notificações
+  5. ✅ Persistência em sendSessionReminder(), sendSessionConfirmation(), sendDiaryEntryNotification(), sendSOSAlert(), sendChatMessageNotification()
+  6. ✅ Categoria automática baseada no tipo de notificação
+- **Arquivos Modificados:**
+  - `lib/realtime-notifications.ts`: database persistence em todos métodos
+  - `lib/notification-service.ts`: database inserts antes de enviar email/SMS/push
+- **Benefícios:**
+  - Histórico completo de notificações
+  - Sincronização entre dispositivos
+  - Análise de engajamento
+  - Compliance (audit trail)
+- **Tempo Real:** 2.5 horas
+- **Commit:** c39532e
 
 ### HIGH-03: Upload de Arquivos Sem Scan de Vírus
 - **Status:** 🟡 Pendente
