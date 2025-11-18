@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   isGlobalAdmin: boolean("is_global_admin").default(false), // Super admin for platform
   status: text("status").notNull().default("active"), // 'active', 'suspended', 'inactive'
   lastLoginAt: timestamp("last_login_at"),
+  passwordChangedAt: timestamp("password_changed_at"), // For token invalidation on password change
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
