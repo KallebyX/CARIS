@@ -642,6 +642,32 @@ export const userSettings = pgTable("user_settings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
+// Tabela de notificações persistentes
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id)
+    .notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'message', 'session', 'sos', 'reminder', 'achievement', 'system'
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  priority: varchar("priority", { length: 20 }).default("normal"), // 'low', 'normal', 'high', 'urgent'
+  category: varchar("category", { length: 50 }), // 'chat', 'therapy', 'emergency', 'gamification', 'admin'
+  isRead: boolean("is_read").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  actionUrl: text("action_url"), // URL to navigate when clicked
+  actionLabel: varchar("action_label", { length: 100 }), // Label for action button
+  metadata: jsonb("metadata"), // Additional data (IDs, context, etc.)
+  expiresAt: timestamp("expires_at"), // Auto-delete after this date
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("idx_notifications_user").on(table.userId),
+  unreadIdx: index("idx_notifications_unread").on(table.userId, table.isRead, table.createdAt),
+  typeIdx: index("idx_notifications_type").on(table.type, table.createdAt),
+  expiresIdx: index("idx_notifications_expires").on(table.expiresAt),
+}))
+
 // Tabela de fontes de áudio para meditação
 export const audioSources = pgTable('audio_sources', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -1045,6 +1071,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   alertConfigurations: many(alertConfigurations),
   generatedAlerts: many(generatedAlerts),
   generatedReports: many(generatedReports),
+  notifications: many(notifications),
 }))
 
 // Custom Fields Relations
@@ -1441,6 +1468,13 @@ export const progressReportsRelations = relations(progressReports, ({ one }) => 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, {
     fields: [userSettings.userId],
+    references: [users.id],
+  }),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
     references: [users.id],
   }),
 }))
