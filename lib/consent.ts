@@ -2,6 +2,8 @@ import { db } from "@/db"
 import { userConsents, userPrivacySettings } from "@/db/schema"
 import { eq, and, desc } from "drizzle-orm"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES } from "./audit"
+import { safeError } from "./safe-logger"
+import { NextResponse } from "next/server"
 
 export interface ConsentData {
   userId: number
@@ -93,7 +95,7 @@ export async function recordConsent(data: ConsentData) {
 
     return result[0]
   } catch (error) {
-    console.error('Erro ao registrar consentimento:', error)
+    safeError('[CONSENT]', 'Erro ao registrar consentimento:', error)
     throw new Error('Falha ao registrar consentimento')
   }
 }
@@ -122,9 +124,67 @@ export async function hasValidConsent(userId: number, consentType: string): Prom
     const consent = latestConsent[0]
     return consent.consentGiven && !consent.revokedAt
   } catch (error) {
-    console.error('Erro ao verificar consentimento:', error)
+    safeError('[CONSENT]', 'Erro ao verificar consentimento:', error)
     return false
   }
+}
+
+/**
+ * SECURITY: Middleware to verify AI analysis consent
+ * Returns error response if user hasn't consented to AI analysis
+ *
+ * Usage in API routes:
+ * ```ts
+ * const consentCheck = await requireAIConsent(userId)
+ * if (consentCheck) return consentCheck // Returns error response if no consent
+ * // Continue with AI processing...
+ * ```
+ */
+export async function requireAIConsent(
+  userId: number,
+  purpose?: string
+): Promise<NextResponse | null> {
+  const hasConsent = await hasValidConsent(userId, CONSENT_TYPES.AI_ANALYSIS)
+
+  if (!hasConsent) {
+    // Log attempted AI usage without consent (compliance requirement)
+    await logAuditEvent({
+      userId,
+      action: 'ai_usage_denied_no_consent',
+      resourceType: 'ai_analysis',
+      severity: 'warning',
+      complianceRelated: true,
+      metadata: {
+        reason: 'missing_ai_consent',
+        purpose: purpose || 'not_specified',
+      },
+    })
+
+    return NextResponse.json(
+      {
+        error: "Consentimento de IA Necessário",
+        message: "Para usar recursos de análise por IA, você precisa primeiro consentir com o processamento de dados por inteligência artificial.",
+        consentRequired: true,
+        consentType: CONSENT_TYPES.AI_ANALYSIS,
+        redirectTo: "/settings/privacy?consent=ai_analysis",
+      },
+      { status: 403 }
+    )
+  }
+
+  // Log successful AI usage with consent (compliance requirement)
+  await logAuditEvent({
+    userId,
+    action: 'ai_analysis_started',
+    resourceType: 'ai_analysis',
+    complianceRelated: true,
+    metadata: {
+      consentVerified: true,
+      purpose: purpose || 'not_specified',
+    },
+  })
+
+  return null // No error, consent is valid
 }
 
 /**
@@ -140,7 +200,7 @@ export async function getUserConsents(userId: number) {
 
     return consents
   } catch (error) {
-    console.error('Erro ao buscar consentimentos do usuário:', error)
+    safeError('[CONSENT]', 'Erro ao buscar consentimentos do usuário:', error)
     throw new Error('Falha ao buscar consentimentos')
   }
 }

@@ -1,8 +1,8 @@
 import { pusherServer } from "./pusher"
 import { NotificationService } from "./notification-service"
 import { db } from "@/db"
-import { users, sessions, sosUsages } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { users, sessions, sosUsages, notifications } from "@/db/schema"
+import { eq, and, desc, sql } from "drizzle-orm"
 
 interface RealtimeNotification {
   id: string
@@ -37,6 +37,24 @@ export class RealtimeNotificationService {
 
   private async sendRealtimeNotification(userId: number, notification: RealtimeNotification) {
     try {
+      // PERSISTENCE: Save notification to database
+      const [savedNotification] = await db
+        .insert(notifications)
+        .values({
+          userId: notification.userId,
+          type: notification.type,
+          title: notification.title,
+          message: notification.message,
+          priority: notification.priority,
+          category: this.getCategoryFromType(notification.type),
+          metadata: notification.data ? JSON.stringify(notification.data) : null,
+          isRead: false,
+        })
+        .returning()
+
+      // Update notification ID with database ID
+      notification.id = savedNotification.id.toString()
+
       // SECURITY: Send via Pusher to user's private channel
       await pusherServer.trigger(`private-user-${userId}`, "notification", notification)
 
@@ -48,6 +66,18 @@ export class RealtimeNotificationService {
     } catch (error) {
       console.error("Erro ao enviar notificação em tempo real:", error)
     }
+  }
+
+  private getCategoryFromType(type: string): string {
+    const categoryMap: Record<string, string> = {
+      'session-reminder': 'therapy',
+      'new-message': 'chat',
+      'diary-entry': 'therapy',
+      'sos-alert': 'emergency',
+      'session-update': 'therapy',
+      'task-assigned': 'therapy',
+    }
+    return categoryMap[type] || 'system'
   }
 
   // Notificação de nova mensagem no chat
@@ -341,14 +371,56 @@ export class RealtimeNotificationService {
 
   // Buscar notificações não lidas do usuário
   async getUnreadNotifications(userId: number): Promise<RealtimeNotification[]> {
-    // Por enquanto, retornamos um array vazio
-    // Em uma implementação completa, você salvaria as notificações no banco
-    return []
+    try {
+      const unreadNotifications = await db
+        .select()
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.userId, userId),
+            eq(notifications.isRead, false),
+            sql`(${notifications.expiresAt} IS NULL OR ${notifications.expiresAt} > NOW())`
+          )
+        )
+        .orderBy(desc(notifications.createdAt))
+        .limit(50)
+
+      return unreadNotifications.map(notif => ({
+        id: notif.id.toString(),
+        type: notif.type as any,
+        title: notif.title,
+        message: notif.message,
+        data: notif.metadata ? JSON.parse(notif.metadata as string) : undefined,
+        priority: notif.priority as any,
+        timestamp: notif.createdAt.toISOString(),
+        userId: notif.userId,
+        read: notif.isRead,
+      }))
+    } catch (error) {
+      console.error("Erro ao buscar notificações não lidas:", error)
+      return []
+    }
   }
 
   // Marcar notificação como lida
   async markNotificationAsRead(userId: number, notificationId: string) {
     try {
+      // PERSISTENCE: Update database
+      await db
+        .update(notifications)
+        .set({
+          isRead: true,
+          readAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(notifications.userId, userId),
+            eq(notifications.id, parseInt(notificationId))
+          )
+        )
+
+      // Send real-time update
       await pusherServer.trigger(`private-user-${userId}`, "notification-read", {
         notificationId,
         timestamp: new Date().toISOString(),
@@ -361,6 +433,22 @@ export class RealtimeNotificationService {
   // Marcar todas as notificações como lidas
   async markAllNotificationsAsRead(userId: number) {
     try {
+      // PERSISTENCE: Update database
+      await db
+        .update(notifications)
+        .set({
+          isRead: true,
+          readAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(notifications.userId, userId),
+            eq(notifications.isRead, false)
+          )
+        )
+
+      // Send real-time update
       await pusherServer.trigger(`private-user-${userId}`, "all-notifications-read", {
         timestamp: new Date().toISOString(),
       })
