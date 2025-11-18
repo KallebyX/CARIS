@@ -3,9 +3,29 @@ import { db } from '@/db'
 import { diaryEntries, moodTracking, users } from '@/db/schema'
 import { eq, desc, gte } from 'drizzle-orm'
 import { predictMoodTrends } from '@/lib/ai/predictive-analytics'
+import { getUserIdFromRequest } from '@/lib/auth'
+import { requireAIConsent } from '@/lib/consent'
+import { rateLimit, RateLimitPresets } from '@/lib/rate-limit'
+import { safeError } from '@/lib/safe-logger'
 
 export async function POST(req: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
+    // SECURITY: Authenticate user
+    const userId = await getUserIdFromRequest(req)
+    if (!userId) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'mood_prediction')
+    if (consentCheck) return consentCheck
+
     const body = await req.json()
     const { patientId, days = 7 } = body
 
@@ -56,7 +76,7 @@ export async function POST(req: NextRequest) {
       data: prediction,
     })
   } catch (error) {
-    console.error('Error in mood prediction API:', error)
+    safeError('[AI_PREDICT_MOOD]', 'Error in mood prediction API:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to generate mood prediction' },
       { status: 500 }

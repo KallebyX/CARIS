@@ -4,13 +4,26 @@ import { db } from '@/db'
 import { users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { runAIProcessing } from '@/lib/clinical-ai-service'
+import { requireAIConsent } from '@/lib/consent'
+import { rateLimit, RateLimitPresets } from '@/lib/rate-limit'
+import { safeError } from '@/lib/safe-logger'
 
 export async function POST(request: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(request, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'admin_ai_processing')
+    if (consentCheck) return consentCheck
 
     // Verify user is admin or psychologist
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1)
@@ -27,7 +40,7 @@ export async function POST(request: NextRequest) {
       message: `Processamento concluído: ${result.entriesProcessed} entradas analisadas, ${result.alertsGenerated} alertas gerados, ${result.insightsGenerated} insights criados`,
     })
   } catch (error) {
-    console.error('Error in AI processing endpoint:', error)
+    safeError('[ADMIN_AI_PROCESSING_POST]', 'Error in AI processing endpoint:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -60,7 +73,7 @@ export async function GET(request: NextRequest) {
       data: stats,
     })
   } catch (error) {
-    console.error('Error getting AI processing status:', error)
+    safeError('[ADMIN_AI_PROCESSING_GET]', 'Error getting AI processing status:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

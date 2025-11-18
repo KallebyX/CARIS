@@ -4,14 +4,27 @@ import { eq, desc, gte } from "drizzle-orm"
 import { NextResponse, NextRequest } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { analyzeMoodPatterns, generateTherapeuticInsights } from "@/lib/ai-analysis"
+import { requireAIConsent } from "@/lib/consent"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 export async function GET(req: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.READ)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'patient_insights')
+    if (consentCheck) return consentCheck
 
     const url = new URL(req.url)
     const period = url.searchParams.get('period') || 'week' // week, month, all
@@ -159,7 +172,7 @@ export async function GET(req: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Insights generation error:', error)
+    safeError('[PATIENT_INSIGHTS]', 'Insights generation error:', error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
