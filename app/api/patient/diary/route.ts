@@ -7,6 +7,8 @@ import { getUserIdFromRequest } from "@/lib/auth"
 import { analyzeEmotionalContent } from "@/lib/ai-analysis"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
 import { hasValidConsent, CONSENT_TYPES } from "@/lib/consent"
+import { sanitizeHtml, sanitizePlainText } from "@/lib/sanitize"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 
 // Helper function to award gamification points
 async function awardGamificationPoints(userId: number, activityType: string, metadata?: any) {
@@ -83,7 +85,13 @@ const entrySchema = z.object({
 
 export async function POST(req: NextRequest) {
   const { ipAddress, userAgent } = getRequestInfo(req)
-  
+
+  // Apply rate limiting for write operations
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
 
@@ -117,7 +125,11 @@ export async function POST(req: NextRequest) {
     const json = await req.json()
     const body = entrySchema.parse(json)
 
-    const { moodRating, intensityRating, content, cycle, emotions, audioUrl, audioTranscription, imageUrl, imageDescription } = body
+    // Sanitize user inputs to prevent XSS attacks
+    const { moodRating, intensityRating, cycle, emotions, audioUrl, imageUrl } = body
+    const content = sanitizeHtml(body.content, true) // Allow basic formatting in diary
+    const audioTranscription = body.audioTranscription ? sanitizePlainText(body.audioTranscription) : undefined
+    const imageDescription = body.imageDescription ? sanitizePlainText(body.imageDescription) : undefined
 
     // Análise de IA do conteúdo emocional (async, não bloqueia a resposta)
     let aiAnalysis = null

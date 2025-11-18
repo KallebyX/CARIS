@@ -146,7 +146,23 @@ export class ApiClient {
   }
 
   /**
-   * Internal fetch wrapper with error handling
+   * Get CSRF token from cookies
+   */
+  private getCSRFToken(): string | null {
+    if (typeof document === 'undefined') return null
+
+    const cookies = document.cookie.split(';')
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=')
+      if (name === 'csrf-token') {
+        return decodeURIComponent(value)
+      }
+    }
+    return null
+  }
+
+  /**
+   * Internal fetch wrapper with error handling and CSRF protection
    */
   private async fetch<T = any>(
     endpoint: string,
@@ -154,13 +170,21 @@ export class ApiClient {
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
 
+    // Add CSRF token for non-GET requests
+    const method = options.method?.toUpperCase() || 'GET'
+    const headers = { ...this.headers, ...options.headers }
+
+    if (method !== 'GET' && method !== 'HEAD') {
+      const csrfToken = this.getCSRFToken()
+      if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken
+      }
+    }
+
     try {
       const response = await fetch(url, {
         ...options,
-        headers: {
-          ...this.headers,
-          ...options.headers,
-        },
+        headers,
         credentials: 'include', // Include cookies
       })
 

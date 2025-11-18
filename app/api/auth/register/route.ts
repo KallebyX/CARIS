@@ -7,10 +7,16 @@ import jwt from "jsonwebtoken"
 import { z } from "zod"
 import { initializePrivacySettings, recordConsent, CONSENT_TYPES, LEGAL_BASIS } from "@/lib/consent"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string()
+    .min(12, "A senha deve ter no mínimo 12 caracteres")
+    .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula")
+    .regex(/[a-z]/, "A senha deve conter pelo menos uma letra minúscula")
+    .regex(/[0-9]/, "A senha deve conter pelo menos um número")
+    .regex(/[^A-Za-z0-9]/, "A senha deve conter pelo menos um caractere especial"),
   name: z.string().min(1),
   role: z.enum(["patient", "psychologist"]),
   // Campos específicos para psicólogos
@@ -31,6 +37,12 @@ const registerSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  // Apply rate limiting to prevent spam registrations
+  const rateLimitResult = await rateLimit(request, RateLimitPresets.AUTH)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const body = await request.json()
     const parsedBody = registerSchema.safeParse(body)

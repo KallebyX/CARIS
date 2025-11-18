@@ -1,0 +1,485 @@
+# TODO - CÁRIS Platform Improvements
+
+**Data da Análise:** 2025-11-18
+**Status:** Em Progresso
+**Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
+
+---
+
+## 🔴 CRÍTICO (Implementar Imediatamente)
+
+### CRITICAL-01: Rate Limiting Não Implementado ⚠️
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivo:** `/lib/rate-limit.ts` (código existe mas não é usado)
+- **Problema:**
+  - Biblioteca completa de rate limiting existe mas 0 dos 107 endpoints a utilizam
+  - Plataforma vulnerável a brute force, DoS, spam
+- **Solução:**
+  1. Aplicar rate limiting em endpoint de login (AUTH preset)
+  2. Aplicar em todos endpoints de escrita (WRITE preset)
+  3. Aplicar em endpoints sensíveis (SENSITIVE preset)
+  4. Aplicar em endpoints de leitura (READ preset)
+- **Arquivos Afetados:** Todos em `/app/api/`
+- **Estimativa:** 4-6 horas
+- **Risco se não corrigido:** Ataques de força bruta, sobrecarga do banco, spam no sistema de chat
+
+### CRITICAL-02: Proteção CSRF Desabilitada
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivo:** `/middleware.ts:236-247`
+- **Problema:**
+  - Validação CSRF executada mas não bloqueia requisições inválidas
+  - Código comentado com TODO
+- **Solução:**
+  1. Descomentar código de bloqueio
+  2. Implementar geração de tokens CSRF no frontend
+  3. Adicionar tokens em todos formulários
+  4. Testar em produção
+- **Estimativa:** 3-4 horas
+- **Risco se não corrigido:** Vulnerabilidade a ataques CSRF em todas operações POST/PUT/DELETE
+
+### CRITICAL-03: Endpoint SOS Sem Autenticação
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivo:** `/app/api/patient/sos/route.ts`
+- **Problema:**
+  - Endpoint de emergência aceita userId do body da requisição
+  - Qualquer pessoa pode disparar alertas SOS para qualquer usuário
+- **Solução:**
+  ```typescript
+  const userId = await getUserIdFromRequest(req)
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  ```
+- **Estimativa:** 30 minutos
+- **Risco se não corrigido:** Falsos positivos em emergências, fadiga de alertas, comprometimento do sistema de crise
+
+### CRITICAL-04: Criptografia de Chat Não Implementada
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivo:** `/app/api/chat/route.ts`
+- **Problema:**
+  - Mensagens armazenadas em texto plano
+  - Biblioteca de criptografia existe em `/lib/encryption.ts` mas não é usada
+  - Schema declara `encryptionVersion: 'aes-256'` mas é falso
+- **Solução:**
+  1. Implementar criptografia usando biblioteca existente
+  2. Migrar mensagens existentes
+  3. Atualizar endpoints de leitura para descriptografar
+- **Estimativa:** 6-8 horas
+- **Risco se não corrigido:** Violação HIPAA/LGPD, exposição de conversas terapêuticas
+
+### CRITICAL-05: Sanitização de Input XSS Ausente
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivos:** Múltiplos endpoints
+- **Problema:**
+  - Nenhuma sanitização HTML antes de armazenar input do usuário
+  - Campos afetados: diary entries, chat, notas de sessão, bios
+- **Solução:**
+  1. Instalar `isomorphic-dompurify`
+  2. Criar helper de sanitização
+  3. Aplicar em todos campos de texto livre
+- **Campos Críticos:**
+  - `/app/api/patient/diary/route.ts:159` - content
+  - `/app/api/chat/route.ts` - content
+  - `/app/api/psychologist/sessions/route.ts` - notes
+- **Estimativa:** 3-4 horas
+- **Risco se não corrigido:** Ataques XSS armazenados, roubo de sessões
+
+### CRITICAL-06: Validação de Senha Fraca
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivo:** `/app/api/auth/register/route.ts:13`
+- **Problema:**
+  ```typescript
+  password: z.string().min(6)  // Apenas 6 caracteres, sem complexidade
+  ```
+- **Solução:**
+  ```typescript
+  password: z.string()
+    .min(12)
+    .regex(/[A-Z]/, 'Deve conter maiúscula')
+    .regex(/[a-z]/, 'Deve conter minúscula')
+    .regex(/[0-9]/, 'Deve conter número')
+    .regex(/[^A-Za-z0-9]/, 'Deve conter caractere especial')
+  ```
+- **Estimativa:** 1 hora
+- **Risco se não corrigido:** Senhas fracas comprometem dados de saúde mental
+
+### CRITICAL-07: JWT Secret Sem Validação
+- **Status:** 🔴 Pendente
+- **Prioridade:** P0 - Urgente
+- **Arquivo:** `/lib/auth.ts:18`
+- **Problema:**
+  - Sem validação de força do JWT_SECRET
+  - Sem mecanismo de rotação
+- **Solução:**
+  1. Validar comprimento mínimo de 64 caracteres no startup
+  2. Documentar processo de rotação
+  3. Adicionar suporte a múltiplos secrets para rotação
+- **Estimativa:** 2 horas
+- **Risco se não corrigido:** Secrets fracos comprometem toda autenticação
+
+---
+
+## 🟠 ALTA PRIORIDADE (Implementar em 2 Semanas)
+
+### HIGH-01: Índices de Banco Ausentes
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Arquivo:** `/db/schema.ts`
+- **Problema:** Queries lentas, performance degrada com crescimento
+- **Índices Necessários:**
+  ```sql
+  CREATE INDEX idx_diary_patient_date ON diary_entries(patient_id, entry_date DESC);
+  CREATE INDEX idx_chat_room_created ON chat_messages(room_id, created_at);
+  CREATE INDEX idx_sessions_psych_scheduled ON sessions(psychologist_id, scheduled_at);
+  CREATE INDEX idx_mood_patient_date ON mood_tracking(patient_id, date);
+  CREATE INDEX idx_audit_user_timestamp ON audit_logs(user_id, timestamp);
+  ```
+- **Estimativa:** 2-3 horas
+- **Impacto:** Queries 10-100x mais rápidas
+
+### HIGH-02: Tabela de Notificações Ausente
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Problema:**
+  - Código de notificações existe
+  - Sem persistência em banco
+  - Não pode marcar como lida, sem histórico
+- **Solução:**
+  1. Criar schema de notificações
+  2. Migração
+  3. Atualizar notification-service para persistir
+- **Estimativa:** 4 horas
+
+### HIGH-03: Upload de Arquivos Sem Scan de Vírus
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Arquivo:** `/app/api/chat/files/upload/route.ts`
+- **Problema:** Schema tem campo `virusScanStatus` mas sem scan real
+- **Solução:**
+  1. Integrar ClamAV ou serviço de scan
+  2. Quarentena arquivos até scan completo
+  3. Atualizar status após scan
+- **Estimativa:** 6-8 horas
+
+### HIGH-04: Verificação de Backup Inexistente
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Arquivo:** `/lib/backup/database-backup.ts`
+- **Problema:** Backups criados mas integridade não verificada
+- **Solução:**
+  1. Checksum após backup
+  2. Teste de restauração periódico
+  3. Alertas se backup falhar
+- **Estimativa:** 4 horas
+
+### HIGH-05: Cascade Deletes Ausentes
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Arquivo:** `/db/schema.ts`
+- **Problema:** Registros órfãos quando usuários/sessões deletados
+- **Solução:** Adicionar CASCADE DELETE em foreign keys
+- **Estimativa:** 3 horas
+
+### HIGH-06: Dados Sensíveis em Logs de Erro
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Problema:** `console.error` pode logar senhas, tokens
+- **Solução:**
+  1. Criar função de log segura
+  2. Sanitizar objetos antes de logar
+  3. Substituir todos console.error
+- **Estimativa:** 4 horas
+
+### HIGH-07: Tokens JWT Não Invalidados em Mudança de Senha
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Arquivo:** `/app/api/user/change-password/route.ts`
+- **Problema:** Tokens antigos válidos por 7 dias após mudança de senha
+- **Solução:**
+  1. Adicionar tabela de blacklist de tokens ou campo lastPasswordChange
+  2. Validar em getUserIdFromRequest
+  3. Invalidar tokens antigos
+- **Estimativa:** 4 horas
+
+### HIGH-08: Credenciais Pusher Expostas Client-Side
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Arquivo:** `/next.config.js:143`
+- **Problema:** Chaves públicas do Pusher permitem subscription não autorizada
+- **Solução:**
+  1. Implementar autorização de canais privados
+  2. Endpoint de auth para Pusher
+  3. Prefixar canais sensíveis com 'private-'
+- **Estimativa:** 3 horas
+
+### HIGH-09: Análise IA Sem Verificação de Consentimento Universal
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Problema:** Alguns endpoints IA não verificam consentimento
+- **Solução:**
+  1. Criar middleware de verificação de consentimento IA
+  2. Aplicar em todos endpoints `/api/ai/*`
+  3. Verificar em análise de imagem e sessão
+- **Estimativa:** 2 horas
+
+### HIGH-10: RBAC Middleware Ausente
+- **Status:** 🟡 Pendente
+- **Prioridade:** P1 - Alta
+- **Problema:** Cada rota checa roles manualmente, inconsistente
+- **Solução:**
+  1. Criar middleware RBAC centralizado
+  2. Decorator ou wrapper para rotas
+  3. Refatorar endpoints para usar
+- **Estimativa:** 6 horas
+
+---
+
+## 🟡 MÉDIA PRIORIDADE (Implementar em 1 Mês)
+
+### MEDIUM-01: Error Boundaries Incompletos
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/components/error-boundary.tsx`
+- **Solução:** Adicionar em todos layouts de dashboard
+- **Estimativa:** 2 horas
+
+### MEDIUM-02: Formato de Resposta API Inconsistente
+- **Status:** ⚪ Pendente
+- **Problema:** Alguns retornam `{success, data}`, outros formatos diferentes
+- **Solução:** Padronizar todas respostas
+- **Estimativa:** 4 horas
+
+### MEDIUM-03: Sem Limite Máximo de Paginação
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/app/api/patient/diary/route.ts:275`
+- **Problema:** Cliente pode pedir `?limit=999999`
+- **Solução:** Adicionar MAX_LIMIT = 100
+- **Estimativa:** 1 hora
+
+### MEDIUM-04: Valores de Gamificação Hardcoded
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/app/api/patient/diary/route.ts:13-18`
+- **Solução:** Mover para tabela de configuração
+- **Estimativa:** 3 horas
+
+### MEDIUM-05: Pool de Conexões Não Configurado
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/db/index.ts`
+- **Solução:** Adicionar configuração de pool Postgres
+- **Estimativa:** 1 hora
+
+### MEDIUM-06: Sem Timeout de Requisições
+- **Status:** ⚪ Pendente
+- **Solução:** Middleware de timeout
+- **Estimativa:** 2 horas
+
+### MEDIUM-07: Código Duplicado em Gamificação
+- **Status:** ⚪ Pendente
+- **Problema:** Lógica de pontos repetida em diary, meditation, tasks
+- **Solução:** Extrair para serviço compartilhado
+- **Estimativa:** 3 horas
+
+### MEDIUM-08: Error Handling de Integração de Calendário
+- **Status:** ⚪ Pendente
+- **Arquivos:** `/lib/calendar/*.ts`
+- **Solução:** Graceful degradation quando APIs externas caem
+- **Estimativa:** 3 horas
+
+### MEDIUM-09: Política de Retenção Não Enforçada
+- **Status:** ⚪ Pendente
+- **Problema:** Schema tem `dataRetentionPreference` mas sem job de cleanup
+- **Solução:** Cron job para deletar dados expirados (LGPD/GDPR)
+- **Estimativa:** 4 horas
+
+### MEDIUM-10: Sem Estratégia de Cache
+- **Status:** ⚪ Pendente
+- **Problema:** Stats de dashboard recalculadas a cada request
+- **Solução:** Redis cache ou materialized views
+- **Estimativa:** 6 horas
+
+### MEDIUM-11: Inconsistências de Timezone
+- **Status:** ⚪ Pendente
+- **Problema:** Algumas tabelas tem timezone, outras não
+- **Solução:** Padronizar uso de timezone em timestamps
+- **Estimativa:** 4 horas
+
+### MEDIUM-12: Tracking de Medicação Ausente
+- **Status:** ⚪ Pendente
+- **Problema:** Campo de texto genérico ao invés de tabela estruturada
+- **Solução:** Criar tabela de medicações com lembretes
+- **Estimativa:** 6 horas
+
+---
+
+## 🟢 BAIXA PRIORIDADE (Backlog)
+
+### LOW-01: TypeScript Build Errors Ignorados
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/next.config.js:359-363`
+- **Solução:** Remover `ignoreBuildErrors: true`
+- **Estimativa:** 2 horas (+ correção de erros)
+
+### LOW-02: ESLint Errors Ignorados
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/next.config.js:350-354`
+- **Solução:** Remover ignore e corrigir issues
+- **Estimativa:** 4 horas
+
+### LOW-03: Formatação de Data Inconsistente
+- **Status:** ⚪ Pendente
+- **Solução:** Padronizar ISO strings vs timestamps
+- **Estimativa:** 2 horas
+
+### LOW-04: Falta Documentação de Loading States
+- **Status:** ⚪ Pendente
+- **Solução:** Documentar padrões de loading
+- **Estimativa:** 1 hora
+
+### LOW-05: Sem i18n
+- **Status:** ⚪ Pendente
+- **Problema:** Comentários em português mas UI hardcoded
+- **Solução:** Implementar next-intl
+- **Estimativa:** 12 horas
+
+### LOW-06: Sentry Desabilitado
+- **Status:** ⚪ Pendente
+- **Arquivo:** `/next.config.js:407`
+- **Solução:** Habilitar `shouldUseSentry = true`
+- **Estimativa:** 30 minutos
+
+### LOW-07: Code Splitting Não Otimizado
+- **Status:** ⚪ Pendente
+- **Solução:** Lazy load charts, AI SDK
+- **Estimativa:** 3 horas
+
+### LOW-08: Auditoria de Acessibilidade Pendente
+- **Status:** ⚪ Pendente
+- **Solução:** Executar testes e corrigir issues
+- **Estimativa:** 8 horas
+
+### LOW-09: PWA Incompleto
+- **Status:** ⚪ Pendente
+- **Problema:** Service worker existe mas sem funcionalidade offline
+- **Solução:** Implementar cache offline para features críticas
+- **Estimativa:** 12 horas
+
+### LOW-10: Campos Duplicados no Schema
+- **Status:** ⚪ Pendente
+- **Exemplo:** `moodTracking` tem `mood` e `moodScore`
+- **Solução:** Consolidar campos redundantes
+- **Estimativa:** 2 horas
+
+---
+
+## 🎯 PLANO DE IMPLEMENTAÇÃO
+
+### Sprint 1 (Semana 1) - Segurança Crítica
+**Objetivo:** Corrigir todas vulnerabilidades CRITICAL
+
+- [ ] CRITICAL-01: Implementar rate limiting em todos endpoints
+- [ ] CRITICAL-02: Habilitar proteção CSRF
+- [ ] CRITICAL-03: Adicionar autenticação ao endpoint SOS
+- [ ] CRITICAL-04: Implementar criptografia de chat
+- [ ] CRITICAL-05: Adicionar sanitização XSS
+- [ ] CRITICAL-06: Fortalecer validação de senha
+- [ ] CRITICAL-07: Validar JWT secret
+
+**Entregável:** Plataforma segura contra ataques comuns
+
+### Sprint 2 (Semana 2) - Performance e Dados
+**Objetivo:** Corrigir issues HIGH de performance e proteção de dados
+
+- [ ] HIGH-01: Adicionar índices de banco
+- [ ] HIGH-02: Criar tabela de notificações
+- [ ] HIGH-04: Implementar verificação de backup
+- [ ] HIGH-05: Adicionar cascade deletes
+- [ ] HIGH-06: Sanitizar logs de erro
+- [ ] HIGH-07: Invalidar tokens em mudança de senha
+
+**Entregável:** Sistema performático e confiável
+
+### Sprint 3 (Semana 3) - Compliance e Qualidade
+**Objetivo:** Compliance LGPD/HIPAA e melhorias de qualidade
+
+- [ ] HIGH-03: Implementar scan de vírus
+- [ ] HIGH-08: Proteger canais Pusher
+- [ ] HIGH-09: Verificação universal de consentimento IA
+- [ ] HIGH-10: Middleware RBAC centralizado
+- [ ] MEDIUM-09: Job de retenção de dados
+
+**Entregável:** Plataforma em compliance
+
+### Sprint 4 (Semana 4) - Refinamentos
+**Objetivo:** Issues de média prioridade
+
+- [ ] MEDIUM-01 a MEDIUM-08
+- [ ] Refatorações de código
+- [ ] Melhorias de UX
+
+**Entregável:** Código limpo e manutenível
+
+### Backlog (Futuro)
+- Issues LOW-01 a LOW-10
+- Features novas
+- Otimizações avançadas
+
+---
+
+## 📊 MÉTRICAS
+
+### Antes das Correções
+- Endpoints com autenticação: 88.8% (95/107)
+- Endpoints com rate limiting: 0% (0/107) ⚠️
+- Endpoints com validação: 74.8% (80/107)
+- Issues de segurança críticos: 7 🔴
+- Score de segurança: 45/100
+
+### Meta Após Sprint 3
+- Endpoints com autenticação: 100% (107/107) ✅
+- Endpoints com rate limiting: 100% (107/107) ✅
+- Endpoints com validação: 100% (107/107) ✅
+- Issues de segurança críticos: 0 ✅
+- Score de segurança: 95/100 ✅
+
+---
+
+## 🎉 PONTOS POSITIVOS IDENTIFICADOS
+
+✅ **Infraestrutura de Segurança Robusta** (precisa ser usada)
+✅ **Schema de Banco Excelente** (50+ tabelas bem desenhadas)
+✅ **Suite de Testes Abrangente** (unit, integration, e2e)
+✅ **Features Específicas de Saúde Mental** (SOS, tracking emocional, gamificação)
+✅ **Comunicação Real-time** (Pusher, WebSocket)
+✅ **Integração IA** (OpenAI para análise emocional)
+✅ **Compliance Features** (LGPD/GDPR, consentimento, auditoria)
+✅ **Integrações Calendário** (Google, Outlook)
+✅ **Sistema de Pagamento** (Stripe completo)
+✅ **Multi-tenancy** (gestão de clínicas)
+
+---
+
+## 📝 NOTAS IMPORTANTES
+
+1. **Não Deployar em Produção** até resolver todos CRITICAL issues
+2. **Dados de Saúde Mental** requerem máxima segurança - priorizar CRITICAL-04 (criptografia)
+3. **Sistema SOS** é feature de emergência - CRITICAL-03 é urgente
+4. **Rate Limiting** deve ser primeira correção - protege contra todos tipos de abuso
+5. **Backups** precisam de verificação - dados não podem ser perdidos
+
+---
+
+## 🔗 REFERÊNCIAS
+
+- Análise completa gerada em: 2025-11-18
+- Repositório: /home/user/CARIS
+- Branch de desenvolvimento: claude/study-system-01TPdAKFTuPV9wenKYS6gjuD
+- Total de arquivos analisados: 200+
+- Total de linhas de código: ~50,000+
+
+---
+
+**Última atualização:** 2025-11-18
+**Próxima revisão:** Após Sprint 1

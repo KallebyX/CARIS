@@ -239,12 +239,11 @@ export async function middleware(request: NextRequest) {
           userId: payload.userId,
           path: pathname
         })
-        // For now, log but don't block (to avoid breaking existing functionality)
-        // TODO: Enable blocking after frontend implements CSRF tokens
-        // return NextResponse.json(
-        //   { error: "Invalid CSRF token" },
-        //   { status: 403 }
-        // )
+        // CSRF protection now enabled - frontend ApiClient includes tokens
+        return NextResponse.json(
+          { error: "Invalid CSRF token" },
+          { status: 403 }
+        )
       }
     }
 

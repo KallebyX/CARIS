@@ -4,6 +4,8 @@ import { chatRooms, chatMessages, messageReadReceipts } from "@/db/schema"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { eq, and, or, desc, isNull } from "drizzle-orm"
 import { pusherServer } from "@/lib/pusher"
+import { sanitizePlainText } from "@/lib/sanitize"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 
 /**
  * GET /api/chat - Get messages for a chat room
@@ -126,6 +128,12 @@ export async function GET(req: NextRequest) {
  * Body: { roomId?, receiverId?, content, messageType?, isTemporary?, expiresAt?, metadata? }
  */
 export async function POST(req: NextRequest) {
+  // Apply rate limiting for chat messages to prevent spam
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.CHAT)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
     if (!userId) {
@@ -136,12 +144,14 @@ export async function POST(req: NextRequest) {
     const {
       roomId,
       receiverId,
-      content,
       messageType = 'text',
       isTemporary = false,
       expiresAt = null,
       metadata = null
     } = body
+
+    // Sanitize message content to prevent XSS attacks
+    const content = sanitizePlainText(body.content)
 
     if (!content) {
       return NextResponse.json({
