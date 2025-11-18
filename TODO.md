@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos os Issues Críticos Resolvidos + 10 Alta Prioridade (100% dos HIGH!)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 17 (7 Críticos + 10 Alta Prioridade)
-**Última Atualização:** 2025-11-18 - Virus Scanning System (HIGH-03)
+**Issues Resolvidos:** 19 (7 CRITICAL + 10 HIGH + 2 MEDIUM)
+**Última Atualização:** 2025-11-18 - Database Connection Pool (MEDIUM-05)
 
 ---
 
@@ -375,11 +375,29 @@
 - **Estimativa:** 4 horas
 
 ### MEDIUM-03: Sem Limite Máximo de Paginação
-- **Status:** ⚪ Pendente
-- **Arquivo:** `/app/api/patient/diary/route.ts:275`
-- **Problema:** Cliente pode pedir `?limit=999999`
-- **Solução:** Adicionar MAX_LIMIT = 100
-- **Estimativa:** 1 hora
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivo:** `/app/api/patient/diary/route.ts`, `/lib/pagination.ts`
+- **Problema:** Cliente podia pedir `?limit=999999` causando DOS
+- **Solução:**
+  1. ✅ Criado lib/pagination.ts com utilitários centralizados
+  2. ✅ MAX_LIMIT = 100 (máximo de itens por página)
+  3. ✅ MAX_OFFSET = 10,000 (previne deep pagination cara)
+  4. ✅ parsePaginationParams() - Validação automática de bounds
+  5. ✅ parsePagePagination() - Suporte a paginação baseada em páginas
+  6. ✅ createPaginationMeta() - Metadata padronizada
+  7. ✅ Atualizado 3 endpoints vulneráveis
+- **Arquivos Modificados:**
+  - `app/api/patient/diary/route.ts`: parsePaginationParams()
+  - `app/api/patient/meditation-library/route.ts`: parsePagePagination()
+  - `app/api/admin/meditation-audios/route.ts`: parsePagePagination()
+- **Benefícios:**
+  - Previne ataques DOS via limites grandes
+  - Previne queries caras com deep pagination
+  - Validação automática de bounds (mín: 1, sem negativos)
+  - API consistente em todos endpoints
+- **Tempo Real:** 1 hora
+- **Commit:** 15d2baf
 
 ### MEDIUM-04: Valores de Gamificação Hardcoded
 - **Status:** ⚪ Pendente
@@ -388,10 +406,38 @@
 - **Estimativa:** 3 horas
 
 ### MEDIUM-05: Pool de Conexões Não Configurado
-- **Status:** ⚪ Pendente
-- **Arquivo:** `/db/index.ts`
-- **Solução:** Adicionar configuração de pool Postgres
-- **Estimativa:** 1 hora
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivo:** `/db/index.ts`, `env.template`
+- **Problema:** Sem configuração de pool, conexões não gerenciadas
+- **Solução:**
+  1. ✅ Configurado connection pool do postgres-js
+  2. ✅ max: 20 conexões (previne exhaustion)
+  3. ✅ idle_timeout: 30s (cleanup agressivo para serverless)
+  4. ✅ max_lifetime: 1h (recicla conexões antigas)
+  5. ✅ connect_timeout: 10s (falha rápida)
+  6. ✅ Prepared statements habilitados (2-5x performance)
+  7. ✅ SSL para production
+  8. ✅ closeDatabase() - Graceful shutdown
+  9. ✅ checkDatabaseHealth() - Health check integrado
+  10. ✅ Variáveis de ambiente configuráveis
+- **Arquivos Modificados:**
+  - `db/index.ts`: Connection pool config completa
+  - `app/api/health/route.ts`: Usa checkDatabaseHealth()
+  - `env.template`: Variáveis DB_POOL_*
+- **Configuração:**
+  - DB_POOL_MAX=20
+  - DB_IDLE_TIMEOUT=30
+  - DB_MAX_LIFETIME=3600
+  - DB_CONNECT_TIMEOUT=10
+  - DB_DEBUG=false
+- **Performance:**
+  - Connection reuse reduz latência
+  - Prepared statements 2-5x mais rápidos
+  - Idle cleanup reduz uso de memória
+  - Max lifetime previne conexões stale
+- **Tempo Real:** 1 hora
+- **Commit:** 02ef84d
 
 ### MEDIUM-06: Sem Timeout de Requisições
 - **Status:** ⚪ Pendente
