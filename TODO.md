@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos os Issues Críticos Resolvidos + 4 Alta Prioridade
+**Status:** ✅ Todos os Issues Críticos Resolvidos + 6 Alta Prioridade
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 11 (7 Críticos + 4 Alta Prioridade)
-**Última Atualização:** 2025-11-18 - Secure Logger Implementation (HIGH-06)
+**Issues Resolvidos:** 13 (7 Críticos + 6 Alta Prioridade)
+**Última Atualização:** 2025-11-18 - Universal AI Consent Verification (HIGH-09)
 
 ---
 
@@ -220,25 +220,54 @@
 - **Commit:** 7bf5999
 
 ### HIGH-08: Credenciais Pusher Expostas Client-Side
-- **Status:** 🟡 Pendente
+- **Status:** ✅ **COMPLETO**
 - **Prioridade:** P1 - Alta
-- **Arquivo:** `/next.config.js:143`
+- **Arquivo:** `/next.config.js:143`, `/app/api/pusher/auth/route.ts`
 - **Problema:** Chaves públicas do Pusher permitem subscription não autorizada
 - **Solução:**
-  1. Implementar autorização de canais privados
-  2. Endpoint de auth para Pusher
-  3. Prefixar canais sensíveis com 'private-'
-- **Estimativa:** 3 horas
+  1. ✅ Criado endpoint `/api/pusher/auth` com autorização server-side
+  2. ✅ Implementada autorização para private-user-{userId}, private-chat-room-{roomId}, private-role-{role}
+  3. ✅ Verificação de participantes em salas de chat
+  4. ✅ Atualizado Pusher client config com authEndpoint
+  5. ✅ Migrados todos canais para usar prefixo `private-`
+- **Arquivos Modificados:**
+  - `app/api/pusher/auth/route.ts` (criado)
+  - `lib/pusher.ts`: authEndpoint config
+  - `lib/realtime-notifications.ts`: canais privados
+  - `app/api/chat/route.ts`: trigger em canais privados
+  - `hooks/use-realtime-notifications.ts`: subscribe privado
+  - `components/chat/chat-layout.tsx`: nome de canal correto
+- **Tempo Real:** 2 horas
+- **Commit:** 4b39d9d
 
 ### HIGH-09: Análise IA Sem Verificação de Consentimento Universal
-- **Status:** 🟡 Pendente
+- **Status:** ✅ **COMPLETO**
 - **Prioridade:** P1 - Alta
-- **Problema:** Alguns endpoints IA não verificam consentimento
+- **Problema:** Endpoints IA não verificam consentimento (LGPD/GDPR violation)
 - **Solução:**
-  1. Criar middleware de verificação de consentimento IA
-  2. Aplicar em todos endpoints `/api/ai/*`
-  3. Verificar em análise de imagem e sessão
-- **Estimativa:** 2 horas
+  1. ✅ Criado middleware `requireAIConsent()` em `lib/consent.ts`
+  2. ✅ Implementado audit logging para uso de IA (sucesso e negação)
+  3. ✅ Adicionado verificação em 10 endpoints IA
+  4. ✅ Rate limiting e autenticação em todos endpoints
+  5. ✅ UI para consentimento na página de privacidade
+  6. ✅ Auto-redirect e scroll para toggle de consentimento
+- **Endpoints Atualizados:**
+  - `/api/ai/emotional-insights` (POST)
+  - `/api/ai/predict-mood` (POST)
+  - `/api/ai/recommendations` (POST)
+  - `/api/ai/risk-assessment` (POST)
+  - `/api/patient/insights` (GET)
+  - `/api/psychologist/ai-insights` (GET, POST)
+  - `/api/analyze-image` (POST)
+  - `/api/transcribe` (POST)
+  - `/api/psychologist/progress-reports` (POST)
+  - `/api/admin/ai-processing` (POST)
+- **Arquivos Modificados:**
+  - `lib/consent.ts`: requireAIConsent() middleware
+  - 10 arquivos de rota IA
+  - `app/dashboard/privacy/page.tsx`: UI de consentimento
+- **Tempo Real:** 3 horas
+- **Commits:** 7bc02ad, 1d7f4ea
 
 ### HIGH-10: RBAC Middleware Ausente
 - **Status:** 🟡 Pendente
