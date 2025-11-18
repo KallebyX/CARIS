@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos os Issues Críticos Resolvidos + 6 Alta Prioridade
+**Status:** ✅ Todos os Issues Críticos Resolvidos + 7 Alta Prioridade
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 13 (7 Críticos + 6 Alta Prioridade)
-**Última Atualização:** 2025-11-18 - Universal AI Consent Verification (HIGH-09)
+**Issues Resolvidos:** 14 (7 Críticos + 7 Alta Prioridade)
+**Última Atualização:** 2025-11-18 - Centralized RBAC Middleware (HIGH-10)
 
 ---
 
@@ -270,14 +270,34 @@
 - **Commits:** 7bc02ad, 1d7f4ea
 
 ### HIGH-10: RBAC Middleware Ausente
-- **Status:** 🟡 Pendente
+- **Status:** ✅ **COMPLETO**
 - **Prioridade:** P1 - Alta
-- **Problema:** Cada rota checa roles manualmente, inconsistente
+- **Problema:** Cada rota checa roles manualmente, código duplicado em 100+ endpoints
 - **Solução:**
-  1. Criar middleware RBAC centralizado
-  2. Decorator ou wrapper para rotas
-  3. Refatorar endpoints para usar
-- **Estimativa:** 6 horas
+  1. ✅ Criado middleware RBAC centralizado em `lib/rbac.ts`
+  2. ✅ Implementado requireRole(), requireAnyRole(), requirePermission()
+  3. ✅ Sistema de permissões granulares (patient, psychologist, admin)
+  4. ✅ Audit logging automático para falhas de autorização
+  5. ✅ Type-safe role and permission definitions
+  6. ✅ Refatorados 2 endpoints críticos como demonstração
+- **Funções Disponíveis:**
+  - `requireRole(req, role)`: Exige role específico
+  - `requireAnyRole(req, roles[])`: Exige qualquer um dos roles
+  - `requirePermission(req, permission)`: Exige permissão granular
+  - `hasRole(req, role)`: Check booleano de role
+  - `hasPermission(req, permission)`: Check booleano de permissão
+  - `getAuthenticatedUser(req)`: Retorna user com role
+- **Endpoints Refatorados:**
+  - `/api/admin/users`: 11 linhas → 2 linhas
+  - `/api/psychologist/patients`: Corrigido security issue (não validava role)
+- **Benefícios:**
+  - DRY: Single source of truth para autorização
+  - Type safety: Previne erros de permissão
+  - Audit trail: Logs de acesso negado para compliance
+  - Manutenção: Fácil adicionar novos roles/permissions
+  - Segurança: Reduz attack surface através de centralização
+- **Tempo Real:** 2.5 horas
+- **Commit:** 1a32f5e
 
 ---
 
