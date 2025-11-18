@@ -10,12 +10,20 @@
 export async function register() {
   // Only run on the server
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    // CRITICAL: Validate security configuration before starting
+    const { validateStartupConfiguration } = await import("./lib/startup-validation")
+    validateStartupConfiguration()
+
     // Import and initialize Sentry server configuration
     await import("./sentry.server.config")
   }
 
   // Only run on the Edge Runtime
   if (process.env.NEXT_RUNTIME === "edge") {
+    // CRITICAL: Validate security configuration before starting
+    const { validateStartupConfiguration } = await import("./lib/startup-validation")
+    validateStartupConfiguration()
+
     // Import and initialize Sentry edge configuration
     await import("./sentry.server.config")
   }

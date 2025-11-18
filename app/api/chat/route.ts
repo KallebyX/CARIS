@@ -6,6 +6,7 @@ import { eq, and, or, desc, isNull } from "drizzle-orm"
 import { pusherServer } from "@/lib/pusher"
 import { sanitizePlainText } from "@/lib/sanitize"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { encryptText, decryptText, type EncryptedData } from "@/lib/server-encryption"
 
 /**
  * GET /api/chat - Get messages for a chat room
@@ -92,7 +93,7 @@ export async function GET(req: NextRequest) {
       .orderBy(chatMessages.createdAt)
       .limit(100)
 
-    // Get read receipts
+    // Decrypt messages and get read receipts
     const messagesWithReceipts = await Promise.all(
       messages.map(async (message) => {
         const receipts = await db
@@ -100,8 +101,28 @@ export async function GET(req: NextRequest) {
           .from(messageReadReceipts)
           .where(eq(messageReadReceipts.messageId, message.id))
 
+        // Decrypt message content
+        let decryptedContent = message.content
+        try {
+          if (message.metadata) {
+            const metadata = JSON.parse(message.metadata)
+            if (metadata.encryption) {
+              decryptedContent = decryptText({
+                encrypted: message.content || '',
+                iv: metadata.encryption.iv,
+                authTag: metadata.encryption.authTag,
+                version: message.encryptionVersion || 'aes-256-gcm-v1'
+              })
+            }
+          }
+        } catch (error) {
+          console.error('[Chat] Failed to decrypt message:', error)
+          decryptedContent = '[Mensagem criptografada - erro ao descriptografar]'
+        }
+
         return {
           ...message,
+          content: decryptedContent,
           readReceipts: receipts
         }
       })
@@ -215,18 +236,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    // Insert message
+    // Encrypt message content before storing (HIPAA/LGPD compliance)
+    const encrypted = encryptText(content)
+
+    // Merge encryption metadata with existing metadata
+    const messageMetadata = {
+      ...(metadata || {}),
+      encryption: {
+        iv: encrypted.iv,
+        authTag: encrypted.authTag,
+      }
+    }
+
+    // Insert encrypted message
     const newMessage = await db
       .insert(chatMessages)
       .values({
         roomId: targetRoomId,
         senderId: userId,
-        content,
+        content: encrypted.encrypted, // Store encrypted content
         messageType,
-        encryptionVersion: 'aes-256',
+        encryptionVersion: encrypted.version,
         isTemporary,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: JSON.stringify(messageMetadata)
       })
       .returning()
 
@@ -243,6 +276,7 @@ export async function POST(req: NextRequest) {
       })
 
     // Trigger Pusher event for real-time delivery
+    // Send decrypted content via Pusher (transport layer encryption)
     try {
       await pusherServer.trigger(
         `chat-room-${targetRoomId}`,
@@ -250,7 +284,7 @@ export async function POST(req: NextRequest) {
         {
           id: message.id,
           senderId: message.senderId,
-          content: message.content,
+          content: content, // Send original (sanitized) content for real-time display
           messageType: message.messageType,
           createdAt: message.createdAt,
           metadata: message.metadata
@@ -276,10 +310,14 @@ export async function POST(req: NextRequest) {
       // Continue even if Pusher fails
     }
 
+    // Return decrypted message to sender
     return NextResponse.json({
       success: true,
       data: {
-        message,
+        message: {
+          ...message,
+          content: content // Return original content, not encrypted
+        },
         roomId: targetRoomId
       }
     })
