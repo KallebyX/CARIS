@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken"
 import { z } from "zod"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -115,8 +116,8 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("Login error:", error)
-    
+    safeError("[AUTH_LOGIN]", "Login error:", error)
+
     await logAuditEvent({
       userId,
       action: 'login_failed',

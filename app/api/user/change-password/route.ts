@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
+import { safeError } from "@/lib/safe-logger"
 
 const passwordSchema = z.string()
   .min(12, "A senha deve ter no mínimo 12 caracteres")
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
       info: "Todas as sessões anteriores foram invalidadas por segurança"
     })
   } catch (error) {
-    console.error("Erro ao alterar senha:", error)
+    safeError("[CHANGE_PASSWORD]", "Erro ao alterar senha:", error)
 
     await logAuditEvent({
       userId,

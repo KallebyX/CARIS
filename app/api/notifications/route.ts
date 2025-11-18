@@ -4,6 +4,7 @@ import { db } from "@/db"
 import { notifications } from "@/db/schema"
 import { eq, and, desc, sql } from "drizzle-orm"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 // Get user notifications
 export async function GET(req: NextRequest) {
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error("[NOTIFICATIONS_GET]", error)
+    safeError("[NOTIFICATIONS_GET]", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }
@@ -162,7 +163,7 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     )
   } catch (error) {
-    console.error("[NOTIFICATIONS_POST]", error)
+    safeError("[NOTIFICATIONS_POST]", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }
@@ -216,7 +217,7 @@ export async function PUT(req: NextRequest) {
       data: { notification }
     })
   } catch (error) {
-    console.error("[NOTIFICATIONS_PUT]", error)
+    safeError("[NOTIFICATIONS_PUT]", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }

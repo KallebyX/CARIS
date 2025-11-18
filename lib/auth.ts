@@ -3,6 +3,7 @@ import * as jose from "jose"
 import { db } from "@/db"
 import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
+import { safeError, safeWarn } from "@/lib/safe-logger"
 
 /**
  * Extrai o ID do usuário do token JWT na requisição.
@@ -40,7 +41,7 @@ export async function getUserIdFromRequest(request: NextRequest | Request) {
 
         // If token was issued before password change, invalidate it
         if (tokenIssuedAt < passwordChangedTimestamp) {
-          console.warn(`[Auth] Token invalidated - issued before password change. User: ${userId}`)
+          safeWarn("[AUTH]", `Token invalidated - issued before password change. User: ${userId}`)
           return null
         }
       }
@@ -48,7 +49,7 @@ export async function getUserIdFromRequest(request: NextRequest | Request) {
 
     return userId
   } catch (error) {
-    console.error("Falha na verificação do token:", error)
+    safeError("[AUTH]", "Falha na verificação do token:", error)
     return null
   }
 }
@@ -64,7 +65,7 @@ export async function verifyToken(token: string) {
     const { payload } = await jose.jwtVerify(token, secret)
     return payload
   } catch (error) {
-    console.error("Falha na verificação do token:", error)
+    safeError("[AUTH]", "Falha na verificação do token:", error)
     return null
   }
 }

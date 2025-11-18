@@ -9,6 +9,7 @@ import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@
 import { hasValidConsent, CONSENT_TYPES } from "@/lib/consent"
 import { sanitizeHtml, sanitizePlainText } from "@/lib/sanitize"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 // Helper function to award gamification points
 async function awardGamificationPoints(userId: number, activityType: string, metadata?: any) {
@@ -153,7 +154,7 @@ export async function POST(req: NextRequest) {
         })
       }
     } catch (error) {
-      console.error('AI analysis failed:', error)
+      safeError('[DIARY]', 'AI analysis failed:', error)
       await logAuditEvent({
         userId,
         action: 'ai_analysis_failed',
@@ -198,7 +199,7 @@ export async function POST(req: NextRequest) {
     try {
       await awardGamificationPoints(userId, 'diary_entry', { entryId: entry.id })
     } catch (error) {
-      console.error('Failed to award gamification points:', error)
+      safeError('[DIARY]', 'Failed to award gamification points:', error)
       // Don't fail the diary entry if gamification fails
     }
 
@@ -241,8 +242,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Diary entry error:', error)
-    
+    safeError('[DIARY_POST]', 'Diary entry error:', error)
+
     await logAuditEvent({
       userId: await getUserIdFromRequest(req),
       action: 'diary_entry_failed',
@@ -336,7 +337,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Diary entries fetch error:', error)
+    safeError('[DIARY_GET]', 'Diary entries fetch error:', error)
     
     await logAuditEvent({
       userId: await getUserIdFromRequest(req),

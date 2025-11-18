@@ -7,6 +7,7 @@ import { pusherServer } from "@/lib/pusher"
 import { sanitizePlainText } from "@/lib/sanitize"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 import { encryptText, decryptText, type EncryptedData } from "@/lib/server-encryption"
+import { safeError } from "@/lib/safe-logger"
 
 /**
  * GET /api/chat - Get messages for a chat room
@@ -116,7 +117,7 @@ export async function GET(req: NextRequest) {
             }
           }
         } catch (error) {
-          console.error('[Chat] Failed to decrypt message:', error)
+          safeError('[CHAT]', 'Failed to decrypt message:', error)
           decryptedContent = '[Mensagem criptografada - erro ao descriptografar]'
         }
 
@@ -137,7 +138,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error("[CHAT_GET]", error)
+    safeError("[CHAT_GET]", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })
@@ -306,7 +307,7 @@ export async function POST(req: NextRequest) {
         )
       }
     } catch (pusherError) {
-      console.error('Pusher notification failed:', pusherError)
+      safeError('[CHAT]', 'Pusher notification failed:', pusherError)
       // Continue even if Pusher fails
     }
 
@@ -322,7 +323,7 @@ export async function POST(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error("Erro ao enviar mensagem:", error)
+    safeError("[CHAT_POST]", "Erro ao enviar mensagem:", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })
@@ -406,13 +407,13 @@ export async function PATCH(req: NextRequest) {
           }
         )
       } catch (pusherError) {
-        console.error('Pusher read receipt failed:', pusherError)
+        safeError('[CHAT]', 'Pusher read receipt failed:', pusherError)
       }
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[CHAT_PATCH]", error)
+    safeError("[CHAT_PATCH]", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })
@@ -475,12 +476,12 @@ export async function DELETE(req: NextRequest) {
         }
       )
     } catch (pusherError) {
-      console.error('Pusher delete notification failed:', pusherError)
+      safeError('[CHAT]', 'Pusher delete notification failed:', pusherError)
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[CHAT_DELETE]", error)
+    safeError("[CHAT_DELETE]", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })

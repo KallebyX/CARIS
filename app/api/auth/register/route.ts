@@ -8,6 +8,7 @@ import { z } from "zod"
 import { initializePrivacySettings, recordConsent, CONSENT_TYPES, LEGAL_BASIS } from "@/lib/consent"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -219,8 +220,8 @@ export async function POST(request: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("Registration error:", error)
-    
+    safeError("[AUTH_REGISTER]", "Registration error:", error)
+
     // Log de erro no registro
     const { ipAddress, userAgent } = getRequestInfo(request)
     await logAuditEvent({
