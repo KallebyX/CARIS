@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserIdFromRequest } from "@/lib/auth"
+import { requireRole } from "@/lib/rbac"
 import { db } from "@/db"
 import { users, clinicUsers, clinics } from "@/db/schema"
 import { eq, and, count, gte } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
+  // SECURITY: Require admin role using centralized RBAC middleware
+  const authError = await requireRole(request, 'admin')
+  if (authError) return authError
+
   try {
-    const userId = await getUserIdFromRequest(request)
-    if (!userId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
-    }
-
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
-      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
-    }
 
     // Get all users with their clinic associations
     const allUsers = await db.query.users.findMany({
