@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json, jsonb, index } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
 // Tabela de usuários
@@ -31,7 +31,7 @@ export const users = pgTable("users", {
 // Perfis de psicólogos
 export const psychologistProfiles = pgTable("psychologist_profiles", {
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .primaryKey(),
   crp: varchar("crp", { length: 20 }),
   bio: text("bio"),
@@ -47,12 +47,12 @@ export const psychologistProfiles = pgTable("psychologist_profiles", {
 // Perfis de pacientes
 export const patientProfiles = pgTable("patient_profiles", {
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .primaryKey(),
   psychologistId: integer("psychologist_id")
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: 'set null' }),
   clinicId: integer("clinic_id")
-    .references(() => clinics.id),
+    .references(() => clinics.id, { onDelete: 'set null' }),
   birthDate: timestamp("birth_date"),
   currentCycle: text("current_cycle"),
   emergencyContact: json("emergency_contact"), // Nome, telefone, etc.
@@ -64,14 +64,11 @@ export const patientProfiles = pgTable("patient_profiles", {
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id")
-    .references(() => clinics.id)
-    .notNull(),
+    .references(() => clinics.id, { onDelete: 'set null' }),
   psychologistId: integer("psychologist_id")
-    .references(() => users.id)
-    .notNull(),
+    .references(() => users.id, { onDelete: 'set null' }),
   patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
+    .references(() => users.id, { onDelete: 'set null' }),
   scheduledAt: timestamp("scheduled_at").notNull(),
   duration: integer("duration").notNull().default(50), // em minutos
   type: text("type").notNull().default('therapy'), // 'therapy', 'consultation', 'group'
@@ -105,7 +102,7 @@ export const sessions = pgTable("sessions", {
 export const diaryEntries = pgTable("diary_entries", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   entryDate: timestamp("entry_date").defaultNow().notNull(),
   moodRating: integer("mood_rating"),
@@ -151,10 +148,10 @@ export const achievements = pgTable("achievements", {
 export const userAchievements = pgTable("user_achievements", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   achievementId: integer("achievement_id")
-    .references(() => achievements.id)
+    .references(() => achievements.id, { onDelete: 'cascade' })
     .notNull(),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
   progress: integer("progress").default(0).notNull(),
@@ -164,7 +161,7 @@ export const userAchievements = pgTable("user_achievements", {
 export const pointActivities = pgTable("point_activities", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   activityType: text("activity_type").notNull(), // 'diary_entry', 'meditation', 'task_completed', 'session_attended'
   points: integer("points").notNull(),
@@ -223,10 +220,10 @@ export const virtualRewards = pgTable("virtual_rewards", {
 export const userRewards = pgTable("user_rewards", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   rewardId: integer("reward_id")
-    .references(() => virtualRewards.id)
+    .references(() => virtualRewards.id, { onDelete: 'cascade' })
     .notNull(),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
   isEquipped: boolean("is_equipped").default(false).notNull(),
@@ -304,8 +301,7 @@ export const tasks = pgTable("tasks", {
 export const sosUsages = pgTable("sos_usages", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
+    .references(() => users.id, { onDelete: 'set null' }),
   type: text("type"), // 'breathing', 'grounding', 'emergency'
   level: text("level").notNull(), // 'mild', 'moderate', 'severe', 'emergency'
   durationMinutes: integer("duration_minutes"),
@@ -323,7 +319,7 @@ export const sosUsages = pgTable("sos_usages", {
 export const moodTracking = pgTable("mood_tracking", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   date: timestamp("date").notNull().defaultNow(),
   mood: integer("mood").notNull(), // 1-10
@@ -351,8 +347,8 @@ export const chatRooms = pgTable('chat_rooms', {
 // Tabela de mensagens do chat (KEEP FIRST VERSION - more complete with encryption)
 export const chatMessages = pgTable('chat_messages', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  roomId: text('room_id').references(() => chatRooms.id).notNull(),
-  senderId: integer('sender_id').references(() => users.id).notNull(),
+  roomId: text('room_id').references(() => chatRooms.id, { onDelete: 'cascade' }).notNull(),
+  senderId: integer('sender_id').references(() => users.id, { onDelete: 'set null' }),
   content: text('content'), // Conteúdo criptografado
   messageType: text('message_type').notNull().default('text'), // 'text', 'file', 'system'
   encryptionVersion: text('encryption_version').notNull().default('aes-256'),
@@ -426,9 +422,9 @@ export const clinicSettings = pgTable("clinic_settings", {
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id")
-    .references(() => clinics.id),
+    .references(() => clinics.id, { onDelete: 'set null' }),
   userId: integer("user_id")
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: 'set null' }),
   action: varchar("action", { length: 100 }).notNull(), // 'create', 'read', 'update', 'delete', 'login', 'logout', 'export', 'anonymize'
   resource: varchar("resource", { length: 100 }), // 'user', 'patient', 'session', 'payment'
   resourceType: varchar("resource_type", { length: 50 }), // alternative field for resource
@@ -647,7 +643,7 @@ export const userSettings = pgTable("user_settings", {
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   type: varchar("type", { length: 50 }).notNull(), // 'message', 'session', 'sos', 'reminder', 'achievement', 'system'
   title: varchar("title", { length: 255 }).notNull(),
