@@ -148,7 +148,7 @@ export function SecureChatLayout({
       },
     })
 
-    const channelName = `private-chat-${roomId}`
+    const channelName = `private-chat-room-${roomId}`
     const channel = pusher.subscribe(channelName)
 
     channel.bind("new-message", (newMessage: SecureChatMessage) => {

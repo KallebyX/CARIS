@@ -37,16 +37,12 @@ export class RealtimeNotificationService {
 
   private async sendRealtimeNotification(userId: number, notification: RealtimeNotification) {
     try {
-      // Enviar via Pusher para o canal específico do usuário
-      await pusherServer.trigger(`user-${userId}`, "notification", notification)
+      // SECURITY: Send via Pusher to user's private channel
+      await pusherServer.trigger(`private-user-${userId}`, "notification", notification)
 
-      // Também enviar para o canal geral se for urgente
-      if (notification.priority === "urgent") {
-        await pusherServer.trigger("urgent-notifications", "urgent-alert", {
-          ...notification,
-          targetUserId: userId,
-        })
-      }
+      // Note: Removed public urgent-notifications channel for security
+      // Urgent notifications are now sent only to the user's private channel
+      // Admin/psychologist alerts should use separate private-role-{role} channels
 
       console.log(`Notificação em tempo real enviada para usuário ${userId}:`, notification.type)
     } catch (error) {
@@ -353,7 +349,7 @@ export class RealtimeNotificationService {
   // Marcar notificação como lida
   async markNotificationAsRead(userId: number, notificationId: string) {
     try {
-      await pusherServer.trigger(`user-${userId}`, "notification-read", {
+      await pusherServer.trigger(`private-user-${userId}`, "notification-read", {
         notificationId,
         timestamp: new Date().toISOString(),
       })
@@ -365,7 +361,7 @@ export class RealtimeNotificationService {
   // Marcar todas as notificações como lidas
   async markAllNotificationsAsRead(userId: number) {
     try {
-      await pusherServer.trigger(`user-${userId}`, "all-notifications-read", {
+      await pusherServer.trigger(`private-user-${userId}`, "all-notifications-read", {
         timestamp: new Date().toISOString(),
       })
     } catch (error) {

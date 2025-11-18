@@ -277,10 +277,10 @@ export async function POST(req: NextRequest) {
       })
 
     // Trigger Pusher event for real-time delivery
-    // Send decrypted content via Pusher (transport layer encryption)
+    // SECURITY: Send to private channels with authorization
     try {
       await pusherServer.trigger(
-        `chat-room-${targetRoomId}`,
+        `private-chat-room-${targetRoomId}`,
         'new-message',
         {
           id: message.id,
@@ -296,7 +296,7 @@ export async function POST(req: NextRequest) {
       const otherParticipants = participants.filter((p: number) => p !== userId)
       for (const participantId of otherParticipants) {
         await pusherServer.trigger(
-          `user-${participantId}`,
+          `private-user-${participantId}`,
           'new-chat-message',
           {
             roomId: targetRoomId,
@@ -397,7 +397,7 @@ export async function PATCH(req: NextRequest) {
     if (message.length > 0 && message[0].senderId !== userId) {
       try {
         await pusherServer.trigger(
-          `user-${message[0].senderId}`,
+          `private-user-${message[0].senderId}`,
           'message-read',
           {
             messageId,
@@ -468,7 +468,7 @@ export async function DELETE(req: NextRequest) {
     // Notify room via Pusher
     try {
       await pusherServer.trigger(
-        `chat-room-${message[0].roomId}`,
+        `private-chat-room-${message[0].roomId}`,
         'message-deleted',
         {
           messageId,
