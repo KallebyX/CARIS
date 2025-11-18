@@ -4,6 +4,7 @@ import { meditationAudios, meditationCategories, users } from '@/db/schema'
 import { getUserIdFromRequest } from '@/lib/auth'
 import { eq, desc, and, ilike, or, sql } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
+import { parsePagePagination } from '@/lib/pagination'
 
 // GET - Listar áudios de meditação (com filtros)
 export async function GET(request: NextRequest) {
@@ -24,9 +25,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get('difficulty')
     const status = searchParams.get('status')
     const search = searchParams.get('search')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = (page - 1) * limit
+    const { limit, offset, page } = parsePagePagination(searchParams, 20)
 
     let query = db
       .select({

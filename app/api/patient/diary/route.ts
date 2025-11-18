@@ -10,6 +10,7 @@ import { hasValidConsent, CONSENT_TYPES } from "@/lib/consent"
 import { sanitizeHtml, sanitizePlainText } from "@/lib/sanitize"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 import { safeError } from "@/lib/safe-logger"
+import { parsePaginationParams } from "@/lib/pagination"
 
 // Helper function to award gamification points
 async function awardGamificationPoints(userId: number, activityType: string, metadata?: any) {
@@ -285,8 +286,7 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url)
-    const limit = parseInt(url.searchParams.get('limit') || '10')
-    const offset = parseInt(url.searchParams.get('offset') || '0')
+    const { limit, offset } = parsePaginationParams(url.searchParams)
 
     const entries = await db
       .select()
