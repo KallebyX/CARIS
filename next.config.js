@@ -348,9 +348,10 @@ const nextConfig = {
   // ESLINT
   // ================================================================
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
+    // ESLint will now run during builds and fail on errors
+    // Configured to show warnings for common patterns while catching real issues
+    // See .eslintrc.json for rule configuration
+    ignoreDuringBuilds: false,
   },
 
   // ================================================================

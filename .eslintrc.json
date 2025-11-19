@@ -1,3 +1,46 @@
 {
-  "extends": "next"
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    // React Hooks Rules - Keep exhaustive-deps as warning for better DX
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+
+    // React Rules - Allow common patterns while catching real issues
+    "react/no-unescaped-entities": "warn",
+    "react/jsx-no-undef": "error",
+    "react/display-name": "warn",
+    "react/prop-types": "off",
+
+    // Next.js Rules - Warn about performance issues but don't block builds
+    "@next/next/no-img-element": "warn",
+    "@next/next/no-page-custom-font": "warn",
+    "@next/next/no-html-link-for-pages": "error",
+
+    // General Best Practices
+    "no-console": [
+      "warn",
+      {
+        "allow": ["warn", "error", "info"]
+      }
+    ],
+    "no-debugger": "warn",
+    "prefer-const": "warn",
+    "no-var": "error"
+  },
+  "overrides": [
+    {
+      // Configuration files
+      "files": ["*.config.js", "*.config.ts"],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      // Test files
+      "files": ["**/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "env": {
+        "jest": true
+      }
+    }
+  ]
 }
