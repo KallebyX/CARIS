@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (33%)
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 19 (7 CRITICAL + 10 HIGH + 2 MEDIUM)
-**Última Atualização:** 2025-11-18 - Database Connection Pool (MEDIUM-05)
+**Issues Resolvidos:** 21 (7 CRITICAL + 10 HIGH + 4 MEDIUM)
+**Última Atualização:** 2025-11-18 - Error Boundaries (MEDIUM-01)
 
 ---
 
@@ -363,10 +363,33 @@
 ## 🟡 MÉDIA PRIORIDADE (Implementar em 1 Mês)
 
 ### MEDIUM-01: Error Boundaries Incompletos
-- **Status:** ⚪ Pendente
-- **Arquivo:** `/components/error-boundary.tsx`
-- **Solução:** Adicionar em todos layouts de dashboard
-- **Estimativa:** 2 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivo:** `/components/error-boundary.tsx`, layouts
+- **Problema:** ErrorBoundary existia mas não era usado nos layouts
+- **Solução:**
+  1. ✅ Adicionado ErrorBoundary ao dashboard layout (app/dashboard/layout.tsx)
+  2. ✅ Adicionado ErrorBoundary ao admin layout (app/admin/layout.tsx)
+  3. ✅ Envolve todo conteúdo de páginas com error handling
+  4. ✅ Isola erros para prevenir crash da aplicação inteira
+- **Features do ErrorBoundary:**
+  - UI customizada com botão de retry
+  - Integração com Sentry para relatórios
+  - Detalhes de erro em modo development
+  - Component stack trace em dev
+  - Informações de suporte ao usuário
+  - Reset de estado de erro
+  - AsyncErrorBoundary para Suspense
+  - withErrorBoundary HOC
+  - useErrorBoundary hook
+- **Benefícios:**
+  - Erros isolados por seção
+  - Usuário pode tentar novamente sem perder estado
+  - Mensagens claras em português
+  - Navegação permanece funcional durante erros
+  - Sidebar e header permanecem acessíveis
+- **Tempo Real:** 1 hora
+- **Commit:** cdf8aa1
 
 ### MEDIUM-02: Formato de Resposta API Inconsistente
 - **Status:** ⚪ Pendente
@@ -440,9 +463,45 @@
 - **Commit:** 02ef84d
 
 ### MEDIUM-06: Sem Timeout de Requisições
-- **Status:** ⚪ Pendente
-- **Solução:** Middleware de timeout
-- **Estimativa:** 2 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivo:** `/lib/request-timeout.ts`, `/docs/REQUEST_TIMEOUT.md`
+- **Problema:** Requisições podiam ficar penduradas indefinidamente
+- **Solução:**
+  1. ✅ Criado request timeout library (lib/request-timeout.ts)
+  2. ✅ withTimeout() HOF para envolver handlers
+  3. ✅ withPromiseTimeout() para operações individuais
+  4. ✅ TimeoutError custom error class
+  5. ✅ Detecção automática de timeout baseada em rota
+  6. ✅ Slow request detection (>50% do timeout)
+  7. ✅ Documentação completa (docs/REQUEST_TIMEOUT.md)
+- **Timeouts Configurados:**
+  - Default: 30 segundos (operações padrão)
+  - Upload: 5 minutos (file uploads)
+  - AI: 2 minutos (OpenAI, analysis, transcription)
+  - Report: 3 minutos (geração de relatórios)
+  - Health: 5 segundos (health checks)
+- **Features:**
+  - Timeout automático baseado em padrões de rota
+  - Override customizado por endpoint
+  - Graceful timeout handling
+  - Request ID único para tracking
+  - Logging detalhado de erros
+  - Warning para requisições lentas
+  - Zero dependencies
+- **Security Benefits:**
+  - Protege contra slow loris attacks
+  - Previne resource exhaustion
+  - Limita tempo de conexão (DOS prevention)
+  - Integra com rate limiting
+- **Usage:**
+  ```typescript
+  export const GET = withTimeout(async (req) => {
+    return NextResponse.json({ data })
+  })
+  ```
+- **Tempo Real:** 2 horas
+- **Commit:** 2909613
 
 ### MEDIUM-07: Código Duplicado em Gamificação
 - **Status:** ⚪ Pendente
