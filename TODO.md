@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (33%)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (42%)
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 21 (7 CRITICAL + 10 HIGH + 4 MEDIUM)
-**Última Atualização:** 2025-11-18 - Error Boundaries (MEDIUM-01)
+**Issues Resolvidos:** 22 (7 CRITICAL + 10 HIGH + 5 MEDIUM)
+**Última Atualização:** 2025-11-19 - API Response Format (MEDIUM-02)
 
 ---
 
@@ -392,10 +392,54 @@
 - **Commit:** cdf8aa1
 
 ### MEDIUM-02: Formato de Resposta API Inconsistente
-- **Status:** ⚪ Pendente
-- **Problema:** Alguns retornam `{success, data}`, outros formatos diferentes
-- **Solução:** Padronizar todas respostas
-- **Estimativa:** 4 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivo:** `/lib/api-response.ts`, multiple API endpoints
+- **Problema:** Respostas inconsistentes - alguns `{success, data}`, outros formatos diferentes
+- **Solução:**
+  1. ✅ Criado `/lib/api-response.ts` com helpers padronizados
+  2. ✅ Formato padrão de sucesso: `{ success: true, data: {...}, meta?: {...} }`
+  3. ✅ Formato padrão de erro: `{ success: false, error: string, code?: string, details?: any }`
+  4. ✅ Helper functions para todos casos comuns:
+     - `apiSuccess()` - Resposta de sucesso genérica (200)
+     - `apiSuccessWithPagination()` - Sucesso com paginação
+     - `apiCreated()` - Recurso criado (201)
+     - `apiNoContent()` - Sem conteúdo (204)
+     - `apiError()` - Erro genérico customizável
+     - `apiValidationError()` - Erro de validação Zod (422)
+     - `apiUnauthorized()` - Não autenticado (401)
+     - `apiForbidden()` - Sem permissão (403)
+     - `apiNotFound()` - Recurso não encontrado (404)
+     - `apiConflict()` - Conflito/duplicata (409)
+     - `apiBadRequest()` - Requisição inválida (400)
+     - `apiServerError()` - Erro interno (500)
+     - `apiServiceUnavailable()` - Serviço indisponível (503)
+     - `handleApiError()` - Handler automático de erros
+  5. ✅ Criado `/docs/API_RESPONSE_FORMAT.md` com documentação completa
+  6. ✅ Refatorados 3 endpoints como exemplo:
+     - `/app/api/patient/meditation-library/route.ts`
+     - `/app/api/patient/insights/route.ts`
+     - `/app/api/admin/users/route.ts`
+- **Features:**
+  - TypeScript types exportados (`ApiResponse`, `ApiSuccessResponse`, `ApiErrorResponse`)
+  - Suporte a pagination metadata
+  - Error codes padronizados (UNAUTHORIZED, VALIDATION_ERROR, etc)
+  - Timestamps automáticos em responses
+  - Detalhes de validação Zod automaticamente formatados
+  - handleApiError() converte automaticamente erros para formato correto
+- **Benefícios:**
+  - API consistente para frontend consumir
+  - Type safety com TypeScript
+  - Melhor tratamento de erros no cliente
+  - Error codes permitem lógica condicional no frontend
+  - Menos código boilerplate em cada endpoint
+  - Facilita debugging com error details estruturados
+- **Próximos Passos (Opcional):**
+  - Migrar gradualmente endpoints restantes (~100+ endpoints)
+  - Adicionar request ID tracking para debugging
+  - Implementar versioning de API se necessário
+- **Tempo Real:** 2.5 horas
+- **Estimativa Original:** 4 horas
 
 ### MEDIUM-03: Sem Limite Máximo de Paginação
 - **Status:** ✅ **COMPLETO**

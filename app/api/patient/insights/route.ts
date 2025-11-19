@@ -7,6 +7,7 @@ import { analyzeMoodPatterns, generateTherapeuticInsights } from "@/lib/ai-analy
 import { requireAIConsent } from "@/lib/consent"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 import { safeError } from "@/lib/safe-logger"
+import { apiUnauthorized, apiSuccess, handleApiError } from "@/lib/api-response"
 
 export async function GET(req: NextRequest) {
   // SECURITY: Rate limiting for AI endpoints
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
     const userId = await getUserIdFromRequest(req)
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      return apiUnauthorized()
     }
 
     // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
@@ -55,8 +56,7 @@ export async function GET(req: NextRequest) {
     )
 
     if (filteredEntries.length === 0) {
-      return NextResponse.json({
-        success: true,
+      return apiSuccess({
         insights: {
           message: "Não há dados suficientes para análise",
           period,
@@ -166,13 +166,10 @@ export async function GET(req: NextRequest) {
       generatedAt: new Date().toISOString()
     }
 
-    return NextResponse.json({
-      success: true,
-      insights
-    })
+    return apiSuccess({ insights })
 
   } catch (error) {
     safeError('[PATIENT_INSIGHTS]', 'Insights generation error:', error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return handleApiError(error)
   }
 }

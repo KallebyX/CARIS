@@ -3,6 +3,16 @@ import { requireRole } from "@/lib/rbac"
 import { db } from "@/db"
 import { users, clinicUsers, clinics } from "@/db/schema"
 import { eq, and, count, gte } from "drizzle-orm"
+import { getUserIdFromRequest } from "@/lib/auth"
+import {
+  apiSuccess,
+  apiCreated,
+  apiUnauthorized,
+  apiForbidden,
+  apiBadRequest,
+  apiConflict,
+  handleApiError
+} from "@/lib/api-response"
 
 export async function GET(request: NextRequest) {
   // SECURITY: Require admin role using centralized RBAC middleware
@@ -41,16 +51,10 @@ export async function GET(request: NextRequest) {
       }))
     }))
 
-    return NextResponse.json({
-      success: true,
-      data: usersWithClinics
-    })
+    return apiSuccess({ users: usersWithClinics })
   } catch (error) {
     console.error("Error fetching users:", error)
-    return NextResponse.json(
-      { error: "Erro interno do servidor" },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
 
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+      return apiUnauthorized("Não autorizado")
     }
 
     // Verify user is global admin
@@ -67,7 +71,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
-      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
+      return apiForbidden("Acesso negado")
     }
 
     const body = await request.json()
@@ -83,10 +87,13 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || !email || !password || !role) {
-      return NextResponse.json(
-        { error: "Nome, email, senha e papel são obrigatórios" },
-        { status: 400 }
-      )
+      return apiBadRequest("Nome, email, senha e papel são obrigatórios", {
+        code: "MISSING_FIELDS",
+        details: {
+          required: ["name", "email", "password", "role"],
+          provided: { name: !!name, email: !!email, password: !!password, role: !!role }
+        }
+      })
     }
 
     // Check if email already exists
@@ -95,10 +102,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Email já está em uso" },
-        { status: 400 }
-      )
+      return apiConflict("Email já está em uso", {
+        code: "DUPLICATE_EMAIL",
+        details: { field: "email" }
+      })
     }
 
     // Hash password (you should use bcrypt or similar)
@@ -135,15 +142,9 @@ export async function POST(request: NextRequest) {
     // Return user without password
     const { password: _, ...userResponse } = newUser
 
-    return NextResponse.json({
-      success: true,
-      data: userResponse
-    }, { status: 201 })
+    return apiCreated({ user: userResponse })
   } catch (error) {
     console.error("Error creating user:", error)
-    return NextResponse.json(
-      { error: "Erro interno do servidor" },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }
