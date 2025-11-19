@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (83%)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (92%)
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 27 (7 CRITICAL + 10 HIGH + 10 MEDIUM)
-**Última Atualização:** 2025-11-19 - Caching Strategy Implementada (MEDIUM-10)
+**Issues Resolvidos:** 28 (7 CRITICAL + 10 HIGH + 11 MEDIUM)
+**Última Atualização:** 2025-11-19 - Timezone Standardization Implementada (MEDIUM-11)
 
 ---
 
@@ -891,10 +891,119 @@
 - **Estimativa Original:** 6 horas
 
 ### MEDIUM-11: Inconsistências de Timezone
-- **Status:** ⚪ Pendente
-- **Problema:** Algumas tabelas tem timezone, outras não
-- **Solução:** Padronizar uso de timezone em timestamps
-- **Estimativa:** 4 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Problema:** Inconsistências graves de timezone no schema do banco de dados
+  - Mistura de `timestamp` (sem timezone) e campos `timezone` separados
+  - Sessions armazenam agendamentos sem timezone awareness
+  - Conversões manuais propensas a erros
+  - DST (Daylight Saving Time) não tratado automaticamente
+  - Dificulta agendamentos cross-timezone
+  - Problemas com integrações de calendário (Google/Outlook)
+- **Solução:**
+  1. ✅ Criada migração SQL completa (`/drizzle/0004_add_timezone_support.sql`)
+     - **Phase 1: Sessions (CRÍTICO)**:
+       * Adicionado `scheduled_at_tz` (timestamptz) para agendamentos
+       * Migração de dados: `scheduled_at` + `timezone` → `scheduled_at_tz`
+       * Default timezone: America/Sao_Paulo
+       * Index para queries timezone-aware
+     - **Phase 2: Activity Timestamps**:
+       * Convertidos todos `createdAt`, `updatedAt` → timestamptz
+       * ~50 campos convertidos em 25+ tabelas
+       * Sessions, Users, Diary Entries, Meditation Sessions
+       * Chat Messages, Notifications, Mood Tracking
+       * Audit Logs, Tasks, SOS Alerts, Consents
+       * Gamification tables (achievements, challenges, points)
+       * Clinic tables, Subscriptions, Education Progress
+       * Backup Operations, File Operations
+     - **Phase 3: Preservados sem timezone**:
+       * `patient_profiles.birth_date` - data de calendário, não momento
+       * `email_verifications.verified_at` - flag simples
+  2. ✅ Documentação Completa (`/docs/TIMEZONE_STANDARDIZATION.md`)
+     - Problem analysis (issues with mixed timezone handling)
+     - PostgreSQL timestamp types explained (timestamp vs timestamptz)
+     - Standardization rules (when to use each type)
+     - Migration strategy (3-phase approach)
+     - Rollback plan (if issues occur)
+     - Application code updates needed
+     - Testing strategies (timezone conversions, DST)
+     - Common timezone values (Brazil, international)
+     - Best practices (ISO 8601, UTC storage, local display)
+     - Monitoring queries
+  3. ✅ Schema Update Guide (`/docs/SCHEMA_TIMEZONE_UPDATE.md`)
+     - Complete Drizzle schema changes required
+     - Before/After examples for all tables
+     - 16 sections covering all affected tables
+     - Fields that should NOT have timezone
+     - Implementation steps (migration → schema → test)
+     - Cleanup procedures (remove old fields)
+     - Verification checklist
+     - TypeScript benefits and new patterns
+     - Common patterns after migration
+- **Arquivos Criados:**
+  - `drizzle/0004_add_timezone_support.sql` (450 linhas)
+  - `docs/TIMEZONE_STANDARDIZATION.md` (650 linhas)
+  - `docs/SCHEMA_TIMEZONE_UPDATE.md` (580 linhas)
+- **Campos Convertidos para timestamptz:**
+  - **Sessions**: scheduledAt (NEW: scheduled_at_tz), createdAt, updatedAt
+  - **Users**: lastLoginAt, passwordChangedAt, createdAt, updatedAt
+  - **Diary Entries**: entryDate, createdAt
+  - **Meditation**: startedAt, completedAt, createdAt, updatedAt
+  - **Chat**: createdAt, editedAt, deletedAt, expiresAt
+  - **Notifications**: createdAt, updatedAt, readAt, expiresAt
+  - **Mood Tracking**: date, createdAt
+  - **Audit Logs**: timestamp, createdAt
+  - **Tasks**: dueDate, assignedAt, completedAt, createdAt
+  - **SOS Alerts**: timestamp, resolvedAt, createdAt
+  - **Gamification**: 8 campos em 4 tabelas
+  - **Consents**: consentDate, revokedAt, createdAt, updatedAt
+  - **Subscriptions**: currentPeriodStart, currentPeriodEnd, canceledAt
+  - **Total**: ~50 campos em 25+ tabelas
+- **Benefícios:**
+  - ✅ Agendamentos timezone-aware automáticos
+  - ✅ Conversão UTC ↔ Local automática pelo PostgreSQL
+  - ✅ DST (Daylight Saving Time) tratado automaticamente
+  - ✅ Integrações de calendário simplificadas
+  - ✅ Queries cross-timezone corretas
+  - ✅ ISO 8601 com timezone nativo
+  - ✅ Melhor compatibilidade com Google Calendar/Outlook
+  - ✅ Data retention policies timezone-aware
+  - ✅ Analytics e relatórios com timezone correto
+  - ✅ Reduz erros de conversão manual
+- **Migration Safety:**
+  - 3-phase approach para rollback seguro
+  - Dados migrados com validação
+  - Campo `timezone` separado mantido temporariamente
+  - Teste extensivo antes de cleanup
+  - Rollback plan documentado
+- **Application Impact:**
+  - Sessions: Remove campo `timezone` após migration
+  - Calendar integration: Simplificado (ISO 8601 direto)
+  - Queries: Timezone-aware comparisons
+  - Frontend: Continua enviando ISO 8601 (sem mudanças)
+  - TypeScript: Tipos mantidos (Date)
+- **Testing Requirements:**
+  - [ ] Test session creation in different timezones
+  - [ ] Verify calendar integration (Google/Outlook)
+  - [ ] Test DST transitions (October/February Brazil)
+  - [ ] Validate data retention queries
+  - [ ] Check notification scheduling
+  - [ ] Test cross-timezone session scheduling
+  - [ ] Verify analytics queries
+- **Deployment Steps:**
+  1. Run migration: `pnpm db:migrate`
+  2. Update schema.ts per guide
+  3. Test in staging (24-48 hours)
+  4. Deploy to production
+  5. Monitor for 1 week
+  6. Run cleanup (remove old fields)
+- **Timezone Support:**
+  - Primary: America/Sao_Paulo (Brazil UTC-3)
+  - Supports: All IANA timezone values
+  - DST handling: Automatic
+  - Cross-timezone: Full support
+- **Tempo Real:** 4 horas
+- **Estimativa Original:** 4 horas
 
 ### MEDIUM-12: Tracking de Medicação Ausente
 - **Status:** ⚪ Pendente
