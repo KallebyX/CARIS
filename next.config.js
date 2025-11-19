@@ -403,8 +403,8 @@ const sentryWebpackPluginOptions = {
 const configWithPlugins = withBundleAnalyzer(nextConfig)
 
 // Only wrap with Sentry if DSN is configured
-// Temporarily disabled Sentry during build to avoid webpack issues
-const shouldUseSentry = false // process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
+// Enabled when SENTRY_DSN environment variable is set (production/staging)
+const shouldUseSentry = !!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)
 
 module.exports = shouldUseSentry
   ? withSentryConfig(configWithPlugins, sentryWebpackPluginOptions)

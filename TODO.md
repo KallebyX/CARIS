@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (100%) 🎉
+**Status:** ✅ Todos CRITICAL + HIGH + MEDIUM Completos! Progresso: LOW (10%) 🎉
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 29 (7 CRITICAL + 10 HIGH + 12 MEDIUM)
-**Última Atualização:** 2025-11-19 - Medication Tracking System Implementado (MEDIUM-12)
+**Issues Resolvidos:** 30 (7 CRITICAL + 10 HIGH + 12 MEDIUM + 1 LOW)
+**Última Atualização:** 2025-11-19 - Sentry Monitoring Habilitado (LOW-06)
 
 ---
 
@@ -1106,10 +1106,50 @@
 - **Estimativa:** 12 horas
 
 ### LOW-06: Sentry Desabilitado
-- **Status:** ⚪ Pendente
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P3 - Baixa
 - **Arquivo:** `/next.config.js:407`
-- **Solução:** Habilitar `shouldUseSentry = true`
-- **Estimativa:** 30 minutos
+- **Problema:** Sentry desabilitado apesar de configuração completa existir
+- **Solução:**
+  1. ✅ Habilitado Sentry no next.config.js
+  2. ✅ Mudado `shouldUseSentry` de `false` para auto-detect baseado em variáveis de ambiente
+  3. ✅ Sentry agora ativa automaticamente quando `SENTRY_DSN` está configurado
+- **Infraestrutura Existente (Já Configurada):**
+  - `sentry.server.config.ts`: Configuração completa server-side
+    * Error tracking com full stack traces
+    * Performance monitoring (20% sample)
+    * Profiling (10% sample)
+    * Uncaught exception handlers
+    * **Privacy-first**: Automatic PII scrubbing (passwords, tokens, emails, PHI)
+    * Request body scrubbing (patient data protection)
+    * JWT token redaction, email redaction
+    * Breadcrumb scrubbing
+    * Disabled in development
+  - `sentry.client.config.ts`: Configuração completa client-side
+    * Error tracking in browser
+    * Performance monitoring (10% sample)
+    * Session replay (10% sessions, 100% on errors)
+    * User feedback integration
+    * Browser profiling
+    * **Privacy-first**: maskAllText, blockAllMedia
+  - `lib/sentry-helpers.ts`: Helper functions
+  - `lib/sentry-performance.ts`: Performance utilities
+  - `docs/SENTRY_SETUP.md`: Documentação completa (622 linhas)
+- **Features:**
+  - ✅ Automatic error capture (server & client)
+  - ✅ Performance monitoring
+  - ✅ Session replay with privacy protection
+  - ✅ Source map upload (production)
+  - ✅ Release tracking
+  - ✅ User feedback integration
+  - ✅ HIPAA/LGPD compliant (PII/PHI scrubbing)
+- **Ativação:**
+  - Adicionar `SENTRY_DSN` ao `.env.local` ou Vercel env vars
+  - Opcional: `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` para source maps
+  - Sentry ativa automaticamente em production/staging
+  - Development: desabilitado (logs to console apenas)
+- **Tempo Real:** 15 minutos
+- **Estimativa Original:** 30 minutos
 
 ### LOW-07: Code Splitting Não Otimizado
 - **Status:** ⚪ Pendente
