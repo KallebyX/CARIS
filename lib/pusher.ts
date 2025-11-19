@@ -22,4 +22,12 @@ export const pusherServer = new PusherServer({
 export const pusherClient = new PusherClient(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
   cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
   enabledTransports: ["ws", "wss"],
+  // SECURITY: Authorization endpoint for private/presence channels
+  authEndpoint: "/api/pusher/auth",
+  auth: {
+    headers: {
+      // Cookies are automatically sent with same-origin requests
+      // JWT token in cookie will be used for authorization
+    },
+  },
 })

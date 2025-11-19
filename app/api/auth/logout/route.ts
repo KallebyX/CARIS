@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
+import { safeError } from "@/lib/safe-logger"
 
 export async function POST() {
   try {
@@ -44,7 +45,7 @@ export async function POST() {
 
     return response
   } catch (error) {
-    console.error("Erro no logout:", error)
+    safeError("[AUTH_LOGOUT]", "Erro no logout:", error)
     return NextResponse.json({ error: "Erro interno do servidor", success: false }, { status: 500 })
   }
 }

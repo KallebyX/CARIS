@@ -1,72 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { meditationSessions, users, pointActivities } from '@/db/schema'
+import { meditationSessions } from '@/db/schema'
 import { getUserIdFromRequest } from '@/lib/auth'
 import { eq, desc, and } from 'drizzle-orm'
-
-// Helper function to award gamification points
-async function awardGamificationPoints(userId: number, activityType: string, metadata?: any) {
-  const pointsConfig = {
-    meditation_completed: { points: 15, xp: 20 },
-    diary_entry: { points: 10, xp: 15 },
-    task_completed: { points: 20, xp: 25 },
-    session_attended: { points: 25, xp: 30 },
-  }
-
-  const config = pointsConfig[activityType as keyof typeof pointsConfig]
-  if (!config) return
-
-  const description = `${activityType === 'meditation_completed' ? 'Sessão de meditação concluída' : activityType}`
-
-  // Insert point activity
-  await db.insert(pointActivities).values({
-    userId,
-    activityType,
-    points: config.points,
-    xp: config.xp,
-    description,
-    metadata: metadata ? JSON.stringify(metadata) : null,
-  })
-
-  // Update user totals
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    columns: { totalXP: true, currentLevel: true, weeklyPoints: true, monthlyPoints: true }
-  })
-
-  if (user) {
-    const newTotalXP = user.totalXP + config.xp
-    const newLevel = calculateLevelFromXP(newTotalXP)
-
-    await db
-      .update(users)
-      .set({
-        totalXP: newTotalXP,
-        currentLevel: newLevel,
-        weeklyPoints: user.weeklyPoints + config.points,
-        monthlyPoints: user.monthlyPoints + config.points,
-      })
-      .where(eq(users.id, userId))
-  }
-}
-
-function calculateLevelFromXP(totalXP: number): number {
-  let level = 1
-  while (calculateXPForLevel(level + 1) <= totalXP) {
-    level++
-  }
-  return level
-}
-
-function calculateXPForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5))
-}
+import { awardGamificationPoints } from '@/lib/gamification'
+import { apiUnauthorized, apiBadRequest, apiSuccess, handleApiError } from '@/lib/api-response'
+import { safeError } from '@/lib/safe-logger'
 
 export async function GET(request: NextRequest) {
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return apiUnauthorized('Não autorizado')
     }
 
     const sessions = await db
@@ -76,16 +21,10 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(meditationSessions.startedAt))
       .limit(50)
 
-    return NextResponse.json({ 
-      success: true, 
-      data: sessions 
-    })
+    return apiSuccess({ sessions })
   } catch (error) {
-    console.error('Erro ao buscar sessões de meditação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    safeError('[MEDITATION_SESSIONS_GET]', 'Erro ao buscar sessões:', error)
+    return handleApiError(error)
   }
 }
 
@@ -93,7 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return apiUnauthorized('Não autorizado')
     }
 
     const body = await request.json()
@@ -110,10 +49,13 @@ export async function POST(request: NextRequest) {
 
     // Validar dados obrigatórios
     if (!meditationId || typeof duration !== 'number') {
-      return NextResponse.json(
-        { error: 'Dados obrigatórios não fornecidos' },
-        { status: 400 }
-      )
+      return apiBadRequest('Meditation ID e duration são obrigatórios', {
+        code: 'MISSING_REQUIRED_FIELDS',
+        details: {
+          required: ['meditationId', 'duration'],
+          provided: { meditationId: !!meditationId, duration: typeof duration === 'number' }
+        }
+      })
     }
 
     // Criar nova sessão de meditação
@@ -136,29 +78,38 @@ export async function POST(request: NextRequest) {
       .values(sessionData)
       .returning()
 
-    // Award gamification points for completed meditation
+    // Award gamification points for completed meditation using centralized service
+    let gamificationResult = null
     if (wasCompleted) {
       try {
-        await awardGamificationPoints(userId, 'meditation_completed', { 
+        const result = await awardGamificationPoints(userId, 'meditation_completed', {
           sessionId: newSession.id,
           duration: sessionData.duration,
           meditationId: sessionData.meditationId
         })
+
+        if (result.success) {
+          gamificationResult = {
+            pointsEarned: result.points,
+            xpEarned: result.xp,
+            leveledUp: result.leveledUp,
+            newLevel: result.newLevel,
+          }
+        } else {
+          safeError('[MEDITATION_SESSIONS]', 'Gamification failed:', result.reason)
+        }
       } catch (error) {
-        console.error('Failed to award gamification points:', error)
+        safeError('[MEDITATION_SESSIONS]', 'Failed to award points:', error)
         // Don't fail the meditation entry if gamification fails
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      data: newSession 
+    return apiSuccess({
+      session: newSession,
+      gamification: gamificationResult
     })
   } catch (error) {
-    console.error('Erro ao criar sessão de meditação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    safeError('[MEDITATION_SESSIONS_POST]', 'Erro ao criar sessão:', error)
+    return handleApiError(error)
   }
 }

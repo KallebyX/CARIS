@@ -4,6 +4,9 @@ import { db } from '@/db'
 import { users, progressReports, diaryEntries, sessions, patientProfiles } from '@/db/schema'
 import { eq, and, desc, gte, lte } from 'drizzle-orm'
 import { generateProgressReport } from '@/lib/ai-analysis'
+import { requireAIConsent } from '@/lib/consent'
+import { rateLimit, RateLimitPresets } from '@/lib/rate-limit'
+import { safeError } from '@/lib/safe-logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,11 +83,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(request, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'progress_reports')
+    if (consentCheck) return consentCheck
 
     // Verify user is a psychologist
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1)
@@ -217,7 +230,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error generating progress report:', error)
+    safeError('[PROGRESS_REPORTS_POST]', 'Error generating progress report:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

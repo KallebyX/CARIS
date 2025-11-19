@@ -4,8 +4,17 @@ import { chatFiles, chatMessages } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { SecureFileUpload } from "@/lib/secure-file-upload"
+import { VirusScanner } from "@/lib/virus-scanner"
+import { safeError } from "@/lib/safe-logger"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 
 export async function POST(req: NextRequest) {
+  // SECURITY: Rate limiting for file uploads
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
     if (!userId) {
@@ -49,14 +58,59 @@ export async function POST(req: NextRequest) {
     // Convert file to buffer
     const fileBuffer = await file.arrayBuffer()
 
-    // Scan for viruses
-    const scanResult = await SecureFileUpload.scanFile(fileBuffer)
+    // SECURITY: Scan for viruses using advanced scanner with multiple engines
+    const virusScanner = VirusScanner.getInstance()
+    const scanResult = await virusScanner.scanFile(fileBuffer, file.type)
+
     if (scanResult.status === 'infected') {
-      return new NextResponse("File contains malicious content", { status: 400 })
+      safeError('[FILE_UPLOAD_VIRUS]', 'Infected file blocked:', {
+        userId,
+        fileName: file.name,
+        mimeType: file.type,
+        engine: scanResult.engine,
+        threats: scanResult.threats,
+      })
+
+      return new NextResponse(
+        JSON.stringify({
+          error: 'File contains malicious content',
+          details: scanResult.details,
+          threats: scanResult.threats,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
     }
 
     if (scanResult.status === 'error') {
-      return new NextResponse("File security check failed", { status: 500 })
+      safeError('[FILE_UPLOAD_SCAN_ERROR]', 'Virus scan failed:', {
+        userId,
+        fileName: file.name,
+        details: scanResult.details,
+      })
+
+      return new NextResponse(
+        JSON.stringify({
+          error: 'File security check failed',
+          details: 'Unable to verify file safety. Please try again later.',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Handle pending scans (VirusTotal async scanning)
+    if (scanResult.status === 'pending') {
+      console.log('[FILE_UPLOAD] File queued for async scanning:', {
+        userId,
+        fileName: file.name,
+        engine: scanResult.engine,
+      })
+      // Continue with upload but mark as pending
     }
 
     // Generate secure filename
@@ -66,7 +120,7 @@ export async function POST(req: NextRequest) {
     // For now, simulate the process
     const filePath = `/secure-storage/chat-files/${secureFileName}`
 
-    // Create file record
+    // Create file record with virus scan results
     const fileRecord = await db
       .insert(chatFiles)
       .values({
@@ -78,9 +132,26 @@ export async function POST(req: NextRequest) {
         mimeType: file.type,
         isEncrypted: true,
         virusScanStatus: scanResult.status,
-        virusScanResult: JSON.stringify(scanResult)
+        virusScanResult: JSON.stringify({
+          status: scanResult.status,
+          engine: scanResult.engine,
+          details: scanResult.details,
+          threats: scanResult.threats,
+          scanDuration: scanResult.scanDuration,
+          scannedAt: new Date().toISOString(),
+        }),
       })
       .returning()
+
+    console.log('[FILE_UPLOAD] File uploaded successfully:', {
+      fileId: fileRecord[0].id,
+      userId,
+      fileName: file.name,
+      size: file.size,
+      scanStatus: scanResult.status,
+      scanEngine: scanResult.engine,
+      scanDuration: scanResult.scanDuration,
+    })
 
     // Generate preview for images
     let preview = null
@@ -99,11 +170,19 @@ export async function POST(req: NextRequest) {
         icon: SecureFileUpload.getFileIcon(file.type),
         formattedSize: SecureFileUpload.formatFileSize(file.size),
         preview,
-        virusScanStatus: scanResult.status
-      }
+        virusScanStatus: scanResult.status,
+        scanEngine: scanResult.engine,
+        scanDetails: scanResult.details,
+      },
     })
   } catch (error) {
-    console.error("[FILE_UPLOAD]", error)
-    return new NextResponse("Internal Error", { status: 500 })
+    safeError('[FILE_UPLOAD]', 'File upload error:', error)
+    return new NextResponse(
+      JSON.stringify({ error: 'Internal server error' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
   }
 }

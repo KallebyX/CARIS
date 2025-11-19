@@ -71,6 +71,10 @@ coverage/
 # ESLint cache
 .eslintcache
 
+# TypeScript build cache
+*.tsbuildinfo
+.next/cache/tsconfig.tsbuildinfo
+
 # Microbundle cache
 .rpt2_cache/
 .rts2_cache_cjs/

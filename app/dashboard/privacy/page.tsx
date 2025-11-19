@@ -53,8 +53,23 @@ export default function PrivacyPage() {
   const [exports, setExports] = useState<DataExport[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showAIConsentAlert, setShowAIConsentAlert] = useState(false)
 
   useEffect(() => {
+    // Check if user was redirected here for AI consent
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('consent') === 'ai_analysis') {
+        setShowAIConsentAlert(true)
+        // Scroll to AI consent toggle after data loads
+        setTimeout(() => {
+          const aiConsentElement = document.getElementById('ai-consent-toggle')
+          if (aiConsentElement) {
+            aiConsentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 500)
+      }
+    }
     loadPrivacyData()
   }, [])
 
@@ -195,6 +210,17 @@ export default function PrivacyPage() {
         </div>
       </div>
 
+      {showAIConsentAlert && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <Shield className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-900">
+            <strong>Consentimento de IA Necessário:</strong> Para usar recursos de análise por Inteligência Artificial,
+            você precisa primeiro consentir com o processamento de dados por IA. Role para baixo e ative a opção
+            "Análise por Inteligência Artificial" nas configurações.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Tabs defaultValue="settings" className="space-y-6">
         <TabsList>
           <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -226,6 +252,29 @@ export default function PrivacyPage() {
                       onCheckedChange={(checked) => {
                         updateSettings({ dataProcessingConsent: checked })
                         recordConsent('data_processing', checked, 'Funcionamento básico da plataforma')
+                      }}
+                      disabled={saving}
+                    />
+                  </div>
+
+                  <div id="ai-consent-toggle" className="flex items-center justify-between border-l-4 border-blue-500 pl-4 bg-blue-50/30 p-3 rounded">
+                    <div className="space-y-0.5">
+                      <Label className="flex items-center gap-2">
+                        Análise por Inteligência Artificial
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">LGPD/GDPR</span>
+                      </Label>
+                      <p className="text-sm text-gray-600">
+                        Permite análise de dados por IA para insights emocionais, previsões e recomendações personalizadas
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Necessário para: análise emocional, predição de humor, recomendações, relatórios de progresso
+                      </p>
+                    </div>
+                    <Switch
+                      checked={consents.some(c => c.consentType === 'ai_analysis' && c.consentGiven)}
+                      onCheckedChange={(checked) => {
+                        recordConsent('ai_analysis', checked, 'Processamento de dados por Inteligência Artificial para análises terapêuticas')
+                        setShowAIConsentAlert(false)
                       }}
                       disabled={saving}
                     />

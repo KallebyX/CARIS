@@ -18,7 +18,10 @@
     "test:integration": "jest --testPathPattern=__tests__/integration",
     "analyze": "ANALYZE=true npm run build",
     "analyze:server": "BUNDLE_ANALYZE=server npm run build",
-    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build"
+    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
+    "type-check": "tsc --noEmit --incremental",
+    "type-check:watch": "tsc --noEmit --incremental --watch",
+    "validate": "npm run type-check && npm run lint"
   },
   "dependencies": {
     "@aws-sdk/client-rds-data": "3.864.0",
@@ -84,6 +87,7 @@
     "googleapis": "^154.0.0",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.1",
+    "isomorphic-dompurify": "^2.32.0",
     "jose": "^5.9.6",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.2",

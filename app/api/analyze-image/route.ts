@@ -1,18 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
 import OpenAI from 'openai'
 import { getUserIdFromRequest } from "@/lib/auth"
+import { requireAIConsent } from "@/lib/consent"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 }) : null
 
 export async function POST(req: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
-    
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'image_analysis')
+    if (consentCheck) return consentCheck
 
     if (!openai) {
       return NextResponse.json({ error: "OpenAI API not configured" }, { status: 503 })
@@ -59,15 +72,15 @@ export async function POST(req: NextRequest) {
 
     const analysis = response.choices[0]?.message?.content || "Não foi possível analisar a imagem."
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       analysis: analysis
     })
-    
+
   } catch (error) {
-    console.error('Image analysis error:', error)
+    safeError('[AI_IMAGE_ANALYSIS]', 'Image analysis error:', error)
     return NextResponse.json(
-      { error: "Failed to analyze image" }, 
+      { error: "Failed to analyze image" },
       { status: 500 }
     )
   }

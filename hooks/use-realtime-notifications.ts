@@ -47,15 +47,14 @@ export function useRealtimeNotifications(userId: number | null): UseRealtimeNoti
     if (!userId) return
 
     let userChannel: Channel
-    let urgentChannel: Channel
 
     const connectToPusher = () => {
       try {
-        // Canal específico do usuário
-        userChannel = pusherClient.subscribe(`user-${userId}`)
+        // SECURITY: Subscribe to private user channel (requires authorization)
+        userChannel = pusherClient.subscribe(`private-user-${userId}`)
 
-        // Canal de notificações urgentes
-        urgentChannel = pusherClient.subscribe("urgent-notifications")
+        // Note: Removed public urgent-notifications channel for security
+        // All notifications now go through the user's private channel
 
         // Listener para novas notificações
         userChannel.bind("notification", (notification: RealtimeNotification) => {
@@ -96,30 +95,6 @@ export function useRealtimeNotifications(userId: number | null): UseRealtimeNoti
           }
         })
 
-        // Listener para notificações urgentes globais
-        urgentChannel.bind("urgent-alert", (alert: RealtimeNotification & { targetUserId: number }) => {
-          if (alert.targetUserId === userId) {
-            console.log("Alerta urgente recebido:", alert)
-
-            // Mostrar alerta mais proeminente
-            toast({
-              title: `🚨 ${alert.title}`,
-              description: alert.message,
-              variant: "destructive",
-              duration: 15000,
-            })
-
-            // Som de emergência
-            try {
-              const audio = new Audio("/sounds/emergency-alert.mp3")
-              audio.volume = 0.8
-              audio.play().catch((e) => console.log("Não foi possível reproduzir o som de emergência:", e))
-            } catch (error) {
-              console.log("Erro ao reproduzir som de emergência:", error)
-            }
-          }
-        })
-
         // Listener para marcar como lida
         userChannel.bind("notification-read", (data: { notificationId: string }) => {
           markAsRead(data.notificationId)
@@ -157,11 +132,7 @@ export function useRealtimeNotifications(userId: number | null): UseRealtimeNoti
     return () => {
       if (userChannel) {
         userChannel.unbind_all()
-        pusherClient.unsubscribe(`user-${userId}`)
-      }
-      if (urgentChannel) {
-        urgentChannel.unbind_all()
-        pusherClient.unsubscribe("urgent-notifications")
+        pusherClient.unsubscribe(`private-user-${userId}`)
       }
     }
   }, [userId, toast, markAsRead, markAllAsRead])

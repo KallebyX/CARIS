@@ -1,16 +1,30 @@
 import { db } from "@/db"
 import { sosUsages } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { RealtimeNotificationService } from "@/lib/realtime-notifications"
 import { patientProfiles } from "@/db/schema"
+import { getUserIdFromRequest } from "@/lib/auth"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { userId, toolName } = await req.json()
+    // Apply rate limiting for sensitive SOS operations
+    const rateLimitResult = await rateLimit(req, RateLimitPresets.SENSITIVE)
+    if (!rateLimitResult.success) {
+      return rateLimitResult.response
+    }
 
-    if (!userId || !toolName) {
-      return new NextResponse("Missing fields", { status: 400 })
+    // Authenticate user - CRITICAL: prevent unauthorized SOS activation
+    const userId = await getUserIdFromRequest(req)
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { toolName } = await req.json()
+
+    if (!toolName) {
+      return NextResponse.json({ error: "Missing toolName field" }, { status: 400 })
     }
 
     const existingSOS = await db.select().from(sosUsages).where(eq(sosUsages.patientId, userId))

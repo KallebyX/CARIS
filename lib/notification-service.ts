@@ -2,7 +2,7 @@ import { EmailService } from "./email"
 import { SMSService } from "./sms"
 import { PushNotificationService } from "./push-notifications"
 import { db } from "@/db"
-import { users, userSettings, patientProfiles } from "@/db/schema"
+import { users, userSettings, notifications } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 interface NotificationPreferences {
@@ -49,7 +49,7 @@ export class NotificationService {
           name: users.name,
           email: users.email,
           role: users.role,
-          phone: patientProfiles.phone,
+          phone: users.phone,
           emailNotifications: userSettings.emailNotifications,
           pushNotifications: userSettings.pushNotifications,
           sessionReminders: userSettings.sessionReminders,
@@ -57,7 +57,6 @@ export class NotificationService {
         })
         .from(users)
         .leftJoin(userSettings, eq(users.id, userSettings.userId))
-        .leftJoin(patientProfiles, eq(users.id, patientProfiles.userId))
         .where(eq(users.id, userId))
         .limit(1)
 
@@ -87,6 +86,24 @@ export class NotificationService {
   async sendSessionReminder(patientId: number, sessionDate: Date, psychologistName: string, sessionType: string) {
     const patient = await this.getUserData(patientId)
     if (!patient || !patient.preferences.sessionReminders) return
+
+    // PERSISTENCE: Save notification to database
+    const formattedDate = sessionDate.toLocaleDateString("pt-BR")
+    const formattedTime = sessionDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+
+    await db.insert(notifications).values({
+      userId: patientId,
+      type: "reminder",
+      title: "🔔 Lembrete de Sessão",
+      message: `Sua sessão com ${psychologistName} está agendada para ${formattedDate} às ${formattedTime}`,
+      priority: "high",
+      category: "therapy",
+      metadata: JSON.stringify({
+        sessionDate: sessionDate.toISOString(),
+        psychologistName,
+        sessionType,
+      }),
+    })
 
     const promises = []
 
@@ -118,6 +135,24 @@ export class NotificationService {
     const patient = await this.getUserData(patientId)
     if (!patient) return
 
+    // PERSISTENCE: Save notification to database
+    const formattedDate = sessionDate.toLocaleDateString("pt-BR")
+    const formattedTime = sessionDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+
+    await db.insert(notifications).values({
+      userId: patientId,
+      type: "session",
+      title: "✅ Sessão Confirmada",
+      message: `Sua sessão com ${psychologistName} foi confirmada para ${formattedDate} às ${formattedTime}`,
+      priority: "normal",
+      category: "therapy",
+      metadata: JSON.stringify({
+        sessionDate: sessionDate.toISOString(),
+        psychologistName,
+        sessionType,
+      }),
+    })
+
     const promises = []
 
     // E-mail
@@ -147,6 +182,20 @@ export class NotificationService {
     const psychologist = await this.getUserData(psychologistId)
     if (!psychologist || !psychologist.preferences.diaryReminders) return
 
+    // PERSISTENCE: Save notification to database
+    await db.insert(notifications).values({
+      userId: psychologistId,
+      type: "message",
+      title: "📝 Nova Entrada no Diário",
+      message: `${patientName} fez uma nova entrada: "${entryTitle}"`,
+      priority: "normal",
+      category: "therapy",
+      metadata: JSON.stringify({
+        patientName,
+        entryTitle,
+      }),
+    })
+
     const promises = []
 
     // E-mail
@@ -169,6 +218,21 @@ export class NotificationService {
   async sendSOSAlert(psychologistId: number, patientName: string, patientPhone?: string) {
     const psychologist = await this.getUserData(psychologistId)
     if (!psychologist) return
+
+    // PERSISTENCE: Save notification to database
+    await db.insert(notifications).values({
+      userId: psychologistId,
+      type: "sos",
+      title: "🚨 ALERTA SOS ATIVADO",
+      message: `${patientName} ativou o SOS. Atenção imediata necessária!`,
+      priority: "urgent",
+      category: "emergency",
+      metadata: JSON.stringify({
+        patientName,
+        patientPhone,
+        timestamp: new Date().toISOString(),
+      }),
+    })
 
     const promises = []
 
@@ -207,6 +271,20 @@ export class NotificationService {
   async sendChatMessageNotification(receiverId: number, senderName: string, message: string) {
     const receiver = await this.getUserData(receiverId)
     if (!receiver || !receiver.preferences.pushNotifications) return
+
+    // PERSISTENCE: Save notification to database
+    await db.insert(notifications).values({
+      userId: receiverId,
+      type: "message",
+      title: `💬 Nova mensagem de ${senderName}`,
+      message: message.length > 100 ? `${message.substring(0, 100)}...` : message,
+      priority: "normal",
+      category: "chat",
+      metadata: JSON.stringify({
+        senderName,
+        messagePreview: message.substring(0, 200),
+      }),
+    })
 
     // Apenas push notification para mensagens de chat
     if (receiver.pushSubscription) {

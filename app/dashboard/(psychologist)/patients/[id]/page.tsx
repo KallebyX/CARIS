@@ -192,7 +192,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         {/* Other tabs content here */}
         <TabsContent value="chat">
           {currentUser && (
-            <ChatLayout counterpartId={patient.id} counterpartName={patient.name} currentUser={currentUser} />
+            <SecureChatLayout counterpartId={patient.id} counterpartName={patient.name} currentUser={currentUser} />
           )}
         </TabsContent>
       </Tabs>

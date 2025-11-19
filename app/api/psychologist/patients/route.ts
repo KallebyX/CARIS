@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { patientProfiles } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { getUserIdFromRequest } from "@/lib/auth"
+import { requireAnyRole, getAuthenticatedUser } from "@/lib/rbac"
 
-export async function GET(request: Request) {
-  const psychologistId = await getUserIdFromRequest(request)
-  if (!psychologistId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
-  }
+export async function GET(request: NextRequest) {
+  // SECURITY: Require psychologist or admin role using centralized RBAC middleware
+  const authError = await requireAnyRole(request, ['psychologist', 'admin'])
+  if (authError) return authError
+
+  const user = await getAuthenticatedUser(request)
+  const psychologistId = user!.id // Safe after requireAnyRole check
 
   try {
     const patients = await db.query.patientProfiles.findMany({

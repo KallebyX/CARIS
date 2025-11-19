@@ -4,6 +4,10 @@ import { chatRooms, chatMessages, messageReadReceipts } from "@/db/schema"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { eq, and, or, desc, isNull } from "drizzle-orm"
 import { pusherServer } from "@/lib/pusher"
+import { sanitizePlainText } from "@/lib/sanitize"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { encryptText, decryptText, type EncryptedData } from "@/lib/server-encryption"
+import { safeError } from "@/lib/safe-logger"
 
 /**
  * GET /api/chat - Get messages for a chat room
@@ -90,7 +94,7 @@ export async function GET(req: NextRequest) {
       .orderBy(chatMessages.createdAt)
       .limit(100)
 
-    // Get read receipts
+    // Decrypt messages and get read receipts
     const messagesWithReceipts = await Promise.all(
       messages.map(async (message) => {
         const receipts = await db
@@ -98,8 +102,28 @@ export async function GET(req: NextRequest) {
           .from(messageReadReceipts)
           .where(eq(messageReadReceipts.messageId, message.id))
 
+        // Decrypt message content
+        let decryptedContent = message.content
+        try {
+          if (message.metadata) {
+            const metadata = JSON.parse(message.metadata)
+            if (metadata.encryption) {
+              decryptedContent = decryptText({
+                encrypted: message.content || '',
+                iv: metadata.encryption.iv,
+                authTag: metadata.encryption.authTag,
+                version: message.encryptionVersion || 'aes-256-gcm-v1'
+              })
+            }
+          }
+        } catch (error) {
+          safeError('[CHAT]', 'Failed to decrypt message:', error)
+          decryptedContent = '[Mensagem criptografada - erro ao descriptografar]'
+        }
+
         return {
           ...message,
+          content: decryptedContent,
           readReceipts: receipts
         }
       })
@@ -114,7 +138,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error("[CHAT_GET]", error)
+    safeError("[CHAT_GET]", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })
@@ -126,6 +150,12 @@ export async function GET(req: NextRequest) {
  * Body: { roomId?, receiverId?, content, messageType?, isTemporary?, expiresAt?, metadata? }
  */
 export async function POST(req: NextRequest) {
+  // Apply rate limiting for chat messages to prevent spam
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.CHAT)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
     if (!userId) {
@@ -136,12 +166,14 @@ export async function POST(req: NextRequest) {
     const {
       roomId,
       receiverId,
-      content,
       messageType = 'text',
       isTemporary = false,
       expiresAt = null,
       metadata = null
     } = body
+
+    // Sanitize message content to prevent XSS attacks
+    const content = sanitizePlainText(body.content)
 
     if (!content) {
       return NextResponse.json({
@@ -205,18 +237,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    // Insert message
+    // Encrypt message content before storing (HIPAA/LGPD compliance)
+    const encrypted = encryptText(content)
+
+    // Merge encryption metadata with existing metadata
+    const messageMetadata = {
+      ...(metadata || {}),
+      encryption: {
+        iv: encrypted.iv,
+        authTag: encrypted.authTag,
+      }
+    }
+
+    // Insert encrypted message
     const newMessage = await db
       .insert(chatMessages)
       .values({
         roomId: targetRoomId,
         senderId: userId,
-        content,
+        content: encrypted.encrypted, // Store encrypted content
         messageType,
-        encryptionVersion: 'aes-256',
+        encryptionVersion: encrypted.version,
         isTemporary,
         expiresAt: expiresAt ? new Date(expiresAt) : null,
-        metadata: metadata ? JSON.stringify(metadata) : null
+        metadata: JSON.stringify(messageMetadata)
       })
       .returning()
 
@@ -233,14 +277,15 @@ export async function POST(req: NextRequest) {
       })
 
     // Trigger Pusher event for real-time delivery
+    // SECURITY: Send to private channels with authorization
     try {
       await pusherServer.trigger(
-        `chat-room-${targetRoomId}`,
+        `private-chat-room-${targetRoomId}`,
         'new-message',
         {
           id: message.id,
           senderId: message.senderId,
-          content: message.content,
+          content: content, // Send original (sanitized) content for real-time display
           messageType: message.messageType,
           createdAt: message.createdAt,
           metadata: message.metadata
@@ -251,7 +296,7 @@ export async function POST(req: NextRequest) {
       const otherParticipants = participants.filter((p: number) => p !== userId)
       for (const participantId of otherParticipants) {
         await pusherServer.trigger(
-          `user-${participantId}`,
+          `private-user-${participantId}`,
           'new-chat-message',
           {
             roomId: targetRoomId,
@@ -262,19 +307,23 @@ export async function POST(req: NextRequest) {
         )
       }
     } catch (pusherError) {
-      console.error('Pusher notification failed:', pusherError)
+      safeError('[CHAT]', 'Pusher notification failed:', pusherError)
       // Continue even if Pusher fails
     }
 
+    // Return decrypted message to sender
     return NextResponse.json({
       success: true,
       data: {
-        message,
+        message: {
+          ...message,
+          content: content // Return original content, not encrypted
+        },
         roomId: targetRoomId
       }
     })
   } catch (error) {
-    console.error("Erro ao enviar mensagem:", error)
+    safeError("[CHAT_POST]", "Erro ao enviar mensagem:", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })
@@ -348,7 +397,7 @@ export async function PATCH(req: NextRequest) {
     if (message.length > 0 && message[0].senderId !== userId) {
       try {
         await pusherServer.trigger(
-          `user-${message[0].senderId}`,
+          `private-user-${message[0].senderId}`,
           'message-read',
           {
             messageId,
@@ -358,13 +407,13 @@ export async function PATCH(req: NextRequest) {
           }
         )
       } catch (pusherError) {
-        console.error('Pusher read receipt failed:', pusherError)
+        safeError('[CHAT]', 'Pusher read receipt failed:', pusherError)
       }
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[CHAT_PATCH]", error)
+    safeError("[CHAT_PATCH]", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })
@@ -419,7 +468,7 @@ export async function DELETE(req: NextRequest) {
     // Notify room via Pusher
     try {
       await pusherServer.trigger(
-        `chat-room-${message[0].roomId}`,
+        `private-chat-room-${message[0].roomId}`,
         'message-deleted',
         {
           messageId,
@@ -427,12 +476,12 @@ export async function DELETE(req: NextRequest) {
         }
       )
     } catch (pusherError) {
-      console.error('Pusher delete notification failed:', pusherError)
+      safeError('[CHAT]', 'Pusher delete notification failed:', pusherError)
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[CHAT_DELETE]", error)
+    safeError("[CHAT_DELETE]", error)
     return NextResponse.json({
       error: "Erro interno do servidor"
     }, { status: 500 })

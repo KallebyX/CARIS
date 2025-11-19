@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { db } from "@/db"
+import { db, checkDatabaseHealth } from "@/db"
 import { users } from "@/db/schema"
 import { logger } from "@/lib/logger"
 import { captureError } from "@/lib/error-tracking"
@@ -65,17 +65,25 @@ async function checkDatabase(): Promise<HealthCheck> {
   const startTime = Date.now()
 
   try {
-    await db.select().from(users).limit(1)
-
+    const healthCheck = await checkDatabaseHealth()
     const duration = Date.now() - startTime
 
-    // Warn if database query is slow
-    if (duration > 100) {
+    if (!healthCheck.healthy) {
+      return {
+        name: "database",
+        status: "fail",
+        duration,
+        error: healthCheck.error || "Database connection failed",
+      }
+    }
+
+    // Warn if database query is slow (>100ms)
+    if (healthCheck.latency && healthCheck.latency > 100) {
       return {
         name: "database",
         status: "warn",
         duration,
-        message: "Database response is slow",
+        message: `Database response is slow (${healthCheck.latency}ms)`,
       }
     }
 

@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
-import { 
-  meditationAudios, 
-  meditationCategories, 
+import {
+  meditationAudios,
+  meditationCategories,
   userMeditationFavorites,
   meditationAudioRatings,
-  meditationSessions 
+  meditationSessions
 } from '@/db/schema'
 import { getUserIdFromRequest } from '@/lib/auth'
 import { eq, desc, and, ilike, or, sql, avg, count } from 'drizzle-orm'
+import { parsePagePagination } from '@/lib/pagination'
+import { apiUnauthorized, apiSuccessWithPagination, handleApiError } from '@/lib/api-response'
 
 // GET - Listar áudios de meditação para pacientes
 export async function GET(request: NextRequest) {
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return apiUnauthorized('Não autorizado')
     }
 
     const { searchParams } = new URL(request.url)
@@ -24,9 +26,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const featured = searchParams.get('featured') === 'true'
     const popular = searchParams.get('popular') === 'true'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const offset = (page - 1) * limit
+    const { limit, offset, page } = parsePagePagination(searchParams, 20)
 
     let query = db
       .select({
@@ -128,23 +128,19 @@ export async function GET(request: NextRequest) {
 
     const [{ count }] = await totalQuery
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        audios: audiosWithFavorites,
-        pagination: {
-          page,
-          limit,
-          total: count,
-          totalPages: Math.ceil(count / limit)
-        }
+    return apiSuccessWithPagination(
+      { audios: audiosWithFavorites },
+      {
+        page,
+        limit,
+        offset,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+        hasMore: offset + audiosWithFavorites.length < count
       }
-    })
+    )
   } catch (error) {
     console.error('Erro ao buscar biblioteca de meditação:', error)
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return handleApiError(error)
   }
 }

@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 const adminNavItems = [
   { title: "Visão Geral", href: "/admin", icon: "🏠" },
@@ -199,7 +200,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Page content */}
         <main className="flex-1 p-4 md:p-8 overflow-auto">
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

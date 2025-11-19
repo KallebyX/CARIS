@@ -4,13 +4,26 @@ import { db } from '@/db'
 import { users, diaryEntries, sessions, clinicalInsights } from '@/db/schema'
 import { eq, and, desc, gte, sql } from 'drizzle-orm'
 import { analyzeSessionProgress, detectClinicalAlerts, generateProgressReport } from '@/lib/ai-analysis'
+import { requireAIConsent } from '@/lib/consent'
+import { rateLimit, RateLimitPresets } from '@/lib/rate-limit'
+import { safeError } from '@/lib/safe-logger'
 
 export async function GET(request: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(request, RateLimitPresets.READ)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'psychologist_ai_insights')
+    if (consentCheck) return consentCheck
 
     // Verify user is a psychologist
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1)
@@ -145,7 +158,7 @@ export async function GET(request: NextRequest) {
       data: insights,
     })
   } catch (error) {
-    console.error('Error generating AI insights:', error)
+    safeError('[PSYCHOLOGIST_AI_INSIGHTS_GET]', 'Error generating AI insights:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -154,11 +167,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(request, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(request)
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'psychologist_ai_insights')
+    if (consentCheck) return consentCheck
 
     // Verify user is a psychologist
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1)
@@ -188,7 +211,7 @@ export async function POST(request: NextRequest) {
       data: insight[0],
     })
   } catch (error) {
-    console.error('Error saving AI insight:', error)
+    safeError('[PSYCHOLOGIST_AI_INSIGHTS_POST]', 'Error saving AI insight:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

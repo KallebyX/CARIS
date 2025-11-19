@@ -348,18 +348,22 @@ const nextConfig = {
   // ESLINT
   // ================================================================
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
+    // ESLint will now run during builds and fail on errors
+    // Configured to show warnings for common patterns while catching real issues
+    // See .eslintrc.json for rule configuration
+    ignoreDuringBuilds: false,
   },
 
   // ================================================================
   // TYPESCRIPT
   // ================================================================
   typescript: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has TypeScript errors.
-    ignoreBuildErrors: true,
+    // TypeScript errors will now fail the build
+    // This ensures type safety and catches errors during development
+    ignoreBuildErrors: false,
+
+    // Enable incremental type checking for better performance
+    // tsconfigPath: './tsconfig.json',
   },
 }
 
@@ -403,8 +407,8 @@ const sentryWebpackPluginOptions = {
 const configWithPlugins = withBundleAnalyzer(nextConfig)
 
 // Only wrap with Sentry if DSN is configured
-// Temporarily disabled Sentry during build to avoid webpack issues
-const shouldUseSentry = false // process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN
+// Enabled when SENTRY_DSN environment variable is set (production/staging)
+const shouldUseSentry = !!(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)
 
 module.exports = shouldUseSentry
   ? withSentryConfig(configWithPlugins, sentryWebpackPluginOptions)

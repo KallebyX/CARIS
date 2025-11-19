@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json, jsonb, index, time } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
 // Tabela de usuários
@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   isGlobalAdmin: boolean("is_global_admin").default(false), // Super admin for platform
   status: text("status").notNull().default("active"), // 'active', 'suspended', 'inactive'
   lastLoginAt: timestamp("last_login_at"),
+  passwordChangedAt: timestamp("password_changed_at"), // For token invalidation on password change
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -30,7 +31,7 @@ export const users = pgTable("users", {
 // Perfis de psicólogos
 export const psychologistProfiles = pgTable("psychologist_profiles", {
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .primaryKey(),
   crp: varchar("crp", { length: 20 }),
   bio: text("bio"),
@@ -46,12 +47,12 @@ export const psychologistProfiles = pgTable("psychologist_profiles", {
 // Perfis de pacientes
 export const patientProfiles = pgTable("patient_profiles", {
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .primaryKey(),
   psychologistId: integer("psychologist_id")
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: 'set null' }),
   clinicId: integer("clinic_id")
-    .references(() => clinics.id),
+    .references(() => clinics.id, { onDelete: 'set null' }),
   birthDate: timestamp("birth_date"),
   currentCycle: text("current_cycle"),
   emergencyContact: json("emergency_contact"), // Nome, telefone, etc.
@@ -63,14 +64,11 @@ export const patientProfiles = pgTable("patient_profiles", {
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id")
-    .references(() => clinics.id)
-    .notNull(),
+    .references(() => clinics.id, { onDelete: 'set null' }),
   psychologistId: integer("psychologist_id")
-    .references(() => users.id)
-    .notNull(),
+    .references(() => users.id, { onDelete: 'set null' }),
   patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
+    .references(() => users.id, { onDelete: 'set null' }),
   scheduledAt: timestamp("scheduled_at").notNull(),
   duration: integer("duration").notNull().default(50), // em minutos
   type: text("type").notNull().default('therapy'), // 'therapy', 'consultation', 'group'
@@ -104,7 +102,7 @@ export const sessions = pgTable("sessions", {
 export const diaryEntries = pgTable("diary_entries", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   entryDate: timestamp("entry_date").defaultNow().notNull(),
   moodRating: integer("mood_rating"),
@@ -150,10 +148,10 @@ export const achievements = pgTable("achievements", {
 export const userAchievements = pgTable("user_achievements", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   achievementId: integer("achievement_id")
-    .references(() => achievements.id)
+    .references(() => achievements.id, { onDelete: 'cascade' })
     .notNull(),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
   progress: integer("progress").default(0).notNull(),
@@ -163,7 +161,7 @@ export const userAchievements = pgTable("user_achievements", {
 export const pointActivities = pgTable("point_activities", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   activityType: text("activity_type").notNull(), // 'diary_entry', 'meditation', 'task_completed', 'session_attended'
   points: integer("points").notNull(),
@@ -171,6 +169,23 @@ export const pointActivities = pgTable("point_activities", {
   description: text("description").notNull(),
   metadata: text("metadata"), // JSON com dados adicionais da atividade
   createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+// MEDIUM-04: Configuração de gamificação (pontos e XP por tipo de atividade)
+export const gamificationConfig = pgTable("gamification_config", {
+  id: serial("id").primaryKey(),
+  activityType: text("activity_type").notNull().unique(), // 'diary_entry', 'meditation_completed', 'task_completed', 'session_attended', etc.
+  points: integer("points").notNull(), // Pontos ganhos por esta atividade
+  xp: integer("xp").notNull(), // XP ganho por esta atividade
+  description: text("description").notNull(), // Descrição da atividade em português
+  category: varchar("category", { length: 50 }).notNull(), // 'diary', 'meditation', 'tasks', 'sessions', 'social'
+  enabled: boolean("enabled").default(true).notNull(), // Se esta recompensa está ativa
+  minLevel: integer("min_level").default(1), // Nível mínimo para ganhar esta recompensa
+  maxDailyCount: integer("max_daily_count"), // Limite diário de vezes que pode ganhar (null = sem limite)
+  cooldownMinutes: integer("cooldown_minutes"), // Tempo mínimo entre recompensas (null = sem cooldown)
+  metadata: jsonb("metadata"), // Dados adicionais configuráveis (multiplicadores, condições especiais, etc.)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Desafios semanais
@@ -222,10 +237,10 @@ export const virtualRewards = pgTable("virtual_rewards", {
 export const userRewards = pgTable("user_rewards", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   rewardId: integer("reward_id")
-    .references(() => virtualRewards.id)
+    .references(() => virtualRewards.id, { onDelete: 'cascade' })
     .notNull(),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
   isEquipped: boolean("is_equipped").default(false).notNull(),
@@ -303,8 +318,7 @@ export const tasks = pgTable("tasks", {
 export const sosUsages = pgTable("sos_usages", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id")
-    .references(() => users.id)
-    .notNull(),
+    .references(() => users.id, { onDelete: 'set null' }),
   type: text("type"), // 'breathing', 'grounding', 'emergency'
   level: text("level").notNull(), // 'mild', 'moderate', 'severe', 'emergency'
   durationMinutes: integer("duration_minutes"),
@@ -322,13 +336,11 @@ export const sosUsages = pgTable("sos_usages", {
 export const moodTracking = pgTable("mood_tracking", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id")
-    .references(() => users.id)
+    .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
   date: timestamp("date").notNull().defaultNow(),
   mood: integer("mood").notNull(), // 1-10
-  moodScore: integer("mood_score"), // 1-10 (alternative field)
   energy: integer("energy"), // 1-10
-  energyLevel: integer("energy_level"), // 1-10 (alternative field)
   anxiety: integer("anxiety"), // 1-10
   stressLevel: integer("stress_level"), // 1-10
   sleepQuality: integer("sleep_quality"), // 1-10
@@ -350,8 +362,8 @@ export const chatRooms = pgTable('chat_rooms', {
 // Tabela de mensagens do chat (KEEP FIRST VERSION - more complete with encryption)
 export const chatMessages = pgTable('chat_messages', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
-  roomId: text('room_id').references(() => chatRooms.id).notNull(),
-  senderId: integer('sender_id').references(() => users.id).notNull(),
+  roomId: text('room_id').references(() => chatRooms.id, { onDelete: 'cascade' }).notNull(),
+  senderId: integer('sender_id').references(() => users.id, { onDelete: 'set null' }),
   content: text('content'), // Conteúdo criptografado
   messageType: text('message_type').notNull().default('text'), // 'text', 'file', 'system'
   encryptionVersion: text('encryption_version').notNull().default('aes-256'),
@@ -425,12 +437,11 @@ export const clinicSettings = pgTable("clinic_settings", {
 export const auditLogs = pgTable("audit_logs", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id")
-    .references(() => clinics.id),
+    .references(() => clinics.id, { onDelete: 'set null' }),
   userId: integer("user_id")
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: 'set null' }),
   action: varchar("action", { length: 100 }).notNull(), // 'create', 'read', 'update', 'delete', 'login', 'logout', 'export', 'anonymize'
-  resource: varchar("resource", { length: 100 }), // 'user', 'patient', 'session', 'payment'
-  resourceType: varchar("resource_type", { length: 50 }), // alternative field for resource
+  resourceType: varchar("resource_type", { length: 50 }).notNull(), // 'user', 'patient', 'session', 'payment'
   resourceId: varchar("resource_id", { length: 50 }),
   oldValues: json("old_values"),
   newValues: json("new_values"),
@@ -641,6 +652,32 @@ export const userSettings = pgTable("user_settings", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
+
+// Tabela de notificações persistentes
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'message', 'session', 'sos', 'reminder', 'achievement', 'system'
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  priority: varchar("priority", { length: 20 }).default("normal"), // 'low', 'normal', 'high', 'urgent'
+  category: varchar("category", { length: 50 }), // 'chat', 'therapy', 'emergency', 'gamification', 'admin'
+  isRead: boolean("is_read").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  actionUrl: text("action_url"), // URL to navigate when clicked
+  actionLabel: varchar("action_label", { length: 100 }), // Label for action button
+  metadata: jsonb("metadata"), // Additional data (IDs, context, etc.)
+  expiresAt: timestamp("expires_at"), // Auto-delete after this date
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("idx_notifications_user").on(table.userId),
+  unreadIdx: index("idx_notifications_unread").on(table.userId, table.isRead, table.createdAt),
+  typeIdx: index("idx_notifications_type").on(table.type, table.createdAt),
+  expiresIdx: index("idx_notifications_expires").on(table.expiresAt),
+}))
 
 // Tabela de fontes de áudio para meditação
 export const audioSources = pgTable('audio_sources', {
@@ -1010,6 +1047,175 @@ export const generatedReports = pgTable("generated_reports", {
   parameters: text("parameters"), // JSON com parâmetros utilizados
 })
 
+// ==== MEDICATION TRACKING SYSTEM (MEDIUM-12) ====
+
+// Medications table - stores medication details
+export const medications = pgTable("medications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  genericName: varchar("generic_name", { length: 255 }),
+  dosage: varchar("dosage", { length: 100 }).notNull(), // e.g., "10mg", "2.5ml", "1 tablet"
+  form: varchar("form", { length: 50 }), // "tablet", "capsule", "liquid", "injection", "topical", "inhaler"
+  purpose: text("purpose"), // Why this medication is prescribed
+  prescribingDoctor: varchar("prescribing_doctor", { length: 255 }),
+  prescriptionNumber: varchar("prescription_number", { length: 100 }),
+  pharmacy: varchar("pharmacy", { length: 255 }),
+
+  // Instructions
+  instructions: text("instructions"), // How to take the medication
+  foodInstructions: text("food_instructions"), // e.g., "Take with food", "On empty stomach"
+  sideEffects: text("side_effects"), // Known side effects to monitor
+  interactions: text("interactions"), // Drug interactions to be aware of
+
+  // Dates
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"), // NULL for ongoing medications
+  refillDate: date("refill_date"), // When to refill
+  refillCount: integer("refill_count").default(0), // Number of refills allowed
+
+  // Status
+  isActive: boolean("is_active").default(true).notNull(),
+  isAsNeeded: boolean("is_as_needed").default(false).notNull(), // PRN (Pro Re Nata) - take as needed
+
+  // Tracking
+  stockQuantity: integer("stock_quantity"), // Current stock
+  lowStockThreshold: integer("low_stock_threshold"), // Alert when stock drops below this
+
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userActiveIdx: index("idx_medications_user_active").on(table.userId, table.isActive),
+  refillDateIdx: index("idx_medications_refill_date").on(table.refillDate),
+}))
+
+// Medication schedules - dosage schedules and reminders
+export const medicationSchedules = pgTable("medication_schedules", {
+  id: serial("id").primaryKey(),
+  medicationId: integer("medication_id")
+    .references(() => medications.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+
+  // Schedule
+  timeOfDay: time("time_of_day").notNull(), // e.g., "08:00", "14:00", "21:00"
+  daysOfWeek: jsonb("days_of_week"), // [0,1,2,3,4,5,6] for Sunday-Saturday, NULL for every day
+  frequency: varchar("frequency", { length: 50 }).notNull(), // "daily", "weekly", "monthly", "as_needed", "specific_days"
+
+  // Dosage
+  dosageAmount: varchar("dosage_amount", { length: 100 }).notNull(), // Amount to take at this time
+  dosageUnit: varchar("dosage_unit", { length: 50 }), // "tablet(s)", "ml", "mg", "puff(s)"
+
+  // Reminders
+  reminderEnabled: boolean("reminder_enabled").default(true).notNull(),
+  reminderMinutesBefore: integer("reminder_minutes_before").default(15), // Remind 15 minutes before
+  notificationChannels: jsonb("notification_channels"), // ["push", "sms", "email"]
+
+  // Status
+  isActive: boolean("is_active").default(true).notNull(),
+
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  medicationIdx: index("idx_medication_schedules_medication").on(table.medicationId, table.isActive),
+  userActiveIdx: index("idx_medication_schedules_user_active").on(table.userId, table.isActive),
+  timeIdx: index("idx_medication_schedules_time").on(table.timeOfDay),
+}))
+
+// Medication logs - track actual medication intake
+export const medicationLogs = pgTable("medication_logs", {
+  id: serial("id").primaryKey(),
+  medicationId: integer("medication_id")
+    .references(() => medications.id, { onDelete: 'cascade' })
+    .notNull(),
+  scheduleId: integer("schedule_id")
+    .references(() => medicationSchedules.id, { onDelete: 'set null' }),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+
+  // Timing
+  scheduledTime: timestamp("scheduled_time", { withTimezone: true }).notNull(), // When it was supposed to be taken
+  actualTime: timestamp("actual_time", { withTimezone: true }), // When it was actually taken (NULL if skipped)
+
+  // Dosage
+  dosageTaken: varchar("dosage_taken", { length: 100 }), // Actual dosage taken (may differ from scheduled)
+
+  // Status
+  status: varchar("status", { length: 50 }).notNull().default('pending'), // "taken", "skipped", "missed", "pending"
+  skipReason: varchar("skip_reason", { length: 100 }), // If skipped: "forgot", "side_effects", "no_medication", "other"
+  skipNotes: text("skip_notes"), // Additional notes if skipped
+
+  // Side effects tracking
+  hadSideEffects: boolean("had_side_effects").default(false),
+  sideEffectsDescription: text("side_effects_description"),
+
+  // Effectiveness
+  effectivenessRating: integer("effectiveness_rating"), // 1-5 scale
+  effectivenessNotes: text("effectiveness_notes"),
+
+  // Mood/condition tracking
+  moodBefore: integer("mood_before"), // 1-10 scale
+  moodAfter: integer("mood_after"), // 1-10 scale
+  symptomsBefore: text("symptoms_before"),
+  symptomsAfter: text("symptoms_after"),
+
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  medicationIdx: index("idx_medication_logs_medication").on(table.medicationId, table.scheduledTime),
+  userIdx: index("idx_medication_logs_user").on(table.userId, table.scheduledTime),
+  statusIdx: index("idx_medication_logs_status").on(table.status, table.scheduledTime),
+  actualTimeIdx: index("idx_medication_logs_actual_time").on(table.actualTime),
+}))
+
+// Medication reminders - queue for cron processing
+export const medicationReminders = pgTable("medication_reminders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  medicationId: integer("medication_id")
+    .references(() => medications.id, { onDelete: 'cascade' })
+    .notNull(),
+  scheduleId: integer("schedule_id")
+    .references(() => medicationSchedules.id, { onDelete: 'cascade' })
+    .notNull(),
+  logId: integer("log_id")
+    .references(() => medicationLogs.id, { onDelete: 'set null' }),
+
+  // Timing
+  reminderTime: timestamp("reminder_time", { withTimezone: true }).notNull(), // When to send the reminder
+  medicationTime: timestamp("medication_time", { withTimezone: true }).notNull(), // When the medication should be taken
+
+  // Status
+  status: varchar("status", { length: 50 }).notNull().default('pending'), // "pending", "sent", "acknowledged", "dismissed"
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+
+  // Channels
+  notificationChannels: jsonb("notification_channels").notNull(), // ["push", "sms", "email"]
+  sentChannels: jsonb("sent_channels"), // Which channels were successfully sent
+
+  // Metadata
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("idx_medication_reminders_user").on(table.userId, table.reminderTime),
+  pendingIdx: index("idx_medication_reminders_pending").on(table.status, table.reminderTime),
+  medicationIdx: index("idx_medication_reminders_medication").on(table.medicationId),
+}))
+
 // ==== RELATIONS ====
 
 // Relações dos usuários
@@ -1045,6 +1251,11 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   alertConfigurations: many(alertConfigurations),
   generatedAlerts: many(generatedAlerts),
   generatedReports: many(generatedReports),
+  notifications: many(notifications),
+  medications: many(medications),
+  medicationSchedules: many(medicationSchedules),
+  medicationLogs: many(medicationLogs),
+  medicationReminders: many(medicationReminders),
 }))
 
 // Custom Fields Relations
@@ -1445,6 +1656,13 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   }),
 }))
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}))
+
 export const audioSourcesRelations = relations(audioSources, ({ one }) => ({
   addedByUser: one(users, {
     fields: [audioSources.addedBy],
@@ -1599,6 +1817,68 @@ export const paymentFailuresRelations = relations(paymentFailures, ({ one }) => 
   payment: one(payments, {
     fields: [paymentFailures.paymentId],
     references: [payments.id],
+  }),
+}))
+
+// Medication Tracking Relations
+export const medicationsRelations = relations(medications, ({ one, many }) => ({
+  user: one(users, {
+    fields: [medications.userId],
+    references: [users.id],
+  }),
+  schedules: many(medicationSchedules),
+  logs: many(medicationLogs),
+  reminders: many(medicationReminders),
+}))
+
+export const medicationSchedulesRelations = relations(medicationSchedules, ({ one, many }) => ({
+  medication: one(medications, {
+    fields: [medicationSchedules.medicationId],
+    references: [medications.id],
+  }),
+  user: one(users, {
+    fields: [medicationSchedules.userId],
+    references: [users.id],
+  }),
+  logs: many(medicationLogs),
+  reminders: many(medicationReminders),
+}))
+
+export const medicationLogsRelations = relations(medicationLogs, ({ one }) => ({
+  medication: one(medications, {
+    fields: [medicationLogs.medicationId],
+    references: [medications.id],
+  }),
+  schedule: one(medicationSchedules, {
+    fields: [medicationLogs.scheduleId],
+    references: [medicationSchedules.id],
+  }),
+  user: one(users, {
+    fields: [medicationLogs.userId],
+    references: [users.id],
+  }),
+  reminder: one(medicationReminders, {
+    fields: [medicationLogs.id],
+    references: [medicationReminders.logId],
+  }),
+}))
+
+export const medicationRemindersRelations = relations(medicationReminders, ({ one }) => ({
+  user: one(users, {
+    fields: [medicationReminders.userId],
+    references: [users.id],
+  }),
+  medication: one(medications, {
+    fields: [medicationReminders.medicationId],
+    references: [medications.id],
+  }),
+  schedule: one(medicationSchedules, {
+    fields: [medicationReminders.scheduleId],
+    references: [medicationSchedules.id],
+  }),
+  log: one(medicationLogs, {
+    fields: [medicationReminders.logId],
+    references: [medicationLogs.id],
   }),
 }))
 

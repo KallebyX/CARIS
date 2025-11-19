@@ -4,14 +4,28 @@ import { eq, desc, gte } from "drizzle-orm"
 import { NextResponse, NextRequest } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { analyzeMoodPatterns, generateTherapeuticInsights } from "@/lib/ai-analysis"
+import { requireAIConsent } from "@/lib/consent"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
+import { apiUnauthorized, apiSuccess, handleApiError } from "@/lib/api-response"
 
 export async function GET(req: NextRequest) {
+  // SECURITY: Rate limiting for AI endpoints
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.READ)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 })
+      return apiUnauthorized()
     }
+
+    // COMPLIANCE: Check AI consent (LGPD/GDPR requirement)
+    const consentCheck = await requireAIConsent(userId, 'patient_insights')
+    if (consentCheck) return consentCheck
 
     const url = new URL(req.url)
     const period = url.searchParams.get('period') || 'week' // week, month, all
@@ -42,8 +56,7 @@ export async function GET(req: NextRequest) {
     )
 
     if (filteredEntries.length === 0) {
-      return NextResponse.json({
-        success: true,
+      return apiSuccess({
         insights: {
           message: "Não há dados suficientes para análise",
           period,
@@ -153,13 +166,10 @@ export async function GET(req: NextRequest) {
       generatedAt: new Date().toISOString()
     }
 
-    return NextResponse.json({
-      success: true,
-      insights
-    })
+    return apiSuccess({ insights })
 
   } catch (error) {
-    console.error('Insights generation error:', error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    safeError('[PATIENT_INSIGHTS]', 'Insights generation error:', error)
+    return handleApiError(error)
   }
 }

@@ -1,18 +1,26 @@
 import { db } from "@/db"
 import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { z } from "zod"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 })
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Apply rate limiting to prevent brute force attacks
+  const rateLimitResult = await rateLimit(request, RateLimitPresets.AUTH)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   const { ipAddress, userAgent } = getRequestInfo(request)
   let userId: number | undefined
 
@@ -108,8 +116,8 @@ export async function POST(request: Request) {
 
     return response
   } catch (error) {
-    console.error("Login error:", error)
-    
+    safeError("[AUTH_LOGIN]", "Login error:", error)
+
     await logAuditEvent({
       userId,
       action: 'login_failed',

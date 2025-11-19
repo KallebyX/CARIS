@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { diaryEntries, patientProfiles, users, pointActivities } from "@/db/schema"
+import { diaryEntries, patientProfiles } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { NextResponse, NextRequest } from "next/server"
 import { z } from "zod"
@@ -7,64 +7,11 @@ import { getUserIdFromRequest } from "@/lib/auth"
 import { analyzeEmotionalContent } from "@/lib/ai-analysis"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
 import { hasValidConsent, CONSENT_TYPES } from "@/lib/consent"
-
-// Helper function to award gamification points
-async function awardGamificationPoints(userId: number, activityType: string, metadata?: any) {
-  const pointsConfig = {
-    diary_entry: { points: 10, xp: 15 },
-    meditation_completed: { points: 15, xp: 20 },
-    task_completed: { points: 20, xp: 25 },
-    session_attended: { points: 25, xp: 30 },
-  }
-
-  const config = pointsConfig[activityType as keyof typeof pointsConfig]
-  if (!config) return
-
-  const description = `${activityType === 'diary_entry' ? 'Entrada no diário' : activityType}`
-
-  // Insert point activity
-  await db.insert(pointActivities).values({
-    userId,
-    activityType,
-    points: config.points,
-    xp: config.xp,
-    description,
-    metadata: metadata ? JSON.stringify(metadata) : null,
-  })
-
-  // Update user totals
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    columns: { totalXP: true, currentLevel: true, weeklyPoints: true, monthlyPoints: true }
-  })
-
-  if (user) {
-    const newTotalXP = user.totalXP + config.xp
-    const newLevel = calculateLevelFromXP(newTotalXP)
-
-    await db
-      .update(users)
-      .set({
-        totalXP: newTotalXP,
-        currentLevel: newLevel,
-        weeklyPoints: user.weeklyPoints + config.points,
-        monthlyPoints: user.monthlyPoints + config.points,
-      })
-      .where(eq(users.id, userId))
-  }
-}
-
-function calculateLevelFromXP(totalXP: number): number {
-  let level = 1
-  while (calculateXPForLevel(level + 1) <= totalXP) {
-    level++
-  }
-  return level
-}
-
-function calculateXPForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5))
-}
+import { sanitizeHtml, sanitizePlainText } from "@/lib/sanitize"
+import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
+import { safeError } from "@/lib/safe-logger"
+import { parsePaginationParams } from "@/lib/pagination"
+import { awardGamificationPoints } from "@/lib/gamification"
 
 const entrySchema = z.object({
   moodRating: z.number().min(0).max(4),
@@ -83,7 +30,13 @@ const entrySchema = z.object({
 
 export async function POST(req: NextRequest) {
   const { ipAddress, userAgent } = getRequestInfo(req)
-  
+
+  // Apply rate limiting for write operations
+  const rateLimitResult = await rateLimit(req, RateLimitPresets.WRITE)
+  if (!rateLimitResult.success) {
+    return rateLimitResult.response
+  }
+
   try {
     const userId = await getUserIdFromRequest(req)
 
@@ -117,7 +70,11 @@ export async function POST(req: NextRequest) {
     const json = await req.json()
     const body = entrySchema.parse(json)
 
-    const { moodRating, intensityRating, content, cycle, emotions, audioUrl, audioTranscription, imageUrl, imageDescription } = body
+    // Sanitize user inputs to prevent XSS attacks
+    const { moodRating, intensityRating, cycle, emotions, audioUrl, imageUrl } = body
+    const content = sanitizeHtml(body.content, true) // Allow basic formatting in diary
+    const audioTranscription = body.audioTranscription ? sanitizePlainText(body.audioTranscription) : undefined
+    const imageDescription = body.imageDescription ? sanitizePlainText(body.imageDescription) : undefined
 
     // Análise de IA do conteúdo emocional (async, não bloqueia a resposta)
     let aiAnalysis = null
@@ -141,7 +98,7 @@ export async function POST(req: NextRequest) {
         })
       }
     } catch (error) {
-      console.error('AI analysis failed:', error)
+      safeError('[DIARY]', 'AI analysis failed:', error)
       await logAuditEvent({
         userId,
         action: 'ai_analysis_failed',
@@ -186,7 +143,7 @@ export async function POST(req: NextRequest) {
     try {
       await awardGamificationPoints(userId, 'diary_entry', { entryId: entry.id })
     } catch (error) {
-      console.error('Failed to award gamification points:', error)
+      safeError('[DIARY]', 'Failed to award gamification points:', error)
       // Don't fail the diary entry if gamification fails
     }
 
@@ -229,8 +186,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(response)
   } catch (error) {
-    console.error('Diary entry error:', error)
-    
+    safeError('[DIARY_POST]', 'Diary entry error:', error)
+
     await logAuditEvent({
       userId: await getUserIdFromRequest(req),
       action: 'diary_entry_failed',
@@ -272,8 +229,7 @@ export async function GET(req: NextRequest) {
     }
 
     const url = new URL(req.url)
-    const limit = parseInt(url.searchParams.get('limit') || '10')
-    const offset = parseInt(url.searchParams.get('offset') || '0')
+    const { limit, offset } = parsePaginationParams(url.searchParams)
 
     const entries = await db
       .select()
@@ -324,7 +280,7 @@ export async function GET(req: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Diary entries fetch error:', error)
+    safeError('[DIARY_GET]', 'Diary entries fetch error:', error)
     
     await logAuditEvent({
       userId: await getUserIdFromRequest(req),
