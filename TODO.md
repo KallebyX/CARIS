@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH + MEDIUM Completos! Progresso: LOW (30%) 🎉
+**Status:** ✅ Todos CRITICAL + HIGH + MEDIUM Completos! Progresso: LOW (40%) 🎉
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 32 (7 CRITICAL + 10 HIGH + 12 MEDIUM + 3 LOW)
-**Última Atualização:** 2025-11-19 - Loading States Documentation (LOW-04)
+**Issues Resolvidos:** 33 (7 CRITICAL + 10 HIGH + 12 MEDIUM + 4 LOW)
+**Última Atualização:** 2025-11-19 - TypeScript Strict Checking Enabled (LOW-01)
 
 ---
 
@@ -1078,10 +1078,28 @@
 ## 🟢 BAIXA PRIORIDADE (Backlog)
 
 ### LOW-01: TypeScript Build Errors Ignorados
-- **Status:** ⚪ Pendente
-- **Arquivo:** `/next.config.js:359-363`
-- **Solução:** Remover `ignoreBuildErrors: true`
-- **Estimativa:** 2 horas (+ correção de erros)
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P3 - Baixa
+- **Arquivo:** `/next.config.js:356-366`
+- **Problema:** TypeScript errors eram ignorados durante build (`ignoreBuildErrors: true`)
+- **Solução:**
+  1. ✅ Removido `ignoreBuildErrors: true` do next.config.js
+  2. ✅ Configurado TypeScript incremental compilation
+  3. ✅ Adicionado cache de build info (`.next/cache/tsconfig.tsbuildinfo`)
+  4. ✅ Otimizações de performance (`assumeChangesOnlyAffectDirectDependencies`)
+  5. ✅ Criados scripts npm para type checking:
+     - `npm run type-check` - Verifica tipos
+     - `npm run type-check:watch` - Watch mode
+     - `npm run validate` - Type check + lint
+  6. ✅ Atualizado .gitignore para excluir cache files
+- **Arquivos Modificados:**
+  - `next.config.js` - TypeScript config enabled
+  - `tsconfig.json` - Performance optimizations
+  - `package.json` - Type check scripts
+  - `.gitignore` - Ignore build cache
+- **Resultado:** Build agora falha em erros de tipo (type-safe), desenvolvimento mais rápido com incremental compilation
+- **Commit:** `feat: enable TypeScript strict checking with incremental compilation (LOW-01)`
+- **Completado em:** 2025-11-19
 
 ### LOW-02: ESLint Errors Ignorados
 - **Status:** ⚪ Pendente

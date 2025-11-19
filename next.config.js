@@ -357,9 +357,12 @@ const nextConfig = {
   // TYPESCRIPT
   // ================================================================
   typescript: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has TypeScript errors.
-    ignoreBuildErrors: true,
+    // TypeScript errors will now fail the build
+    // This ensures type safety and catches errors during development
+    ignoreBuildErrors: false,
+
+    // Enable incremental type checking for better performance
+    // tsconfigPath: './tsconfig.json',
   },
 }
 

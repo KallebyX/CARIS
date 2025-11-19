@@ -18,7 +18,10 @@
     "test:integration": "jest --testPathPattern=__tests__/integration",
     "analyze": "ANALYZE=true npm run build",
     "analyze:server": "BUNDLE_ANALYZE=server npm run build",
-    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build"
+    "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
+    "type-check": "tsc --noEmit --incremental",
+    "type-check:watch": "tsc --noEmit --incremental --watch",
+    "validate": "npm run type-check && npm run lint"
   },
   "dependencies": {
     "@aws-sdk/client-rds-data": "3.864.0",

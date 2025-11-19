@@ -13,6 +13,13 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+
+    // Performance optimizations
+    "assumeChangesOnlyAffectDirectDependencies": true,
+
+    // Build info for incremental compilation
+    "tsBuildInfoFile": ".next/cache/tsconfig.tsbuildinfo",
+
     "plugins": [
       {
         "name": "next"
@@ -23,5 +30,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".next", "out", "dist", "build"]
 }
