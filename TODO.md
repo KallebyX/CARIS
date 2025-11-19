@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (50%)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (58%)
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 23 (7 CRITICAL + 10 HIGH + 6 MEDIUM)
-**Última Atualização:** 2025-11-19 - Gamificação Database-Driven (MEDIUM-04)
+**Issues Resolvidos:** 24 (7 CRITICAL + 10 HIGH + 7 MEDIUM)
+**Última Atualização:** 2025-11-19 - Código Duplicado Eliminado (MEDIUM-07)
 
 ---
 
@@ -592,10 +592,55 @@
 - **Commit:** 2909613
 
 ### MEDIUM-07: Código Duplicado em Gamificação
-- **Status:** ⚪ Pendente
-- **Problema:** Lógica de pontos repetida em diary, meditation, tasks
-- **Solução:** Extrair para serviço compartilhado
-- **Estimativa:** 3 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivos:** 4 endpoints refatorados
+- **Problema:** Lógica de gamificação duplicada em 4+ arquivos, funções helper copiadas 3x
+- **Solução:**
+  1. ✅ Refatorado `/app/api/patient/meditation-sessions/route.ts`
+     - Removida função local `awardGamificationPoints` duplicada
+     - Removidas funções `calculateLevelFromXP` e `calculateXPForLevel`
+     - Agora usa serviço centralizado de `/lib/gamification.ts`
+     - Adicionado formato de resposta padronizado
+     - Melhor handling de erros com safeError
+  2. ✅ Refatorado `/app/api/gamification/achievements/route.ts`
+     - Removidas funções duplicadas (calculateLevel*)
+     - Substituída lógica manual de XP por importação do serviço
+     - Adicionado formato de resposta padronizado
+     - Melhor tratamento de erros
+  3. ✅ Refatorado `/app/api/gamification/challenges/route.ts`
+     - Removida lógica manual completa de atualização de XP
+     - Substituída por `awardGamificationPoints()` centralizado
+     - Removidas funções duplicadas (calculateLevel*)
+     - Adicionado formato de resposta padronizado
+     - Gamification result agora incluído na resposta
+  4. ✅ Atualizado `/app/api/gamification/points/route.ts`
+     - Já foi refatorado no MEDIUM-04
+     - Usa serviço centralizado
+- **Código Eliminado:**
+  - ~150 linhas de código duplicado removidas
+  - 3 implementações da função `awardGamificationPoints` → 1 centralizada
+  - 6 cópias de `calculateLevelFromXP/calculateXPForLevel` → importadas do serviço
+  - 3 implementações de lógica manual de XP update → substituídas
+- **Arquivos Modificados:**
+  - `app/api/patient/meditation-sessions/route.ts`
+  - `app/api/gamification/achievements/route.ts`
+  - `app/api/gamification/challenges/route.ts`
+- **Benefícios:**
+  - DRY: Código duplicado completamente eliminado
+  - Manutenção: 1 lugar para atualizar lógica de gamificação
+  - Consistência: Todos endpoints usam mesmo serviço
+  - Features: Daily limits, cooldowns, level requirements automáticos
+  - Type Safety: TypeScript types compartilhados
+  - API Consistency: Todas respostas no formato padronizado
+  - Error Handling: Melhor logging e tratamento de erros
+- **Impacto:**
+  - 4 endpoints refatorados
+  - 150+ linhas de duplicação eliminadas
+  - 100% dos endpoints de gamificação agora usam serviço centralizado
+- **Tempo Real:** 1.5 horas
+- **Estimativa Original:** 3 horas
+- **Bônus:** Também aplicou standardização de API response (MEDIUM-02)
 
 ### MEDIUM-08: Error Handling de Integração de Calendário
 - **Status:** ⚪ Pendente

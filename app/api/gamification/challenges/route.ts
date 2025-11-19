@@ -3,11 +3,14 @@ import { db } from "@/db"
 import { users, weeklyChallenges, userChallengeProgress, pointActivities } from "@/db/schema"
 import { eq, desc, and, gte, lte, sql } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
+import { awardGamificationPoints } from "@/lib/gamification"
+import { apiUnauthorized, apiBadRequest, apiNotFound, apiSuccess, handleApiError } from "@/lib/api-response"
+import { safeError } from "@/lib/safe-logger"
 
 export async function GET(request: NextRequest) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    return apiUnauthorized("Não autorizado")
   }
 
   try {
@@ -61,28 +64,25 @@ export async function GET(request: NextRequest) {
       limit: 10,
     })
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        activeChallenges: challengesWithProgress,
-        completedChallenges,
-        stats: {
-          active: challengesWithProgress.length,
-          completed: completedChallenges.length,
-          inProgress: challengesWithProgress.filter(c => c.userProgress > 0 && !c.completed).length,
-        },
+    return apiSuccess({
+      activeChallenges: challengesWithProgress,
+      completedChallenges,
+      stats: {
+        active: challengesWithProgress.length,
+        completed: completedChallenges.length,
+        inProgress: challengesWithProgress.filter(c => c.userProgress > 0 && !c.completed).length,
       },
     })
   } catch (error) {
-    console.error("Erro ao buscar desafios:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    safeError('[CHALLENGES_GET]', 'Erro ao buscar desafios:', error)
+    return handleApiError(error)
   }
 }
 
 export async function POST(request: NextRequest) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    return apiUnauthorized("Não autorizado")
   }
 
   try {
@@ -90,7 +90,13 @@ export async function POST(request: NextRequest) {
 
     if (action === 'update_progress') {
       if (!challengeId || progress === undefined) {
-        return NextResponse.json({ error: "Dados incompletos" }, { status: 400 })
+        return apiBadRequest("Challenge ID e progress são obrigatórios", {
+          code: "MISSING_REQUIRED_FIELDS",
+          details: {
+            required: ['challengeId', 'progress'],
+            provided: { challengeId: !!challengeId, progress: progress !== undefined }
+          }
+        })
       }
 
       const challenge = await db.query.weeklyChallenges.findFirst({
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (!challenge) {
-        return NextResponse.json({ error: "Desafio não encontrado" }, { status: 404 })
+        return apiNotFound("Desafio não encontrado")
       }
 
       // Verificar se o usuário já tem progresso neste desafio
@@ -133,72 +139,52 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Se completou o desafio, adicionar recompensas
+      // Se completou o desafio, adicionar recompensas usando serviço centralizado
+      let gamificationResult = null
       if (completed && (!userProgress || !userProgress.completed)) {
-        await db.insert(pointActivities).values({
-          userId,
-          activityType: 'challenge_completed',
-          points: challenge.pointsReward,
-          xp: challenge.xpReward,
-          description: `Desafio concluído: ${challenge.title}`,
-          metadata: JSON.stringify({ challengeId }),
-        })
+        try {
+          const result = await awardGamificationPoints(userId, 'challenge_completed', {
+            challengeId,
+            challengeTitle: challenge.title,
+            challengeType: challenge.type,
+          })
 
-        // Atualizar pontos e XP do usuário
-        const user = await db.query.users.findFirst({
-          where: eq(users.id, userId),
-          columns: {
-            totalXP: true,
-            currentLevel: true,
-            weeklyPoints: true,
-            monthlyPoints: true,
-          },
-        })
-
-        if (user) {
-          const newTotalXP = user.totalXP + challenge.xpReward
-          const newLevel = calculateLevelFromXP(newTotalXP)
-
-          await db
-            .update(users)
-            .set({
-              totalXP: newTotalXP,
-              currentLevel: newLevel,
-              weeklyPoints: user.weeklyPoints + challenge.pointsReward,
-              monthlyPoints: user.monthlyPoints + challenge.pointsReward,
-            })
-            .where(eq(users.id, userId))
+          if (result.success) {
+            gamificationResult = {
+              pointsEarned: result.points,
+              xpEarned: result.xp,
+              leveledUp: result.leveledUp,
+              newLevel: result.newLevel,
+            }
+          } else {
+            safeError('[CHALLENGES]', 'Gamification failed:', result.reason)
+          }
+        } catch (error) {
+          safeError('[CHALLENGES]', 'Failed to award points:', error)
         }
       }
 
-      return NextResponse.json({
-        success: true,
-        data: {
-          progress: newProgress,
-          completed,
-          rewardEarned: completed && (!userProgress || !userProgress.completed),
-          pointsEarned: completed ? challenge.pointsReward : 0,
-          xpEarned: completed ? challenge.xpReward : 0,
-        },
+      return apiSuccess({
+        progress: newProgress,
+        completed,
+        rewardEarned: completed && (!userProgress || !userProgress.completed),
+        gamification: gamificationResult,
       })
     }
 
     if (action === 'create_weekly') {
       // Criar desafios semanais automáticos
       const newChallenges = await createWeeklyChallenges()
-      return NextResponse.json({
-        success: true,
-        data: {
-          challengesCreated: newChallenges.length,
-          challenges: newChallenges,
-        },
+      return apiSuccess({
+        challengesCreated: newChallenges.length,
+        challenges: newChallenges,
       })
     }
 
-    return NextResponse.json({ error: "Ação não especificada" }, { status: 400 })
+    return apiBadRequest("Ação não especificada", { code: "MISSING_ACTION" })
   } catch (error) {
-    console.error("Erro ao processar desafio:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    safeError('[CHALLENGES_POST]', 'Erro ao processar desafio:', error)
+    return handleApiError(error)
   }
 }
 
@@ -266,18 +252,4 @@ async function createWeeklyChallenges() {
   }
 
   return newChallenges
-}
-
-// Função para calcular nível baseado no XP total
-function calculateLevelFromXP(totalXP: number): number {
-  let level = 1
-  while (calculateXPForLevel(level + 1) <= totalXP) {
-    level++
-  }
-  return level
-}
-
-// Função para calcular XP necessário para um nível
-function calculateXPForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5))
 }

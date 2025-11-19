@@ -3,11 +3,14 @@ import { db } from "@/db"
 import { users, achievements, userAchievements, pointActivities } from "@/db/schema"
 import { eq, desc, count, and, sql, gte } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
+import { calculateLevelFromXP, calculateXPForLevel } from "@/lib/gamification"
+import { apiUnauthorized, apiBadRequest, apiSuccess, handleApiError } from "@/lib/api-response"
+import { safeError } from "@/lib/safe-logger"
 
 export async function GET(request: NextRequest) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    return apiUnauthorized("Não autorizado")
   }
 
   try {
@@ -51,28 +54,25 @@ export async function GET(request: NextRequest) {
     const unlockedCount = unlockedAchievements.length
     const progressPercentage = totalAchievements > 0 ? Math.round((unlockedCount / totalAchievements) * 100) : 0
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        achievements: groupedAchievements,
-        stats: {
-          total: totalAchievements,
-          unlocked: unlockedCount,
-          progressPercentage,
-        },
-        recentUnlocked: unlockedAchievements.slice(0, 5),
+    return apiSuccess({
+      achievements: groupedAchievements,
+      stats: {
+        total: totalAchievements,
+        unlocked: unlockedCount,
+        progressPercentage,
       },
+      recentUnlocked: unlockedAchievements.slice(0, 5),
     })
   } catch (error) {
-    console.error("Erro ao buscar conquistas:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    safeError('[ACHIEVEMENTS_GET]', 'Erro ao buscar conquistas:', error)
+    return handleApiError(error)
   }
 }
 
 export async function POST(request: NextRequest) {
   const userId = await getUserIdFromRequest(request)
   if (!userId) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    return apiUnauthorized("Não autorizado")
   }
 
   try {
@@ -81,19 +81,16 @@ export async function POST(request: NextRequest) {
     if (checkAll) {
       // Verificar todas as conquistas automaticamente
       const newAchievements = await checkAllAchievements(userId)
-      return NextResponse.json({
-        success: true,
-        data: {
-          newAchievements,
-          message: `${newAchievements.length} nova(s) conquista(s) desbloqueada(s)!`,
-        },
+      return apiSuccess({
+        newAchievements,
+        message: `${newAchievements.length} nova(s) conquista(s) desbloqueada(s)!`,
       })
     }
 
-    return NextResponse.json({ error: "Ação não especificada" }, { status: 400 })
+    return apiBadRequest("Ação não especificada", { code: "MISSING_ACTION" })
   } catch (error) {
-    console.error("Erro ao processar conquistas:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+    safeError('[ACHIEVEMENTS_POST]', 'Erro ao processar conquistas:', error)
+    return handleApiError(error)
   }
 }
 
@@ -256,18 +253,4 @@ async function checkSpecialAchievement(userId: number, achievement: any): Promis
     default:
       return false
   }
-}
-
-// Função para calcular nível baseado no XP total
-function calculateLevelFromXP(totalXP: number): number {
-  let level = 1
-  while (calculateXPForLevel(level + 1) <= totalXP) {
-    level++
-  }
-  return level
-}
-
-// Função para calcular XP necessário para um nível
-function calculateXPForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5))
 }
