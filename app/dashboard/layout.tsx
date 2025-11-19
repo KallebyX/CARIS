@@ -31,6 +31,7 @@ import { NotificationCenter } from "@/components/notifications/notification-cent
 import { MobileNav, MobileNavSpacer } from "@/components/mobile-nav"
 import { useIsMobile } from "@/lib/responsive-utils"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { LocaleSwitcherCompact } from "@/components/locale-switcher"
 
 interface User {
   id: number
@@ -242,6 +243,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex items-center space-x-4 ml-auto">
               {/* Notification Center */}
               <NotificationCenter userId={user.id} />
+
+              {/* Language Switcher */}
+              <LocaleSwitcherCompact />
 
               {/* User avatar */}
               <Avatar className="h-8 w-8">
