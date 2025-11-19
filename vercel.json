@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/compliance/data-retention",
+      "schedule": "0 2 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/compliance/data-retention",
+      "headers": [
+        {
+          "key": "x-cron-secret",
+          "value": "@data_retention_cron_secret"
+        }
+      ]
+    }
+  ]
+}

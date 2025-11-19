@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (67%)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (75%)
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 25 (7 CRITICAL + 10 HIGH + 8 MEDIUM)
-**Última Atualização:** 2025-11-19 - Calendar Error Handling Implementado (MEDIUM-08)
+**Issues Resolvidos:** 26 (7 CRITICAL + 10 HIGH + 9 MEDIUM)
+**Última Atualização:** 2025-11-19 - Data Retention Policy Implementada (MEDIUM-09)
 
 ---
 
@@ -710,10 +710,98 @@
 - **Estimativa Original:** 3 horas
 
 ### MEDIUM-09: Política de Retenção Não Enforçada
-- **Status:** ⚪ Pendente
-- **Problema:** Schema tem `dataRetentionPreference` mas sem job de cleanup
-- **Solução:** Cron job para deletar dados expirados (LGPD/GDPR)
-- **Estimativa:** 4 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Problema:** Schema tem `dataRetentionPreference` mas sem job de cleanup automático
+- **Solução:**
+  1. ✅ Criado Data Retention Service (`/lib/data-retention.ts`)
+     - Busca usuários com políticas de retenção ativas
+     - Calcula data de corte baseada em preferência do usuário
+     - Deleta dados expirados de 8 tipos: diary, chat, sessions, meditation, mood, insights, notifications, points
+     - Preserva sessões agendadas, notificações não lidas, audit logs
+     - Suporte a anonymização após deleção (LGPD/GDPR)
+     - Batch processing com delay entre batches
+     - Dry run mode para testes seguros
+     - Preview de impacto por usuário
+  2. ✅ Criado API Endpoint (`/app/api/compliance/data-retention/route.ts`)
+     - POST: Enforcement manual (admin) ou automático (cron)
+     - GET: Preview do que será deletado para usuário
+     - Autenticação dupla: Admin role ou CRON_SECRET
+     - Suporte a dry run, batch size configurável, usuário específico
+     - Respostas padronizadas com API response format
+  3. ✅ Configuração de Cron Job (`/vercel.json`)
+     - Execução diária às 2 AM UTC
+     - Autenticação via secret header
+     - Compatível com Vercel Cron
+     - Documentação de alternativas (GitHub Actions, cron-job.org)
+  4. ✅ Documentação Completa (`/docs/DATA_RETENTION_POLICY.md`)
+     - Overview e arquitetura
+     - Setup guide (Vercel Cron, GitHub Actions, External)
+     - Usage examples (manual, preview, programmatic)
+     - Compliance notes (LGPD, GDPR, HIPAA)
+     - Monitoring e audit trail
+     - Testing strategies (dry run, specific user)
+     - Troubleshooting guide
+     - Best practices
+  5. ✅ Atualizado Environment Template (`/env.template`)
+     - DATA_RETENTION_CRON_SECRET para autenticação
+- **Arquivos Criados:**
+  - `lib/data-retention.ts` (520 linhas)
+  - `app/api/compliance/data-retention/route.ts` (90 linhas)
+  - `vercel.json` (Cron configuration)
+  - `docs/DATA_RETENTION_POLICY.md` (480 linhas)
+- **Arquivos Modificados:**
+  - `env.template`: Adicionada variável DATA_RETENTION_CRON_SECRET
+- **Features Implementadas:**
+  - Enforcement automático via cron job
+  - Dry run mode (preview sem deletar)
+  - Batch processing (default: 50 usuários por vez)
+  - Filtro por usuário específico
+  - Preview de impacto antes de deletar
+  - Anonymização opcional após deleção
+  - Audit logging completo
+  - Error handling granular (por usuário)
+  - Safety guards (preserva scheduled sessions)
+  - Compliance tracking
+- **Tipos de Dados Deletados:**
+  - Diary entries (entradas do diário)
+  - Chat messages (mensagens antigas)
+  - Completed sessions (sessões concluídas/canceladas)
+  - Meditation sessions (histórico de meditação)
+  - Mood tracking (rastreamento de humor)
+  - Clinical insights (análises IA)
+  - Read notifications (notificações lidas)
+  - Point activities (histórico de gamificação)
+- **Dados Preservados:**
+  - Scheduled sessions (sessões futuras)
+  - Unread notifications (alertas importantes)
+  - Audit logs (anonimizados mas preservados)
+  - User account (só dados deletados, conta permanece)
+  - Privacy settings (mantido para compliance)
+- **Configuração do Usuário:**
+  - Default: 2555 dias (7 anos)
+  - Configurável via Privacy Settings
+  - Opção de anonymização após deleção
+  - Períodos comuns: 30, 90, 365, 730, 1825, 2555 dias
+- **Compliance:**
+  - ✅ LGPD: Direito à exclusão, minimização de dados
+  - ✅ GDPR: Right to be forgotten, storage limitation
+  - ✅ HIPAA: 6+ years retention (default 7 years)
+  - ✅ Audit trail mantido indefinidamente
+- **Segurança:**
+  - Cron secret de 64 caracteres
+  - HTTPS only
+  - Admin role required para execução manual
+  - Rate limiting aplicado
+  - Irreversível (sem undo)
+  - Audit logging de todas operações
+- **Performance:**
+  - Batch processing para grandes volumes
+  - Delay de 100ms entre batches
+  - Configurável: batchSize ajustável
+  - Execução em horário de baixo tráfego (2 AM)
+- **Tempo Real:** 4 horas
+- **Estimativa Original:** 4 horas
 
 ### MEDIUM-10: Sem Estratégia de Cache
 - **Status:** ⚪ Pendente
