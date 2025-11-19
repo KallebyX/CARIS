@@ -340,9 +340,7 @@ export const moodTracking = pgTable("mood_tracking", {
     .notNull(),
   date: timestamp("date").notNull().defaultNow(),
   mood: integer("mood").notNull(), // 1-10
-  moodScore: integer("mood_score"), // 1-10 (alternative field)
   energy: integer("energy"), // 1-10
-  energyLevel: integer("energy_level"), // 1-10 (alternative field)
   anxiety: integer("anxiety"), // 1-10
   stressLevel: integer("stress_level"), // 1-10
   sleepQuality: integer("sleep_quality"), // 1-10
@@ -443,8 +441,7 @@ export const auditLogs = pgTable("audit_logs", {
   userId: integer("user_id")
     .references(() => users.id, { onDelete: 'set null' }),
   action: varchar("action", { length: 100 }).notNull(), // 'create', 'read', 'update', 'delete', 'login', 'logout', 'export', 'anonymize'
-  resource: varchar("resource", { length: 100 }), // 'user', 'patient', 'session', 'payment'
-  resourceType: varchar("resource_type", { length: 50 }), // alternative field for resource
+  resourceType: varchar("resource_type", { length: 50 }).notNull(), // 'user', 'patient', 'session', 'payment'
   resourceId: varchar("resource_id", { length: 50 }),
   oldValues: json("old_values"),
   newValues: json("new_values"),

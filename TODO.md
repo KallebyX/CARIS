@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH + MEDIUM Completos! Progresso: LOW (10%) 🎉
+**Status:** ✅ Todos CRITICAL + HIGH + MEDIUM Completos! Progresso: LOW (20%) 🎉
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 30 (7 CRITICAL + 10 HIGH + 12 MEDIUM + 1 LOW)
-**Última Atualização:** 2025-11-19 - Sentry Monitoring Habilitado (LOW-06)
+**Issues Resolvidos:** 31 (7 CRITICAL + 10 HIGH + 12 MEDIUM + 2 LOW)
+**Última Atualização:** 2025-11-19 - Schema Cleanup - Campos Duplicados Removidos (LOW-10)
 
 ---
 
@@ -1168,10 +1168,34 @@
 - **Estimativa:** 12 horas
 
 ### LOW-10: Campos Duplicados no Schema
-- **Status:** ⚪ Pendente
-- **Exemplo:** `moodTracking` tem `mood` e `moodScore`
-- **Solução:** Consolidar campos redundantes
-- **Estimativa:** 2 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P3 - Baixa
+- **Problema:** Schema contém campos duplicados/alternativos não utilizados
+- **Solução:**
+  1. ✅ Removido `moodTracking.mood_score` (duplicado de `mood`)
+  2. ✅ Removido `moodTracking.energy_level` (duplicado de `energy`)
+  3. ✅ Removido `auditLogs.resource` (duplicado de `resource_type`)
+  4. ✅ Adicionado NOT NULL constraint em `auditLogs.resource_type`
+- **Análise de Impacto:**
+  - ✅ `moodScore`: Nenhum uso encontrado em APIs
+  - ✅ `energyLevel`: Nenhum uso encontrado em APIs (usa `energy`)
+  - ✅ `resource`: Nenhum uso encontrado (lib/audit.ts usa `resourceType`)
+  - ✅ `resourceType`: Campo ativo usado em 5 APIs
+- **Arquivos Modificados:**
+  - `db/schema.ts`: Removidos 3 campos duplicados
+  - `drizzle/0006_remove_duplicate_fields.sql`: Migration para remover colunas
+- **Benefícios:**
+  - Schema mais limpo e claro
+  - Menos confusão sobre qual campo usar
+  - Redução de espaço em disco (3 colunas removidas)
+  - Melhor manutenibilidade
+  - Queries mais simples
+- **Migration Segura:**
+  - Verifica NULL values antes de adicionar constraint
+  - Inclui plano de rollback completo
+  - Queries de verificação incluídas
+- **Tempo Real:** 45 minutos
+- **Estimativa Original:** 2 horas
 
 ---
 
