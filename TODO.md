@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (92%)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (100%) 🎉
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 28 (7 CRITICAL + 10 HIGH + 11 MEDIUM)
-**Última Atualização:** 2025-11-19 - Timezone Standardization Implementada (MEDIUM-11)
+**Issues Resolvidos:** 29 (7 CRITICAL + 10 HIGH + 12 MEDIUM)
+**Última Atualização:** 2025-11-19 - Medication Tracking System Implementado (MEDIUM-12)
 
 ---
 
@@ -1006,10 +1006,72 @@
 - **Estimativa Original:** 4 horas
 
 ### MEDIUM-12: Tracking de Medicação Ausente
-- **Status:** ⚪ Pendente
-- **Problema:** Campo de texto genérico ao invés de tabela estruturada
-- **Solução:** Criar tabela de medicações com lembretes
-- **Estimativa:** 6 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Problema:** Campo de texto genérico ao invés de tabela estruturada para medicações
+- **Solução:**
+  1. ✅ Criada migração SQL completa (`/drizzle/0005_add_medication_tracking.sql`)
+     - **medications**: Detalhes do medicamento (nome, dosagem, prescrição, estoque)
+     - **medication_schedules**: Agendamentos e lembretes de dosagem
+     - **medication_logs**: Tracking de aderência e efeitos colaterais
+     - **medication_reminders**: Fila de lembretes para processamento por cron
+     - Triggers para auto-atualização de timestamps e gerenciamento de estoque
+     - Views para consultas comuns (medications ativas, stats de aderência)
+  2. ✅ Atualizado Drizzle schema (`/db/schema.ts`)
+     - Importado tipo `time` do pg-core
+     - Adicionadas 4 tabelas de medicação com relações completas
+     - Indexes otimizados para performance
+     - Todas timestamps usando `{ withTimezone: true }`
+  3. ✅ Criados API endpoints completos:
+     - `/app/api/patient/medications/route.ts`: GET (list) + POST (create)
+     - `/app/api/patient/medications/[id]/route.ts`: GET + PATCH + DELETE
+     - `/app/api/patient/medication-logs/route.ts`: GET + POST + PATCH
+     - `/app/api/patient/medication-adherence/route.ts`: GET (statistics)
+  4. ✅ Documentação Completa (`/docs/MEDICATION_TRACKING.md`)
+     - Database schema detalhado (4 tables, views, triggers)
+     - API documentation com exemplos
+     - Usage examples (TypeScript)
+     - Best practices (stock, adherence, side effects, reminders)
+     - Future enhancements roadmap
+- **Arquivos Criados:**
+  - `drizzle/0005_add_medication_tracking.sql` (~350 linhas)
+  - `app/api/patient/medications/route.ts` (202 linhas)
+  - `app/api/patient/medications/[id]/route.ts` (200 linhas)
+  - `app/api/patient/medication-logs/route.ts` (244 linhas)
+  - `app/api/patient/medication-adherence/route.ts` (155 linhas)
+  - `docs/MEDICATION_TRACKING.md` (650+ linhas)
+- **Arquivos Modificados:**
+  - `db/schema.ts`: Adicionadas 4 tabelas + relações
+- **Features Implementadas:**
+  - Medication management (CRUD completo)
+  - Dosage schedules com múltiplas frequências (daily, weekly, monthly, as_needed)
+  - Adherence tracking (taken, skipped, missed, pending)
+  - Stock management com alertas de estoque baixo
+  - Refill tracking e lembretes
+  - Side effects monitoring
+  - Effectiveness rating (1-5 scale)
+  - Mood correlation (before/after tracking)
+  - Symptom tracking (before/after)
+  - Notification channels (push, sms, email)
+  - Reminder queue system
+  - Adherence statistics com views otimizadas
+- **Schema Highlights:**
+  - Soft deletes (isActive flag)
+  - PRN medications support (Pro Re Nata - as needed)
+  - Stock auto-decrement via trigger
+  - Comprehensive indexing para performance
+  - JSONB fields para flexibilidade (days_of_week, notification_channels)
+  - Timezone-aware timestamps
+- **API Features:**
+  - Zod validation em todos endpoints
+  - Ownership verification (user só acessa suas medications)
+  - Batch queries otimizadas (limit, filters)
+  - Adherence stats configuráveis (por período, por medicação)
+  - Low stock alerts
+  - Refill reminders
+  - Recent side effects tracking
+- **Tempo Real:** 5 horas
+- **Estimativa Original:** 6 horas
 
 ---
 

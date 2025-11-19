@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json, jsonb, index } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, integer, timestamp, boolean, varchar, date, decimal, json, jsonb, index, time } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
 
 // Tabela de usuários
@@ -1050,6 +1050,175 @@ export const generatedReports = pgTable("generated_reports", {
   parameters: text("parameters"), // JSON com parâmetros utilizados
 })
 
+// ==== MEDICATION TRACKING SYSTEM (MEDIUM-12) ====
+
+// Medications table - stores medication details
+export const medications = pgTable("medications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  genericName: varchar("generic_name", { length: 255 }),
+  dosage: varchar("dosage", { length: 100 }).notNull(), // e.g., "10mg", "2.5ml", "1 tablet"
+  form: varchar("form", { length: 50 }), // "tablet", "capsule", "liquid", "injection", "topical", "inhaler"
+  purpose: text("purpose"), // Why this medication is prescribed
+  prescribingDoctor: varchar("prescribing_doctor", { length: 255 }),
+  prescriptionNumber: varchar("prescription_number", { length: 100 }),
+  pharmacy: varchar("pharmacy", { length: 255 }),
+
+  // Instructions
+  instructions: text("instructions"), // How to take the medication
+  foodInstructions: text("food_instructions"), // e.g., "Take with food", "On empty stomach"
+  sideEffects: text("side_effects"), // Known side effects to monitor
+  interactions: text("interactions"), // Drug interactions to be aware of
+
+  // Dates
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"), // NULL for ongoing medications
+  refillDate: date("refill_date"), // When to refill
+  refillCount: integer("refill_count").default(0), // Number of refills allowed
+
+  // Status
+  isActive: boolean("is_active").default(true).notNull(),
+  isAsNeeded: boolean("is_as_needed").default(false).notNull(), // PRN (Pro Re Nata) - take as needed
+
+  // Tracking
+  stockQuantity: integer("stock_quantity"), // Current stock
+  lowStockThreshold: integer("low_stock_threshold"), // Alert when stock drops below this
+
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userActiveIdx: index("idx_medications_user_active").on(table.userId, table.isActive),
+  refillDateIdx: index("idx_medications_refill_date").on(table.refillDate),
+}))
+
+// Medication schedules - dosage schedules and reminders
+export const medicationSchedules = pgTable("medication_schedules", {
+  id: serial("id").primaryKey(),
+  medicationId: integer("medication_id")
+    .references(() => medications.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+
+  // Schedule
+  timeOfDay: time("time_of_day").notNull(), // e.g., "08:00", "14:00", "21:00"
+  daysOfWeek: jsonb("days_of_week"), // [0,1,2,3,4,5,6] for Sunday-Saturday, NULL for every day
+  frequency: varchar("frequency", { length: 50 }).notNull(), // "daily", "weekly", "monthly", "as_needed", "specific_days"
+
+  // Dosage
+  dosageAmount: varchar("dosage_amount", { length: 100 }).notNull(), // Amount to take at this time
+  dosageUnit: varchar("dosage_unit", { length: 50 }), // "tablet(s)", "ml", "mg", "puff(s)"
+
+  // Reminders
+  reminderEnabled: boolean("reminder_enabled").default(true).notNull(),
+  reminderMinutesBefore: integer("reminder_minutes_before").default(15), // Remind 15 minutes before
+  notificationChannels: jsonb("notification_channels"), // ["push", "sms", "email"]
+
+  // Status
+  isActive: boolean("is_active").default(true).notNull(),
+
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  medicationIdx: index("idx_medication_schedules_medication").on(table.medicationId, table.isActive),
+  userActiveIdx: index("idx_medication_schedules_user_active").on(table.userId, table.isActive),
+  timeIdx: index("idx_medication_schedules_time").on(table.timeOfDay),
+}))
+
+// Medication logs - track actual medication intake
+export const medicationLogs = pgTable("medication_logs", {
+  id: serial("id").primaryKey(),
+  medicationId: integer("medication_id")
+    .references(() => medications.id, { onDelete: 'cascade' })
+    .notNull(),
+  scheduleId: integer("schedule_id")
+    .references(() => medicationSchedules.id, { onDelete: 'set null' }),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+
+  // Timing
+  scheduledTime: timestamp("scheduled_time", { withTimezone: true }).notNull(), // When it was supposed to be taken
+  actualTime: timestamp("actual_time", { withTimezone: true }), // When it was actually taken (NULL if skipped)
+
+  // Dosage
+  dosageTaken: varchar("dosage_taken", { length: 100 }), // Actual dosage taken (may differ from scheduled)
+
+  // Status
+  status: varchar("status", { length: 50 }).notNull().default('pending'), // "taken", "skipped", "missed", "pending"
+  skipReason: varchar("skip_reason", { length: 100 }), // If skipped: "forgot", "side_effects", "no_medication", "other"
+  skipNotes: text("skip_notes"), // Additional notes if skipped
+
+  // Side effects tracking
+  hadSideEffects: boolean("had_side_effects").default(false),
+  sideEffectsDescription: text("side_effects_description"),
+
+  // Effectiveness
+  effectivenessRating: integer("effectiveness_rating"), // 1-5 scale
+  effectivenessNotes: text("effectiveness_notes"),
+
+  // Mood/condition tracking
+  moodBefore: integer("mood_before"), // 1-10 scale
+  moodAfter: integer("mood_after"), // 1-10 scale
+  symptomsBefore: text("symptoms_before"),
+  symptomsAfter: text("symptoms_after"),
+
+  // Metadata
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  medicationIdx: index("idx_medication_logs_medication").on(table.medicationId, table.scheduledTime),
+  userIdx: index("idx_medication_logs_user").on(table.userId, table.scheduledTime),
+  statusIdx: index("idx_medication_logs_status").on(table.status, table.scheduledTime),
+  actualTimeIdx: index("idx_medication_logs_actual_time").on(table.actualTime),
+}))
+
+// Medication reminders - queue for cron processing
+export const medicationReminders = pgTable("medication_reminders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  medicationId: integer("medication_id")
+    .references(() => medications.id, { onDelete: 'cascade' })
+    .notNull(),
+  scheduleId: integer("schedule_id")
+    .references(() => medicationSchedules.id, { onDelete: 'cascade' })
+    .notNull(),
+  logId: integer("log_id")
+    .references(() => medicationLogs.id, { onDelete: 'set null' }),
+
+  // Timing
+  reminderTime: timestamp("reminder_time", { withTimezone: true }).notNull(), // When to send the reminder
+  medicationTime: timestamp("medication_time", { withTimezone: true }).notNull(), // When the medication should be taken
+
+  // Status
+  status: varchar("status", { length: 50 }).notNull().default('pending'), // "pending", "sent", "acknowledged", "dismissed"
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
+
+  // Channels
+  notificationChannels: jsonb("notification_channels").notNull(), // ["push", "sms", "email"]
+  sentChannels: jsonb("sent_channels"), // Which channels were successfully sent
+
+  // Metadata
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userIdx: index("idx_medication_reminders_user").on(table.userId, table.reminderTime),
+  pendingIdx: index("idx_medication_reminders_pending").on(table.status, table.reminderTime),
+  medicationIdx: index("idx_medication_reminders_medication").on(table.medicationId),
+}))
+
 // ==== RELATIONS ====
 
 // Relações dos usuários
@@ -1086,6 +1255,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   generatedAlerts: many(generatedAlerts),
   generatedReports: many(generatedReports),
   notifications: many(notifications),
+  medications: many(medications),
+  medicationSchedules: many(medicationSchedules),
+  medicationLogs: many(medicationLogs),
+  medicationReminders: many(medicationReminders),
 }))
 
 // Custom Fields Relations
@@ -1647,6 +1820,68 @@ export const paymentFailuresRelations = relations(paymentFailures, ({ one }) => 
   payment: one(payments, {
     fields: [paymentFailures.paymentId],
     references: [payments.id],
+  }),
+}))
+
+// Medication Tracking Relations
+export const medicationsRelations = relations(medications, ({ one, many }) => ({
+  user: one(users, {
+    fields: [medications.userId],
+    references: [users.id],
+  }),
+  schedules: many(medicationSchedules),
+  logs: many(medicationLogs),
+  reminders: many(medicationReminders),
+}))
+
+export const medicationSchedulesRelations = relations(medicationSchedules, ({ one, many }) => ({
+  medication: one(medications, {
+    fields: [medicationSchedules.medicationId],
+    references: [medications.id],
+  }),
+  user: one(users, {
+    fields: [medicationSchedules.userId],
+    references: [users.id],
+  }),
+  logs: many(medicationLogs),
+  reminders: many(medicationReminders),
+}))
+
+export const medicationLogsRelations = relations(medicationLogs, ({ one }) => ({
+  medication: one(medications, {
+    fields: [medicationLogs.medicationId],
+    references: [medications.id],
+  }),
+  schedule: one(medicationSchedules, {
+    fields: [medicationLogs.scheduleId],
+    references: [medicationSchedules.id],
+  }),
+  user: one(users, {
+    fields: [medicationLogs.userId],
+    references: [users.id],
+  }),
+  reminder: one(medicationReminders, {
+    fields: [medicationLogs.id],
+    references: [medicationReminders.logId],
+  }),
+}))
+
+export const medicationRemindersRelations = relations(medicationReminders, ({ one }) => ({
+  user: one(users, {
+    fields: [medicationReminders.userId],
+    references: [users.id],
+  }),
+  medication: one(medications, {
+    fields: [medicationReminders.medicationId],
+    references: [medications.id],
+  }),
+  schedule: one(medicationSchedules, {
+    fields: [medicationReminders.scheduleId],
+    references: [medicationSchedules.id],
+  }),
+  log: one(medicationLogs, {
+    fields: [medicationReminders.logId],
+    references: [medicationLogs.id],
   }),
 }))
 
