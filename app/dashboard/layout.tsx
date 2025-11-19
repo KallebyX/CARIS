@@ -30,6 +30,7 @@ import { useLogout } from "@/hooks/use-logout"
 import { NotificationCenter } from "@/components/notifications/notification-center"
 import { MobileNav, MobileNavSpacer } from "@/components/mobile-nav"
 import { useIsMobile } from "@/lib/responsive-utils"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 interface User {
   id: number
@@ -259,7 +260,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Page content */}
         <main className={`p-4 sm:p-6 ${isMobile ? 'pb-20' : ''}`}>
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
           {/* Spacer for mobile navigation */}
           {isMobile && <MobileNavSpacer />}
         </main>
