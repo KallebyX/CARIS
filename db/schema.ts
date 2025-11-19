@@ -171,6 +171,23 @@ export const pointActivities = pgTable("point_activities", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
+// MEDIUM-04: Configuração de gamificação (pontos e XP por tipo de atividade)
+export const gamificationConfig = pgTable("gamification_config", {
+  id: serial("id").primaryKey(),
+  activityType: text("activity_type").notNull().unique(), // 'diary_entry', 'meditation_completed', 'task_completed', 'session_attended', etc.
+  points: integer("points").notNull(), // Pontos ganhos por esta atividade
+  xp: integer("xp").notNull(), // XP ganho por esta atividade
+  description: text("description").notNull(), // Descrição da atividade em português
+  category: varchar("category", { length: 50 }).notNull(), // 'diary', 'meditation', 'tasks', 'sessions', 'social'
+  enabled: boolean("enabled").default(true).notNull(), // Se esta recompensa está ativa
+  minLevel: integer("min_level").default(1), // Nível mínimo para ganhar esta recompensa
+  maxDailyCount: integer("max_daily_count"), // Limite diário de vezes que pode ganhar (null = sem limite)
+  cooldownMinutes: integer("cooldown_minutes"), // Tempo mínimo entre recompensas (null = sem cooldown)
+  metadata: jsonb("metadata"), // Dados adicionais configuráveis (multiplicadores, condições especiais, etc.)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 // Desafios semanais
 export const weeklyChallenges = pgTable("weekly_challenges", {
   id: serial("id").primaryKey(),

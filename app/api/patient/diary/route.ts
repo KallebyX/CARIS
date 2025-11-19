@@ -1,5 +1,5 @@
 import { db } from "@/db"
-import { diaryEntries, patientProfiles, users, pointActivities } from "@/db/schema"
+import { diaryEntries, patientProfiles } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 import { NextResponse, NextRequest } from "next/server"
 import { z } from "zod"
@@ -11,64 +11,7 @@ import { sanitizeHtml, sanitizePlainText } from "@/lib/sanitize"
 import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 import { safeError } from "@/lib/safe-logger"
 import { parsePaginationParams } from "@/lib/pagination"
-
-// Helper function to award gamification points
-async function awardGamificationPoints(userId: number, activityType: string, metadata?: any) {
-  const pointsConfig = {
-    diary_entry: { points: 10, xp: 15 },
-    meditation_completed: { points: 15, xp: 20 },
-    task_completed: { points: 20, xp: 25 },
-    session_attended: { points: 25, xp: 30 },
-  }
-
-  const config = pointsConfig[activityType as keyof typeof pointsConfig]
-  if (!config) return
-
-  const description = `${activityType === 'diary_entry' ? 'Entrada no diário' : activityType}`
-
-  // Insert point activity
-  await db.insert(pointActivities).values({
-    userId,
-    activityType,
-    points: config.points,
-    xp: config.xp,
-    description,
-    metadata: metadata ? JSON.stringify(metadata) : null,
-  })
-
-  // Update user totals
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
-    columns: { totalXP: true, currentLevel: true, weeklyPoints: true, monthlyPoints: true }
-  })
-
-  if (user) {
-    const newTotalXP = user.totalXP + config.xp
-    const newLevel = calculateLevelFromXP(newTotalXP)
-
-    await db
-      .update(users)
-      .set({
-        totalXP: newTotalXP,
-        currentLevel: newLevel,
-        weeklyPoints: user.weeklyPoints + config.points,
-        monthlyPoints: user.monthlyPoints + config.points,
-      })
-      .where(eq(users.id, userId))
-  }
-}
-
-function calculateLevelFromXP(totalXP: number): number {
-  let level = 1
-  while (calculateXPForLevel(level + 1) <= totalXP) {
-    level++
-  }
-  return level
-}
-
-function calculateXPForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5))
-}
+import { awardGamificationPoints } from "@/lib/gamification"
 
 const entrySchema = z.object({
   moodRating: z.number().min(0).max(4),

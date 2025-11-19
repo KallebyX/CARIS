@@ -1,10 +1,10 @@
 # TODO - CÁRIS Platform Improvements
 
 **Data da Análise:** 2025-11-18
-**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (42%)
+**Status:** ✅ Todos CRITICAL + HIGH Completos! Progresso: MEDIUM (50%)
 **Total de Issues Identificados:** 39 (7 Críticos, 10 Alta Prioridade, 12 Média Prioridade, 10 Baixa Prioridade)
-**Issues Resolvidos:** 22 (7 CRITICAL + 10 HIGH + 5 MEDIUM)
-**Última Atualização:** 2025-11-19 - API Response Format (MEDIUM-02)
+**Issues Resolvidos:** 23 (7 CRITICAL + 10 HIGH + 6 MEDIUM)
+**Última Atualização:** 2025-11-19 - Gamificação Database-Driven (MEDIUM-04)
 
 ---
 
@@ -467,10 +467,54 @@
 - **Commit:** 15d2baf
 
 ### MEDIUM-04: Valores de Gamificação Hardcoded
-- **Status:** ⚪ Pendente
-- **Arquivo:** `/app/api/patient/diary/route.ts:13-18`
-- **Solução:** Mover para tabela de configuração
-- **Estimativa:** 3 horas
+- **Status:** ✅ **COMPLETO**
+- **Prioridade:** P2 - Média
+- **Arquivo:** `/lib/gamification.ts`, `db/schema.ts`, múltiplos endpoints
+- **Problema:** Valores de pontos e XP hardcoded em 3+ lugares diferentes (diary, meditation, gamification)
+- **Solução:**
+  1. ✅ Criado tabela `gamification_config` no schema
+  2. ✅ Migração SQL com 6 tipos de atividades padrão
+  3. ✅ Criado `/lib/gamification.ts` - Serviço centralizado de gamificação
+  4. ✅ Cache de 5 minutos para configurações (previne queries excessivas)
+  5. ✅ Configurações avançadas:
+     - `minLevel`: Nível mínimo requerido para ganhar recompensa
+     - `maxDailyCount`: Limite diário de recompensas
+     - `cooldownMinutes`: Tempo mínimo entre recompensas
+     - `enabled`: Liga/desliga recompensas específicas
+     - `metadata`: Dados configuráveis customizados
+  6. ✅ Removido código duplicado em 3 endpoints:
+     - `/app/api/patient/diary/route.ts`
+     - `/app/api/gamification/points/route.ts`
+     - Funções helper duplicadas (calculateXPForLevel, etc)
+  7. ✅ `awardGamificationPoints()` agora database-driven
+  8. ✅ Validações automáticas: level requirement, daily limits, cooldowns
+- **Arquivos Criados:**
+  - `lib/gamification.ts`: Serviço completo de gamificação
+  - `drizzle/0003_add_gamification_config.sql`: Migração e seed
+- **Arquivos Modificados:**
+  - `db/schema.ts`: Adicionada tabela gamificationConfig
+  - `app/api/patient/diary/route.ts`: Remove hardcode, usa serviço
+  - `app/api/gamification/points/route.ts`: Remove duplicação, usa serviço
+- **Atividades Configuradas:**
+  - diary_entry: 10 pts, 15 XP
+  - meditation_completed: 15 pts, 20 XP
+  - task_completed: 20 pts, 25 XP
+  - session_attended: 25 pts, 30 XP
+  - streak_maintained: 5 pts, 10 XP
+  - challenge_completed: 50 pts, 75 XP
+- **Benefícios:**
+  - Configuração via admin/database (sem redeploy)
+  - DRY: Código duplicado eliminado
+  - Flexibilidade: Limites, cooldowns, níveis configuráveis
+  - Performance: Cache reduce carga no DB
+  - Extensível: Fácil adicionar novos tipos de atividade
+  - Type-safe: TypeScript interfaces exportadas
+- **Fallback Safety:**
+  - Se DB falhar, usa valores hardcoded como fallback
+  - Garante gamificação sempre funciona
+- **Tempo Real:** 2 horas
+- **Estimativa Original:** 3 horas
+- **Bônus:** Também endereça parte do MEDIUM-07 (código duplicado)
 
 ### MEDIUM-05: Pool de Conexões Não Configurado
 - **Status:** ✅ **COMPLETO**
