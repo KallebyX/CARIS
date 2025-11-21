@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 
 // ================================================================
+// I18N CONFIGURATION
+// ================================================================
+const createNextIntlPlugin = require('next-intl/plugin')
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
+
+// ================================================================
 // SENTRY CONFIGURATION
 // ================================================================
 const { withSentryConfig } = require("@sentry/nextjs")
@@ -403,8 +409,9 @@ const sentryWebpackPluginOptions = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
 }
 
-// Wrap with bundle analyzer first, then Sentry
-const configWithPlugins = withBundleAnalyzer(nextConfig)
+// Wrap with plugins in order: next-intl -> bundle analyzer -> Sentry
+let configWithPlugins = withNextIntl(nextConfig)
+configWithPlugins = withBundleAnalyzer(configWithPlugins)
 
 // Only wrap with Sentry if DSN is configured
 // Enabled when SENTRY_DSN environment variable is set (production/staging)

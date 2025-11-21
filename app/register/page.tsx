@@ -10,8 +10,12 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslations } from "@/lib/i18n"
 
 export default function RegisterPage() {
+  const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -27,11 +31,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
+        title: tCommon('error'),
+        description: tErrors('passwordMismatch'),
         variant: "destructive",
       })
       return
@@ -39,8 +43,8 @@ export default function RegisterPage() {
 
     if (!formData.role) {
       toast({
-        title: "Erro", 
-        description: "Selecione um tipo de conta",
+        title: tCommon('error'),
+        description: tErrors('required'),
         variant: "destructive",
       })
       return
@@ -63,18 +67,18 @@ export default function RegisterPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || "Falha no registro")
+        throw new Error(data.error || tErrors('generic'))
       }
 
       toast({
-        title: "Sucesso!",
-        description: "Conta criada com sucesso",
+        title: tCommon('success'),
+        description: t('accountCreated'),
       })
 
       router.push("/dashboard")
     } catch (error: any) {
       toast({
-        title: "Erro",
+        title: tCommon('error'),
         description: error.message,
         variant: "destructive",
       })
@@ -91,20 +95,20 @@ export default function RegisterPage() {
           className="absolute top-0 -mt-12 inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Voltar ao início
+          {tCommon('back')}
         </Link>
         <Card className="bg-teal-600/95 text-white rounded-3xl shadow-2xl backdrop-blur-sm border-0">
           <CardHeader className="text-center pt-10 pb-6">
             <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
               <span className="text-2xl font-bold text-white">C</span>
             </div>
-            <CardTitle className="text-3xl font-bold text-orange-300">Criar Conta</CardTitle>
-            <p className="text-teal-100">Inicie sua jornada de clareza existencial.</p>
+            <CardTitle className="text-3xl font-bold text-orange-300">{t('registerTitle')}</CardTitle>
+            <p className="text-teal-100">{t('registerPrompt')}</p>
           </CardHeader>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
+                <Label htmlFor="name">{t('name')}</Label>
                 <Input
                   id="name"
                   type="text"
@@ -112,10 +116,11 @@ export default function RegisterPage() {
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   className="bg-white/20 border-teal-400 h-12 placeholder:text-teal-200 focus:bg-white/30"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -123,56 +128,65 @@ export default function RegisterPage() {
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   className="bg-white/20 border-teal-400 h-12 placeholder:text-teal-200 focus:bg-white/30"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Tipo de conta</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                  <SelectTrigger className="bg-white/20 border-teal-400 h-12 text-white">
-                    <SelectValue placeholder="Selecione o tipo de conta" />
+                <Label htmlFor="role">{t('role')}</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) => setFormData({...formData, role: value})}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="bg-white/20 border-teal-400 h-12 text-white disabled:opacity-50">
+                    <SelectValue placeholder={t('role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="patient">Paciente</SelectItem>
-                    <SelectItem value="psychologist">Psicólogo(a)</SelectItem>
+                    <SelectItem value="patient">{t('patient')}</SelectItem>
+                    <SelectItem value="psychologist">{t('psychologist')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
-                    className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30"
+                    className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30 disabled:opacity-50"
                     required
                     minLength={6}
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-200 hover:text-white"
+                    disabled={isLoading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-200 hover:text-white disabled:opacity-50"
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Senha</Label>
+                <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                    className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30"
+                    className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30 disabled:opacity-50"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-200 hover:text-white"
+                    disabled={isLoading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-200 hover:text-white disabled:opacity-50"
                   >
                     {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
@@ -181,14 +195,17 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base font-semibold rounded-full shadow-lg mt-6"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base font-semibold rounded-full shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Criando conta..." : "Registrar"}
+                {isLoading ? tCommon('saving') : t('register')}
               </Button>
               <div className="text-center text-sm pt-2">
-                <span className="text-teal-100">Já tem uma conta? </span>
-                <Link href="/login" className="font-semibold text-orange-300 hover:text-orange-400">
-                  Entrar
+                <span className="text-teal-100">{t('loginTitle')}? </span>
+                <Link
+                  href="/login"
+                  className={`font-semibold text-orange-300 hover:text-orange-400 transition-colors ${isLoading ? "pointer-events-none opacity-50" : ""}`}
+                >
+                  {t('login')}
                 </Link>
               </div>
             </form>

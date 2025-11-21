@@ -1,6 +1,49 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import * as jose from "jose"
+import { locales, defaultLocale, type Locale } from "./i18n.config"
+
+// ================================================================
+// I18N LOCALE DETECTION
+// ================================================================
+
+/**
+ * Detect user's preferred locale from request
+ * Priority: Cookie > Accept-Language header > Default
+ */
+function detectLocale(request: NextRequest): Locale {
+  // 1. Check cookie
+  const localeCookie = request.cookies.get('NEXT_LOCALE')?.value as Locale | undefined
+  if (localeCookie && locales.includes(localeCookie)) {
+    return localeCookie
+  }
+
+  // 2. Check Accept-Language header
+  const acceptLanguage = request.headers.get('accept-language')
+  if (acceptLanguage) {
+    for (const locale of locales) {
+      if (acceptLanguage.includes(locale) || acceptLanguage.includes(locale.split('-')[0])) {
+        return locale
+      }
+    }
+  }
+
+  // 3. Default locale
+  return defaultLocale
+}
+
+/**
+ * Set locale cookie in response
+ */
+function setLocaleCookie(response: NextResponse, locale: Locale): void {
+  response.cookies.set('NEXT_LOCALE', locale, {
+    httpOnly: false, // Needs to be accessible by JavaScript
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 31536000, // 1 year
+  })
+}
 
 // ================================================================
 // SECURITY HEADERS CONFIGURATION
@@ -210,10 +253,14 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  // Detect and set locale for all requests
+  const locale = detectLocale(request)
+
   // Se não há token, redireciona para login
   if (!token) {
     logSecurityEvent("unauthorized_access_attempt", request)
     const response = NextResponse.redirect(new URL("/login", request.url))
+    setLocaleCookie(response, locale)
     return applySecurityHeaders(response, request)
   }
 
@@ -228,6 +275,7 @@ export async function middleware(request: NextRequest) {
       response.cookies.delete("token")
       response.cookies.delete("refresh_token")
       response.cookies.delete("user_session")
+      setLocaleCookie(response, locale)
       return applySecurityHeaders(response, request)
     }
 
@@ -276,6 +324,9 @@ export async function middleware(request: NextRequest) {
       path: "/",
     })
 
+    // Set locale cookie
+    setLocaleCookie(response, locale)
+
     return response
   } catch (error) {
     logSecurityEvent("invalid_token", request, {
@@ -288,6 +339,9 @@ export async function middleware(request: NextRequest) {
     response.cookies.delete("refresh_token")
     response.cookies.delete("user_session")
     response.cookies.delete("csrf-token")
+
+    // Set locale cookie
+    setLocaleCookie(response, locale)
 
     // Headers para evitar cache
     response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate")
