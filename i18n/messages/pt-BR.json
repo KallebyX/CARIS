@@ -132,7 +132,21 @@
     "startMeditation": "Iniciar meditação",
     "meditationHistory": "Histórico de meditação",
     "sosButton": "Botão SOS",
-    "emergencyHelp": "Ajuda emergencial"
+    "emergencyHelp": "Ajuda emergencial",
+    "journey": {
+      "title": "Sua Jornada",
+      "subtitle": "Continue sua caminhada de autoconhecimento",
+      "sosCardTitle": "Precisa de ajuda agora?",
+      "sosCardDescription": "Acesse nossas ferramentas de regulação emocional para momentos de crise.",
+      "accessSOS": "Acessar SOS",
+      "currentCycle": "Ciclo Atual: {cycle}",
+      "growthPhase": "Fase de expansão e desenvolvimento pessoal",
+      "completed": "{percent}% concluído",
+      "emotionalDiary": "Diário Emocional",
+      "emotionalDiaryDescription": "Registre suas reflexões e emoções",
+      "nextSession": "Próxima Sessão",
+      "sessionTime": "Amanhã às 14:00"
+    }
   },
   "psychologist": {
     "patients": "Pacientes",
