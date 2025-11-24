@@ -146,6 +146,10 @@
       "emotionalDiaryDescription": "Registre suas reflexões e emoções",
       "nextSession": "Próxima Sessão",
       "sessionTime": "Amanhã às 14:00"
+    },
+    "emotionalMap": {
+      "title": "Mapa Emocional",
+      "subtitle": "Visualize e analise seus padrões emocionais com insights gerados por IA"
     }
   },
   "psychologist": {
