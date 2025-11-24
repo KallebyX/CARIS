@@ -155,7 +155,18 @@
     "totalPatients": "Total de pacientes",
     "activePatients": "Pacientes ativos",
     "sessionsThisWeek": "Sessões esta semana",
-    "sessionsThisMonth": "Sessões este mês"
+    "sessionsThisMonth": "Sessões este mês",
+    "welcomeBack": "Bem-vindo de volta!",
+    "loading": "Carregando dashboard...",
+    "loadError": "Não foi possível carregar os dados do dashboard.",
+    "aiAssistant": "Assistente IA",
+    "newPatient": "Novo Paciente",
+    "scheduleSession": "Agendar Sessão",
+    "sessionsToday": "Sessões Hoje",
+    "upcomingSessions": "Próximas Sessões",
+    "viewFullSchedule": "Ver Agenda Completa",
+    "recentActivities": "Atividades Recentes",
+    "viewAllPatients": "Ver Todos os Pacientes"
   },
   "admin": {
     "dashboard": "Dashboard Admin",

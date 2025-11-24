@@ -155,7 +155,18 @@
     "totalPatients": "Total patients",
     "activePatients": "Active patients",
     "sessionsThisWeek": "Sessions this week",
-    "sessionsThisMonth": "Sessions this month"
+    "sessionsThisMonth": "Sessions this month",
+    "welcomeBack": "Welcome back!",
+    "loading": "Loading dashboard...",
+    "loadError": "Failed to load dashboard data.",
+    "aiAssistant": "AI Assistant",
+    "newPatient": "New Patient",
+    "scheduleSession": "Schedule Session",
+    "sessionsToday": "Sessions Today",
+    "upcomingSessions": "Upcoming Sessions",
+    "viewFullSchedule": "View Full Schedule",
+    "recentActivities": "Recent Activities",
+    "viewAllPatients": "View All Patients"
   },
   "admin": {
     "dashboard": "Admin Dashboard",
