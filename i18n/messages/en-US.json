@@ -150,6 +150,12 @@
     "emotionalMap": {
       "title": "Emotional Map",
       "subtitle": "Visualize and analyze your emotional patterns with AI-generated insights"
+    },
+    "chat": {
+      "title": "Therapeutic Chat",
+      "subtitle": "Secure and direct communication with your psychologist between sessions.",
+      "loadError": "Failed to load chat information.",
+      "userLoadError": "Failed to load user data."
     }
   },
   "psychologist": {

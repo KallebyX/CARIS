@@ -150,6 +150,12 @@
     "emotionalMap": {
       "title": "Mapa Emocional",
       "subtitle": "Visualize e analise seus padrões emocionais com insights gerados por IA"
+    },
+    "chat": {
+      "title": "Chat Terapêutico",
+      "subtitle": "Comunicação segura e direta com seu psicólogo entre as sessões.",
+      "loadError": "Não foi possível carregar as informações do chat.",
+      "userLoadError": "Não foi possível carregar os dados do usuário."
     }
   },
   "psychologist": {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { SecureChatLayout } from "@/components/chat/chat-layout"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useTranslations } from "@/lib/i18n"
 
 interface ChatInfo {
   counterpartId: number
@@ -15,6 +16,7 @@ interface User {
 }
 
 export default function PatientChatPage() {
+  const t = useTranslations('patient.chat')
   const [chatInfo, setChatInfo] = useState<ChatInfo | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -29,13 +31,13 @@ export default function PatientChatPage() {
 
         if (!chatInfoRes.ok) {
           const errorData = await chatInfoRes.json()
-          throw new Error(errorData.error || "Não foi possível carregar as informações do chat.")
+          throw new Error(errorData.error || t('loadError'))
         }
         const chatInfoData = await chatInfoRes.json()
         setChatInfo(chatInfoData)
 
         if (!userRes.ok) {
-          throw new Error("Não foi possível carregar os dados do usuário.")
+          throw new Error(t('userLoadError'))
         }
         const userData = await userRes.json()
         setCurrentUser(userData)
@@ -64,8 +66,8 @@ export default function PatientChatPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-slate-800 mb-2">Chat Terapêutico</h1>
-      <p className="text-slate-600 mb-6">Comunicação segura e direta com seu psicólogo entre as sessões.</p>
+      <h1 className="text-3xl font-bold text-slate-800 mb-2">{t('title')}</h1>
+      <p className="text-slate-600 mb-6">{t('subtitle')}</p>
       {chatInfo && currentUser && (
         <SecureChatLayout
           counterpartId={chatInfo.counterpartId}
