@@ -412,5 +412,66 @@
       "time": "HH:mm",
       "dateTime": "dd/MM/yyyy HH:mm"
     }
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Gerencie suas informações de perfil, conta e notificações.",
+    "loading": "Carregando configurações...",
+    "loadError": "Erro ao carregar configurações.",
+    "tryAgain": "Tentar Novamente",
+    "saving": "Salvando...",
+    "updating": "Atualizando...",
+    "saveChanges": "Salvar Alterações",
+    "updatePassword": "Atualizar Senha",
+    "tabs": {
+      "profile": "Perfil",
+      "account": "Conta",
+      "notifications": "Notificações",
+      "calendar": "Calendário",
+      "billing": "Pagamentos"
+    },
+    "profile": {
+      "title": "Perfil Público",
+      "descriptionPsychologist": "Informações que serão vistas por seus pacientes.",
+      "descriptionPatient": "Suas informações pessoais.",
+      "fullName": "Nome Completo",
+      "crp": "CRP",
+      "crpPlaceholder": "Ex: 06/12345",
+      "bio": "Mini Biografia",
+      "bioPlaceholder": "Fale um pouco sobre sua abordagem terapêutica..."
+    },
+    "account": {
+      "title": "Informações da Conta",
+      "description": "Suas informações básicas de login.",
+      "email": "E-mail",
+      "emailChangeInfo": "Para alterar seu e-mail, entre em contato com o suporte.",
+      "changePassword": "Alterar Senha",
+      "changePasswordDescription": "Mantenha sua conta segura com uma senha forte.",
+      "currentPassword": "Senha Atual",
+      "newPassword": "Nova Senha",
+      "confirmPassword": "Confirmar Nova Senha",
+      "passwordMismatch": "As senhas não coincidem.",
+      "passwordTooShort": "A nova senha deve ter pelo menos 6 caracteres.",
+      "passwordChangeSuccess": "Senha alterada com sucesso!",
+      "passwordChangeError": "Não foi possível alterar a senha."
+    },
+    "notifications": {
+      "title": "Notificações",
+      "description": "Escolha como você quer ser notificado.",
+      "chatMessages": "Novas mensagens no chat",
+      "chatMessagesDescription": "Receber notificações push e por e-mail.",
+      "pushNotifications": "Notificações push",
+      "pushNotificationsDescription": "Receber notificações no navegador.",
+      "sessionReminders": "Lembretes de sessão",
+      "sessionRemindersDescription": "24 horas antes de cada sessão.",
+      "diaryEntriesPsychologist": "Entradas no diário",
+      "diaryRemindersPatient": "Lembretes do diário",
+      "diaryEntriesPsychologistDescription": "Ser notificado quando um paciente fizer uma nova entrada.",
+      "diaryRemindersPatientDescription": "Receber lembretes para escrever no diário."
+    },
+    "success": "Sucesso",
+    "settingsUpdateSuccess": "Configurações atualizadas com sucesso!",
+    "settingsUpdateError": "Não foi possível atualizar as configurações.",
+    "saveEntryError": "Falha ao salvar a entrada."
   }
 }

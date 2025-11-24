@@ -412,5 +412,66 @@
       "time": "HH:mm",
       "dateTime": "MM/dd/yyyy HH:mm"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your profile, account and notification preferences.",
+    "loading": "Loading settings...",
+    "loadError": "Error loading settings.",
+    "tryAgain": "Try Again",
+    "saving": "Saving...",
+    "updating": "Updating...",
+    "saveChanges": "Save Changes",
+    "updatePassword": "Update Password",
+    "tabs": {
+      "profile": "Profile",
+      "account": "Account",
+      "notifications": "Notifications",
+      "calendar": "Calendar",
+      "billing": "Billing"
+    },
+    "profile": {
+      "title": "Public Profile",
+      "descriptionPsychologist": "Information that will be seen by your patients.",
+      "descriptionPatient": "Your personal information.",
+      "fullName": "Full Name",
+      "crp": "CRP",
+      "crpPlaceholder": "Ex: 06/12345",
+      "bio": "Mini Biography",
+      "bioPlaceholder": "Tell us about your therapeutic approach..."
+    },
+    "account": {
+      "title": "Account Information",
+      "description": "Your basic login information.",
+      "email": "Email",
+      "emailChangeInfo": "To change your email, please contact support.",
+      "changePassword": "Change Password",
+      "changePasswordDescription": "Keep your account secure with a strong password.",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "New password must be at least 6 characters.",
+      "passwordChangeSuccess": "Password changed successfully!",
+      "passwordChangeError": "Failed to change password."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Choose how you want to be notified.",
+      "chatMessages": "New chat messages",
+      "chatMessagesDescription": "Receive push and email notifications.",
+      "pushNotifications": "Push notifications",
+      "pushNotificationsDescription": "Receive browser notifications.",
+      "sessionReminders": "Session reminders",
+      "sessionRemindersDescription": "24 hours before each session.",
+      "diaryEntriesPsychologist": "Diary entries",
+      "diaryRemindersPatient": "Diary reminders",
+      "diaryEntriesPsychologistDescription": "Get notified when a patient makes a new entry.",
+      "diaryRemindersPatientDescription": "Receive reminders to write in your diary."
+    },
+    "success": "Success",
+    "settingsUpdateSuccess": "Settings updated successfully!",
+    "settingsUpdateError": "Failed to update settings.",
+    "saveEntryError": "Failed to save entry."
   }
 }
