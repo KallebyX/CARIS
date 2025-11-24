@@ -78,7 +78,35 @@
     "achievements": "Achievements",
     "streak": "Streak",
     "points": "Points",
-    "level": "Level"
+    "level": "Level",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "home": "Home",
+      "patients": "Patients",
+      "schedule": "Schedule",
+      "aiAssistant": "AI Assistant",
+      "reports": "Reports",
+      "library": "Library",
+      "journey": "Journey",
+      "diary": "Diary",
+      "emotionalMap": "Emotional Map",
+      "emotions": "Emotions",
+      "videotherapy": "Videotherapy",
+      "chat": "Chat",
+      "sessions": "Sessions",
+      "tasks": "Tasks",
+      "meditation": "Meditation",
+      "progress": "Progress",
+      "sos": "SOS",
+      "settings": "Settings",
+      "config": "Settings"
+    },
+    "userRole": {
+      "psychologist": "Psychologist",
+      "patient": "Patient",
+      "admin": "Administrator"
+    },
+    "loggingOut": "Logging out..."
   },
   "patient": {
     "diary": "Diary",

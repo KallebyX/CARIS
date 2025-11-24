@@ -78,7 +78,35 @@
     "achievements": "Conquistas",
     "streak": "Sequência",
     "points": "Pontos",
-    "level": "Nível"
+    "level": "Nível",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "home": "Início",
+      "patients": "Pacientes",
+      "schedule": "Agenda",
+      "aiAssistant": "Assistente IA",
+      "reports": "Relatórios",
+      "library": "Biblioteca",
+      "journey": "Jornada",
+      "diary": "Diário",
+      "emotionalMap": "Mapa Emocional",
+      "emotions": "Emoções",
+      "videotherapy": "Videoterapia",
+      "chat": "Chat",
+      "sessions": "Sessões",
+      "tasks": "Tarefas",
+      "meditation": "Meditação",
+      "progress": "Progresso",
+      "sos": "SOS",
+      "settings": "Configurações",
+      "config": "Config"
+    },
+    "userRole": {
+      "psychologist": "Psicólogo",
+      "patient": "Paciente",
+      "admin": "Administrador"
+    },
+    "loggingOut": "Saindo..."
   },
   "patient": {
     "diary": "Diário",
