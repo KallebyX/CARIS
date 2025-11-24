@@ -190,7 +190,19 @@
     "upcomingSessions": "Próximas Sessões",
     "viewFullSchedule": "Ver Agenda Completa",
     "recentActivities": "Atividades Recentes",
-    "viewAllPatients": "Ver Todos os Pacientes"
+    "viewAllPatients": "Ver Todos os Pacientes",
+    "patientManagement": {
+      "title": "Gestão Avançada de Pacientes",
+      "subtitle": "Configure e gerencie campos customizados, metas e relatórios para seus pacientes",
+      "customFields": "Campos Customizados",
+      "generalGoals": "Metas Gerais",
+      "reports": "Relatórios",
+      "alerts": "Alertas",
+      "alertsConfig": "Configuração de Alertas",
+      "alertsDescription": "Configure alertas automáticos para acompanhamento de pacientes",
+      "alertsInDevelopment": "Sistema de alertas em desenvolvimento.",
+      "alertsComingSoon": "Em breve você poderá configurar alertas personalizados."
+    }
   },
   "admin": {
     "dashboard": "Dashboard Admin",
