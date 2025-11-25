@@ -423,6 +423,75 @@
         "online": "Online",
         "inPerson": "In Person"
       }
+    },
+    "reportsPage": {
+      "title": "Reports & Metrics",
+      "subtitle": "Detailed analysis of your patients' progress and engagement.",
+      "loading": "Loading data...",
+      "exportPdf": "Export PDF",
+      "allPatients": "All patients",
+      "selectedPatient": "Selected patient",
+      "totalPatients": "Total patients",
+      "stats": {
+        "avgEngagement": "Average Engagement",
+        "activePatients": "Active Patients",
+        "sessionsCompleted": "Sessions Completed",
+        "sosToolsUsage": "SOS Tools Usage",
+        "vsLastMonth": "+5% vs. last month",
+        "cancellations": "{count} cancellations",
+        "usesInPeriod": "Uses in period"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "individual": "Individual Report",
+        "export": "Export Data"
+      },
+      "individual": {
+        "selectPatient": "Select a Patient",
+        "selectDescription": "Choose a patient from the filter above to view their detailed individual report.",
+        "selectPlaceholder": "Select patient"
+      },
+      "export": {
+        "title": "Export Reports",
+        "fullReportPdf": "Full Report (PDF)",
+        "rawDataCsv": "Raw Data (CSV)",
+        "notes": {
+          "pdf": "The PDF report includes all charts and statistics",
+          "csv": "CSV data can be imported into spreadsheets",
+          "filter": "All data is filtered by the selected period"
+        }
+      }
+    },
+    "aiAssistantPage": {
+      "title": "AI Clinical Assistant",
+      "subtitle": "Automatic insights, progress analysis and clinical alerts",
+      "selectPatient": "Select Patient",
+      "selectDescription": "Choose a patient for detailed analysis:",
+      "selectPlaceholder": "Select a patient...",
+      "selectedPatient": "Selected patient:"
+    },
+    "libraryPage": {
+      "title": "Content Library",
+      "subtitle": "Manage and prescribe materials for your patients.",
+      "addMaterial": "Add Material",
+      "searchLibrary": "Search library...",
+      "tabs": {
+        "all": "All",
+        "articles": "Articles",
+        "videos": "Videos",
+        "exercises": "Exercises"
+      },
+      "contentTypes": {
+        "article": "Article",
+        "exercise": "Exercise",
+        "video": "Video"
+      },
+      "actions": {
+        "prescribe": "Prescribe",
+        "edit": "Edit",
+        "delete": "Delete",
+        "preview": "Preview"
+      }
     }
   },
   "admin": {

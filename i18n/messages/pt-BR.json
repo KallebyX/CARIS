@@ -423,6 +423,75 @@
         "online": "Online",
         "inPerson": "Presencial"
       }
+    },
+    "reportsPage": {
+      "title": "Relatórios e Métricas",
+      "subtitle": "Análise detalhada do progresso e engajamento dos seus pacientes.",
+      "loading": "Carregando dados...",
+      "exportPdf": "Exportar PDF",
+      "allPatients": "Todos os pacientes",
+      "selectedPatient": "Paciente selecionado",
+      "totalPatients": "Total de pacientes",
+      "stats": {
+        "avgEngagement": "Engajamento Médio",
+        "activePatients": "Pacientes Ativos",
+        "sessionsCompleted": "Sessões Realizadas",
+        "sosToolsUsage": "Uso de Ferramentas SOS",
+        "vsLastMonth": "+5% vs. mês passado",
+        "cancellations": "{count} cancelamentos",
+        "usesInPeriod": "Usos no período"
+      },
+      "tabs": {
+        "overview": "Visão Geral",
+        "individual": "Relatório Individual",
+        "export": "Exportar Dados"
+      },
+      "individual": {
+        "selectPatient": "Selecione um Paciente",
+        "selectDescription": "Escolha um paciente no filtro acima para visualizar seu relatório individual detalhado.",
+        "selectPlaceholder": "Selecionar paciente"
+      },
+      "export": {
+        "title": "Exportar Relatórios",
+        "fullReportPdf": "Relatório Completo (PDF)",
+        "rawDataCsv": "Dados Brutos (CSV)",
+        "notes": {
+          "pdf": "O relatório PDF inclui todos os gráficos e estatísticas",
+          "csv": "Os dados CSV podem ser importados em planilhas",
+          "filter": "Todos os dados são filtrados pelo período selecionado"
+        }
+      }
+    },
+    "aiAssistantPage": {
+      "title": "Assistente Clínico IA",
+      "subtitle": "Insights automáticos, análises de progresso e alertas clínicos",
+      "selectPatient": "Selecionar Paciente",
+      "selectDescription": "Escolha um paciente para análise detalhada:",
+      "selectPlaceholder": "Selecione um paciente...",
+      "selectedPatient": "Paciente selecionado:"
+    },
+    "libraryPage": {
+      "title": "Biblioteca de Conteúdos",
+      "subtitle": "Gerencie e prescreva materiais para seus pacientes.",
+      "addMaterial": "Adicionar Material",
+      "searchLibrary": "Buscar na biblioteca...",
+      "tabs": {
+        "all": "Todos",
+        "articles": "Artigos",
+        "videos": "Vídeos",
+        "exercises": "Exercícios"
+      },
+      "contentTypes": {
+        "article": "Artigo",
+        "exercise": "Exercício",
+        "video": "Vídeo"
+      },
+      "actions": {
+        "prescribe": "Prescrever",
+        "edit": "Editar",
+        "delete": "Excluir",
+        "preview": "Pré-visualizar"
+      }
     }
   },
   "admin": {
