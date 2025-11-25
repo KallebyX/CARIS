@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { useTranslations } from "@/lib/i18n"
 
 interface Session {
   id: number
@@ -66,6 +67,7 @@ interface ScheduleStats {
 }
 
 export default function SchedulePage() {
+  const t = useTranslations("psychologist.schedulePage")
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState("week")
   const [sessions, setSessions] = useState<Session[]>([])
@@ -107,11 +109,11 @@ export default function SchedulePage() {
         setSessions(data.sessions)
         setStats(data.stats)
       } else {
-        toast.error("Erro ao carregar sessões")
+        toast.error(t("toast.loadError"))
       }
     } catch (error) {
       console.error("Failed to fetch sessions:", error)
-      toast.error("Erro ao carregar sessões")
+      toast.error(t("toast.loadError"))
     } finally {
       setLoading(false)
     }
@@ -130,7 +132,7 @@ export default function SchedulePage() {
   }
 
   const deleteSession = async (sessionId: number) => {
-    if (!confirm("Tem certeza que deseja deletar esta sessão?")) return
+    if (!confirm(t("deleteConfirm"))) return
 
     try {
       const res = await fetch(`/api/psychologist/sessions/${sessionId}`, {
@@ -138,16 +140,16 @@ export default function SchedulePage() {
       })
 
       if (res.ok) {
-        toast.success("Sessão deletada com sucesso")
+        toast.success(t("toast.deleteSuccess"))
         fetchSessions()
         fetchScheduleStats()
       } else {
         const error = await res.json()
-        toast.error(error.error || "Erro ao deletar sessão")
+        toast.error(error.error || t("toast.deleteError"))
       }
     } catch (error) {
       console.error("Error deleting session:", error)
-      toast.error("Erro ao deletar sessão")
+      toast.error(t("toast.deleteError"))
     }
   }
 
@@ -160,16 +162,16 @@ export default function SchedulePage() {
       })
 
       if (res.ok) {
-        toast.success("Status atualizado com sucesso")
+        toast.success(t("toast.updateSuccess"))
         fetchSessions()
         fetchScheduleStats()
       } else {
         const error = await res.json()
-        toast.error(error.error || "Erro ao atualizar status")
+        toast.error(error.error || t("toast.updateError"))
       }
     } catch (error) {
       console.error("Error updating session:", error)
-      toast.error("Erro ao atualizar status")
+      toast.error(t("toast.updateError"))
     }
   }
 
@@ -229,73 +231,73 @@ export default function SchedulePage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Agenda</h1>
-          <p className="text-gray-600">Gerencie suas sessões e compromissos</p>
+          <h1 className="text-3xl font-bold text-gray-800">{t("title")}</h1>
+          <p className="text-gray-600">{t("subtitle")}</p>
         </div>
         <div className="flex space-x-3">
           <Button variant="outline" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="w-4 h-4 mr-2" />
-            Filtros
+            {t("filters")}
           </Button>
           <Button variant="outline">
             <CalendarIcon className="w-4 h-4 mr-2" />
-            Sincronizar Google
+            {t("syncGoogle")}
           </Button>
           <Button className="bg-[#2D9B9B] hover:bg-[#238B8B]" asChild>
             <Link href="/dashboard/schedule/new">
               <Plus className="w-4 h-4 mr-2" />
-              Nova Sessão
+              {t("newSession")}
             </Link>
           </Button>
         </div>
       </div>
 
-      {/* Filtros */}
+      {/* Filters */}
       {showFilters && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Filtros</CardTitle>
+            <CardTitle className="text-lg">{t("filters")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
-                <Label htmlFor="status-filter">Status</Label>
+                <Label htmlFor="status-filter">{t("filterLabels.status")}</Label>
                 <Select
                   value={filters.status}
                   onValueChange={(value) => setFilters((prev) => ({ ...prev, status: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
+                    <SelectValue placeholder={t("all")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="agendada">Agendada</SelectItem>
-                    <SelectItem value="confirmada">Confirmada</SelectItem>
-                    <SelectItem value="realizada">Realizada</SelectItem>
-                    <SelectItem value="cancelada">Cancelada</SelectItem>
+                    <SelectItem value="all">{t("all")}</SelectItem>
+                    <SelectItem value="agendada">{t("sessionStatus.scheduled")}</SelectItem>
+                    <SelectItem value="confirmada">{t("sessionStatus.confirmed")}</SelectItem>
+                    <SelectItem value="realizada">{t("sessionStatus.completed")}</SelectItem>
+                    <SelectItem value="cancelada">{t("sessionStatus.canceled")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="type-filter">Tipo</Label>
+                <Label htmlFor="type-filter">{t("filterLabels.type")}</Label>
                 <Select
                   value={filters.type}
                   onValueChange={(value) => setFilters((prev) => ({ ...prev, type: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
+                    <SelectValue placeholder={t("all")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="online">Online</SelectItem>
-                    <SelectItem value="presencial">Presencial</SelectItem>
+                    <SelectItem value="all">{t("all")}</SelectItem>
+                    <SelectItem value="online">{t("sessionType.online")}</SelectItem>
+                    <SelectItem value="presencial">{t("sessionType.inPerson")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="start-date">Data Início</Label>
+                <Label htmlFor="start-date">{t("filterLabels.startDate")}</Label>
                 <Input
                   id="start-date"
                   type="date"
@@ -305,7 +307,7 @@ export default function SchedulePage() {
               </div>
 
               <div>
-                <Label htmlFor="end-date">Data Fim</Label>
+                <Label htmlFor="end-date">{t("filterLabels.endDate")}</Label>
                 <Input
                   id="end-date"
                   type="date"
@@ -315,12 +317,12 @@ export default function SchedulePage() {
               </div>
 
               <div>
-                <Label htmlFor="search">Buscar Paciente</Label>
+                <Label htmlFor="search">{t("searchPatient")}</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
                     id="search"
-                    placeholder="Nome ou email..."
+                    placeholder={t("nameOrEmail")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -332,55 +334,55 @@ export default function SchedulePage() {
         </Card>
       )}
 
-      {/* Estatísticas Rápidas */}
+      {/* Quick Stats */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
-              <p className="text-sm text-gray-600">Total</p>
+              <p className="text-sm text-gray-600">{t("stats.total")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-yellow-600">{stats.agendadas}</div>
-              <p className="text-sm text-gray-600">Agendadas</p>
+              <p className="text-sm text-gray-600">{t("stats.scheduled")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-green-600">{stats.confirmadas}</div>
-              <p className="text-sm text-gray-600">Confirmadas</p>
+              <p className="text-sm text-gray-600">{t("stats.confirmed")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-blue-600">{stats.realizadas}</div>
-              <p className="text-sm text-gray-600">Realizadas</p>
+              <p className="text-sm text-gray-600">{t("stats.completed")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-red-600">{stats.canceladas}</div>
-              <p className="text-sm text-gray-600">Canceladas</p>
+              <p className="text-sm text-gray-600">{t("stats.canceled")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-purple-600">{stats.online}</div>
-              <p className="text-sm text-gray-600">Online</p>
+              <p className="text-sm text-gray-600">{t("stats.online")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-[#2D9B9B]">{stats.totalHours}h</div>
-              <p className="text-sm text-gray-600">Horas</p>
+              <p className="text-sm text-gray-600">{t("stats.hours")}</p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Lista de Sessões */}
+      {/* Sessions List */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card>
@@ -388,14 +390,14 @@ export default function SchedulePage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center">
                   <Clock className="w-5 h-5 mr-2 text-[#2D9B9B]" />
-                  Sessões ({filteredSessions.length})
+                  {t("sessions")} ({filteredSessions.length})
                 </CardTitle>
                 <div className="flex items-center space-x-2">
                   <Button variant="outline" size="sm" onClick={() => navigateDate("prev")}>
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
-                    Hoje
+                    {t("today")}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => navigateDate("next")}>
                     <ChevronRight className="w-4 h-4" />
@@ -405,13 +407,13 @@ export default function SchedulePage() {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="text-center py-8">Carregando sessões...</div>
+                <div className="text-center py-8">{t("loading")}</div>
               ) : filteredSessions.length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">Nenhuma sessão encontrada</p>
+                  <p className="text-gray-600">{t("noSessions")}</p>
                   <Button className="mt-4 bg-[#2D9B9B] hover:bg-[#238B8B]" asChild>
-                    <Link href="/dashboard/schedule/new">Agendar Sessão</Link>
+                    <Link href="/dashboard/schedule/new">{t("scheduleSession")}</Link>
                   </Button>
                 </div>
               ) : (
@@ -499,7 +501,7 @@ export default function SchedulePage() {
           </Card>
         </div>
 
-        {/* Sidebar com estatísticas */}
+        {/* Sidebar with stats */}
         <div className="space-y-6">
           {scheduleStats && (
             <>
@@ -507,24 +509,24 @@ export default function SchedulePage() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     <BarChart3 className="w-5 h-5 mr-2" />
-                    Resumo Geral
+                    {t("summary.title")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Esta Semana</span>
+                    <span className="text-gray-600">{t("summary.thisWeek")}</span>
                     <span className="font-semibold text-gray-800">{scheduleStats.overview.weekSessions}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Este Mês</span>
+                    <span className="text-gray-600">{t("summary.thisMonth")}</span>
                     <span className="font-semibold text-gray-800">{scheduleStats.overview.monthSessions}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Horas/Mês</span>
+                    <span className="text-gray-600">{t("summary.hoursPerMonth")}</span>
                     <span className="font-semibold text-gray-800">{scheduleStats.overview.hoursThisMonth}h</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Pacientes Ativos</span>
+                    <span className="text-gray-600">{t("summary.activePatients")}</span>
                     <span className="font-semibold text-gray-800">{scheduleStats.overview.activePatients}</span>
                   </div>
                 </CardContent>
@@ -532,7 +534,7 @@ export default function SchedulePage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Próximas Sessões</CardTitle>
+                  <CardTitle className="text-lg">{t("upcomingSessions")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -542,8 +544,8 @@ export default function SchedulePage() {
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800">{session.patient.name}</p>
                           <p className="text-xs text-gray-600">
-                            {new Date(session.sessionDate).toLocaleDateString("pt-BR")} às{" "}
-                            {new Date(session.sessionDate).toLocaleTimeString("pt-BR", {
+                            {new Date(session.sessionDate).toLocaleDateString(undefined)} {" "}
+                            {new Date(session.sessionDate).toLocaleTimeString(undefined, {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}
@@ -556,7 +558,7 @@ export default function SchedulePage() {
                     ))}
                   </div>
                   {scheduleStats.upcomingSessions.length === 0 && (
-                    <p className="text-center text-gray-500 py-4">Nenhuma sessão próxima</p>
+                    <p className="text-center text-gray-500 py-4">{t("noUpcomingSessions")}</p>
                   )}
                 </CardContent>
               </Card>

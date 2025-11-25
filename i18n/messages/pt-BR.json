@@ -156,6 +156,149 @@
       "subtitle": "Comunicação segura e direta com seu psicólogo entre as sessões.",
       "loadError": "Não foi possível carregar as informações do chat.",
       "userLoadError": "Não foi possível carregar os dados do usuário."
+    },
+    "diaryPage": {
+      "title": "Diário Multimodal",
+      "subtitle": "Expresse-se através de texto, voz e imagens.",
+      "newEntry": "Nova Entrada",
+      "moodQuestion": "Como você está se sentindo agora?",
+      "intensityQuestion": "Qual a intensidade desse sentimento?",
+      "cycleQuestion": "A qual ciclo essa entrada se refere?",
+      "emotionsQuestion": "Quais emoções você identifica? (Opcional)",
+      "expressionLabel": "Escolha como expressar seus sentimentos",
+      "yourReflection": "Sua reflexão",
+      "newPrompt": "Novo prompt",
+      "saving": "Salvando...",
+      "saveMultimodalEntry": "Salvar Entrada Multimodal",
+      "tabs": {
+        "text": "Texto",
+        "voice": "Voz",
+        "photo": "Foto"
+      },
+      "cycles": {
+        "create": "Criar",
+        "care": "Cuidar",
+        "grow": "Crescer",
+        "heal": "Curar"
+      },
+      "emotions": {
+        "joy": "Alegria",
+        "sadness": "Tristeza",
+        "anger": "Raiva",
+        "anxiety": "Ansiedade",
+        "fear": "Medo",
+        "surprise": "Surpresa",
+        "calm": "Calma",
+        "gratitude": "Gratidão"
+      },
+      "prompts": {
+        "colors": "Como você descreveria seu dia em cores ou metáforas?",
+        "challenge": "Qual foi o momento mais desafiador de hoje e como você lidou com ele?",
+        "gratitude": "Pelo que você sentiu gratidão hoje?",
+        "anxiety": "Se sua ansiedade pudesse falar, o que ela diria?"
+      },
+      "validation": {
+        "contentRequired": "Campo obrigatório",
+        "contentRequiredDescription": "Por favor, adicione algum conteúdo (texto, áudio ou imagem).",
+        "cycleRequired": "Campo obrigatório",
+        "cycleRequiredDescription": "Por favor, selecione um ciclo."
+      },
+      "success": {
+        "title": "Sucesso!",
+        "description": "Sua entrada multimodal no diário foi salva."
+      },
+      "error": {
+        "title": "Erro",
+        "saveError": "Falha ao salvar a entrada."
+      }
+    },
+    "sessionsPage": {
+      "title": "Minhas Sessões",
+      "subtitle": "Acompanhe seus agendamentos e histórico.",
+      "loading": "Carregando suas sessões...",
+      "requestAppointment": "Solicitar Agendamento",
+      "upcomingSessions": "Próximas Sessões",
+      "pastSessions": "Sessões Anteriores",
+      "noUpcomingSessions": "Nenhuma sessão futura agendada.",
+      "noPastSessions": "Nenhuma sessão anterior encontrada.",
+      "joinSession": "Entrar na Sessão",
+      "withPsychologist": "Com {name}",
+      "sessionType": {
+        "online": "Online",
+        "inPerson": "Presencial"
+      },
+      "status": {
+        "confirmed": "Confirmada",
+        "scheduled": "Agendada",
+        "completed": "Realizada",
+        "canceled": "Cancelada"
+      }
+    },
+    "progressPage": {
+      "title": "Meu Progresso",
+      "subtitle": "Acompanhe sua jornada de crescimento e bem-estar.",
+      "loading": "Carregando seu progresso...",
+      "loadError": "Erro ao carregar dados de progresso.",
+      "tryAgain": "Tentar Novamente",
+      "stats": {
+        "diaryEntries": "Entradas no Diário",
+        "inLast30Days": "nos últimos 30 dias",
+        "completedTasks": "Tarefas Concluídas",
+        "completionRate": "{rate}% de conclusão",
+        "sosUsage": "Uso do SOS",
+        "totalMinutes": "{minutes} minutos totais",
+        "sessions": "Sessões",
+        "upcoming": "{count} próximas"
+      },
+      "tabs": {
+        "overview": "Visão Geral",
+        "tasks": "Tarefas",
+        "achievements": "Conquistas",
+        "emotional": "Mapa Emocional"
+      },
+      "overview": {
+        "overallProgress": "Progresso Geral",
+        "taskCompletion": "Conclusão de Tarefas",
+        "diaryActivity": "Atividade no Diário",
+        "sosToolsUsage": "Uso de Ferramentas SOS",
+        "recentAchievements": "Conquistas Recentes",
+        "continueJourney": "Continue sua jornada para desbloquear conquistas!",
+        "tryGamifiedDashboard": "Experimente o novo dashboard gamificado para ver todas as suas conquistas."
+      },
+      "tasks": {
+        "title": "Minhas Tarefas",
+        "byPsychologist": "Por: {name}",
+        "start": "Iniciar",
+        "complete": "Concluir",
+        "noTasks": "Nenhuma tarefa encontrada. Seu psicólogo pode prescrever tarefas durante as sessões."
+      },
+      "achievements": {
+        "firstEntry": "Primeira Entrada",
+        "firstEntryDesc": "Fez sua primeira entrada no diário",
+        "weekStreak": "Semana Consistente",
+        "weekStreakDesc": "7 dias consecutivos de entradas no diário",
+        "actOfCourage": "Ato de Coragem",
+        "actOfCourageDesc": "Usou as ferramentas SOS quando precisou",
+        "firstTask": "Primeira Tarefa",
+        "firstTaskDesc": "Concluiu sua primeira tarefa terapêutica",
+        "monthlyGoal": "Meta Mensal",
+        "monthlyGoalDesc": "Atingiu sua meta mensal de progresso",
+        "unlocked": "Desbloqueada"
+      },
+      "emotionalMap": {
+        "title": "Mapa Emocional - Últimos 30 Dias"
+      },
+      "taskStatus": {
+        "pending": "pendente",
+        "inProgress": "em progresso",
+        "completed": "concluída"
+      }
+    },
+    "meditationPage": {
+      "title": "Centro de Meditação",
+      "subtitle": "Explore nossa biblioteca de meditações guiadas e desenvolva uma prática consistente de mindfulness.",
+      "yourStats": "Suas Estatísticas",
+      "progressOverTime": "Progresso ao Longo do Tempo"
     }
   },
   "psychologist": {
@@ -202,6 +345,84 @@
       "alertsDescription": "Configure alertas automáticos para acompanhamento de pacientes",
       "alertsInDevelopment": "Sistema de alertas em desenvolvimento.",
       "alertsComingSoon": "Em breve você poderá configurar alertas personalizados."
+    },
+    "patientsPage": {
+      "title": "Pacientes",
+      "subtitle": "Gerencie todos os seus pacientes",
+      "export": "Exportar",
+      "newPatient": "Novo Paciente",
+      "patientList": "Lista de Pacientes",
+      "searchPatients": "Buscar pacientes...",
+      "filters": "Filtros",
+      "loading": "Carregando...",
+      "tableHeaders": {
+        "name": "Nome",
+        "currentCycle": "Ciclo Atual",
+        "lastActivity": "Última Atividade",
+        "status": "Status"
+      },
+      "actions": {
+        "viewDetails": "Ver Detalhes",
+        "edit": "Editar",
+        "scheduleSession": "Agendar Sessão"
+      }
+    },
+    "schedulePage": {
+      "title": "Agenda",
+      "subtitle": "Gerencie suas sessões e compromissos",
+      "filters": "Filtros",
+      "syncGoogle": "Sincronizar Google",
+      "newSession": "Nova Sessão",
+      "searchPatient": "Buscar Paciente",
+      "nameOrEmail": "Nome ou email...",
+      "today": "Hoje",
+      "all": "Todos",
+      "loading": "Carregando sessões...",
+      "noSessions": "Nenhuma sessão encontrada",
+      "scheduleSession": "Agendar Sessão",
+      "sessions": "Sessões",
+      "deleteConfirm": "Tem certeza que deseja deletar esta sessão?",
+      "filterLabels": {
+        "status": "Status",
+        "type": "Tipo",
+        "startDate": "Data Início",
+        "endDate": "Data Fim"
+      },
+      "stats": {
+        "total": "Total",
+        "scheduled": "Agendadas",
+        "confirmed": "Confirmadas",
+        "completed": "Realizadas",
+        "canceled": "Canceladas",
+        "online": "Online",
+        "hours": "Horas"
+      },
+      "summary": {
+        "title": "Resumo Geral",
+        "thisWeek": "Esta Semana",
+        "thisMonth": "Este Mês",
+        "hoursPerMonth": "Horas/Mês",
+        "activePatients": "Pacientes Ativos"
+      },
+      "upcomingSessions": "Próximas Sessões",
+      "noUpcomingSessions": "Nenhuma sessão próxima",
+      "toast": {
+        "loadError": "Erro ao carregar sessões",
+        "deleteSuccess": "Sessão deletada com sucesso",
+        "deleteError": "Erro ao deletar sessão",
+        "updateSuccess": "Status atualizado com sucesso",
+        "updateError": "Erro ao atualizar status"
+      },
+      "sessionStatus": {
+        "scheduled": "Agendada",
+        "confirmed": "Confirmada",
+        "completed": "Realizada",
+        "canceled": "Cancelada"
+      },
+      "sessionType": {
+        "online": "Online",
+        "inPerson": "Presencial"
+      }
     }
   },
   "admin": {

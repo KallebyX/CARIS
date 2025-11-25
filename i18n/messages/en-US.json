@@ -156,6 +156,149 @@
       "subtitle": "Secure and direct communication with your psychologist between sessions.",
       "loadError": "Failed to load chat information.",
       "userLoadError": "Failed to load user data."
+    },
+    "diaryPage": {
+      "title": "Multimodal Diary",
+      "subtitle": "Express yourself through text, voice, and images.",
+      "newEntry": "New Entry",
+      "moodQuestion": "How are you feeling right now?",
+      "intensityQuestion": "What is the intensity of this feeling?",
+      "cycleQuestion": "Which cycle does this entry refer to?",
+      "emotionsQuestion": "Which emotions do you identify? (Optional)",
+      "expressionLabel": "Choose how to express your feelings",
+      "yourReflection": "Your reflection",
+      "newPrompt": "New prompt",
+      "saving": "Saving...",
+      "saveMultimodalEntry": "Save Multimodal Entry",
+      "tabs": {
+        "text": "Text",
+        "voice": "Voice",
+        "photo": "Photo"
+      },
+      "cycles": {
+        "create": "Create",
+        "care": "Care",
+        "grow": "Grow",
+        "heal": "Heal"
+      },
+      "emotions": {
+        "joy": "Joy",
+        "sadness": "Sadness",
+        "anger": "Anger",
+        "anxiety": "Anxiety",
+        "fear": "Fear",
+        "surprise": "Surprise",
+        "calm": "Calm",
+        "gratitude": "Gratitude"
+      },
+      "prompts": {
+        "colors": "How would you describe your day in colors or metaphors?",
+        "challenge": "What was the most challenging moment today and how did you deal with it?",
+        "gratitude": "What did you feel grateful for today?",
+        "anxiety": "If your anxiety could speak, what would it say?"
+      },
+      "validation": {
+        "contentRequired": "Required field",
+        "contentRequiredDescription": "Please add some content (text, audio, or image).",
+        "cycleRequired": "Required field",
+        "cycleRequiredDescription": "Please select a cycle."
+      },
+      "success": {
+        "title": "Success!",
+        "description": "Your multimodal diary entry has been saved."
+      },
+      "error": {
+        "title": "Error",
+        "saveError": "Failed to save the entry."
+      }
+    },
+    "sessionsPage": {
+      "title": "My Sessions",
+      "subtitle": "Track your appointments and history.",
+      "loading": "Loading your sessions...",
+      "requestAppointment": "Request Appointment",
+      "upcomingSessions": "Upcoming Sessions",
+      "pastSessions": "Past Sessions",
+      "noUpcomingSessions": "No upcoming sessions scheduled.",
+      "noPastSessions": "No past sessions found.",
+      "joinSession": "Join Session",
+      "withPsychologist": "With {name}",
+      "sessionType": {
+        "online": "Online",
+        "inPerson": "In Person"
+      },
+      "status": {
+        "confirmed": "Confirmed",
+        "scheduled": "Scheduled",
+        "completed": "Completed",
+        "canceled": "Canceled"
+      }
+    },
+    "progressPage": {
+      "title": "My Progress",
+      "subtitle": "Track your journey of growth and well-being.",
+      "loading": "Loading your progress...",
+      "loadError": "Error loading progress data.",
+      "tryAgain": "Try Again",
+      "stats": {
+        "diaryEntries": "Diary Entries",
+        "inLast30Days": "in the last 30 days",
+        "completedTasks": "Completed Tasks",
+        "completionRate": "{rate}% completion",
+        "sosUsage": "SOS Usage",
+        "totalMinutes": "{minutes} total minutes",
+        "sessions": "Sessions",
+        "upcoming": "{count} upcoming"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "tasks": "Tasks",
+        "achievements": "Achievements",
+        "emotional": "Emotional Map"
+      },
+      "overview": {
+        "overallProgress": "Overall Progress",
+        "taskCompletion": "Task Completion",
+        "diaryActivity": "Diary Activity",
+        "sosToolsUsage": "SOS Tools Usage",
+        "recentAchievements": "Recent Achievements",
+        "continueJourney": "Continue your journey to unlock achievements!",
+        "tryGamifiedDashboard": "Try the new gamified dashboard to see all your achievements."
+      },
+      "tasks": {
+        "title": "My Tasks",
+        "byPsychologist": "By: {name}",
+        "start": "Start",
+        "complete": "Complete",
+        "noTasks": "No tasks found. Your psychologist can prescribe tasks during sessions."
+      },
+      "achievements": {
+        "firstEntry": "First Entry",
+        "firstEntryDesc": "Made your first diary entry",
+        "weekStreak": "Consistent Week",
+        "weekStreakDesc": "7 consecutive days of diary entries",
+        "actOfCourage": "Act of Courage",
+        "actOfCourageDesc": "Used SOS tools when needed",
+        "firstTask": "First Task",
+        "firstTaskDesc": "Completed your first therapeutic task",
+        "monthlyGoal": "Monthly Goal",
+        "monthlyGoalDesc": "Reached your monthly progress goal",
+        "unlocked": "Unlocked"
+      },
+      "emotionalMap": {
+        "title": "Emotional Map - Last 30 Days"
+      },
+      "taskStatus": {
+        "pending": "pending",
+        "inProgress": "in progress",
+        "completed": "completed"
+      }
+    },
+    "meditationPage": {
+      "title": "Meditation Center",
+      "subtitle": "Explore our library of guided meditations and develop a consistent mindfulness practice.",
+      "yourStats": "Your Statistics",
+      "progressOverTime": "Progress Over Time"
     }
   },
   "psychologist": {
@@ -202,6 +345,84 @@
       "alertsDescription": "Configure automatic alerts for patient monitoring",
       "alertsInDevelopment": "Alert system under development.",
       "alertsComingSoon": "Soon you will be able to configure personalized alerts."
+    },
+    "patientsPage": {
+      "title": "Patients",
+      "subtitle": "Manage all your patients",
+      "export": "Export",
+      "newPatient": "New Patient",
+      "patientList": "Patient List",
+      "searchPatients": "Search patients...",
+      "filters": "Filters",
+      "loading": "Loading...",
+      "tableHeaders": {
+        "name": "Name",
+        "currentCycle": "Current Cycle",
+        "lastActivity": "Last Activity",
+        "status": "Status"
+      },
+      "actions": {
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "scheduleSession": "Schedule Session"
+      }
+    },
+    "schedulePage": {
+      "title": "Schedule",
+      "subtitle": "Manage your sessions and appointments",
+      "filters": "Filters",
+      "syncGoogle": "Sync Google",
+      "newSession": "New Session",
+      "searchPatient": "Search Patient",
+      "nameOrEmail": "Name or email...",
+      "today": "Today",
+      "all": "All",
+      "loading": "Loading sessions...",
+      "noSessions": "No sessions found",
+      "scheduleSession": "Schedule Session",
+      "sessions": "Sessions",
+      "deleteConfirm": "Are you sure you want to delete this session?",
+      "filterLabels": {
+        "status": "Status",
+        "type": "Type",
+        "startDate": "Start Date",
+        "endDate": "End Date"
+      },
+      "stats": {
+        "total": "Total",
+        "scheduled": "Scheduled",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "canceled": "Canceled",
+        "online": "Online",
+        "hours": "Hours"
+      },
+      "summary": {
+        "title": "General Summary",
+        "thisWeek": "This Week",
+        "thisMonth": "This Month",
+        "hoursPerMonth": "Hours/Month",
+        "activePatients": "Active Patients"
+      },
+      "upcomingSessions": "Upcoming Sessions",
+      "noUpcomingSessions": "No upcoming sessions",
+      "toast": {
+        "loadError": "Error loading sessions",
+        "deleteSuccess": "Session deleted successfully",
+        "deleteError": "Error deleting session",
+        "updateSuccess": "Status updated successfully",
+        "updateError": "Error updating status"
+      },
+      "sessionStatus": {
+        "scheduled": "Scheduled",
+        "confirmed": "Confirmed",
+        "completed": "Completed",
+        "canceled": "Canceled"
+      },
+      "sessionType": {
+        "online": "Online",
+        "inPerson": "In Person"
+      }
     }
   },
   "admin": {
