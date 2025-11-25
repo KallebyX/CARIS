@@ -11,8 +11,12 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "@/lib/i18n"
 
 export default function LoginPage() {
+  const t = useTranslations('auth')
+  const tCommon = useTranslations('common')
+  const tErrors = useTranslations('errors')
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -48,7 +52,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || "Falha no login")
+        throw new Error(data.error || t('invalidCredentials'))
       }
 
       const data = await res.json()
@@ -76,20 +80,20 @@ export default function LoginPage() {
           className="absolute top-0 -mt-12 inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Voltar ao início
+          {tCommon('back')}
         </Link>
         <Card className="bg-teal-600/95 text-white rounded-3xl shadow-2xl backdrop-blur-sm border-0">
           <CardHeader className="text-center pt-10 pb-6">
             <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
               <span className="text-2xl font-bold text-white">C</span>
             </div>
-            <CardTitle className="text-3xl font-bold text-orange-300">Entrar</CardTitle>
-            <p className="text-teal-100">Bem-vindo de volta à sua jornada de clareza existencial.</p>
+            <CardTitle className="text-3xl font-bold text-orange-300">{t('login')}</CardTitle>
+            <p className="text-teal-100">{t('loginSubtitle')}</p>
           </CardHeader>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email">Nome de usuário ou E-mail</Label>
+                <Label htmlFor="email">{t('email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -101,7 +105,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password">{t('password')}</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -130,14 +134,14 @@ export default function LoginPage() {
                     className="border-white data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 disabled:opacity-50"
                   />
                   <Label htmlFor="remember" className={isLoading ? "opacity-50" : ""}>
-                    Lembrar de mim
+                    {t('rememberMe')}
                   </Label>
                 </div>
                 <Link
                   href="/forgot-password"
                   className={`text-teal-200 hover:text-white transition-colors ${isLoading ? "pointer-events-none opacity-50" : ""}`}
                 >
-                  Esqueceu a senha?
+                  {t('forgotPassword')}
                 </Link>
               </div>
               <Button
@@ -145,16 +149,16 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base font-semibold rounded-full shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                {isLoading ? tCommon('loading') : t('login')}
               </Button>
               {error && <p className="text-sm text-orange-300 bg-red-900/50 p-2 rounded-md text-center">{error}</p>}
               <div className="text-center text-sm">
-                <span className="text-teal-100">Ainda não tem uma conta? </span>
+                <span className="text-teal-100">{t('registerSubtitle')} </span>
                 <Link
                   href="/register"
                   className={`font-semibold text-orange-300 hover:text-orange-400 transition-colors ${isLoading ? "pointer-events-none opacity-50" : ""}`}
                 >
-                  Registre-se
+                  {t('register')}
                 </Link>
               </div>
             </form>

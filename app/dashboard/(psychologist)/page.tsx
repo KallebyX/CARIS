@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Users, Calendar, Plus, BookOpen, Brain } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "@/lib/i18n"
 
 interface DashboardData {
   stats: {
@@ -17,6 +18,8 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
+  const t = useTranslations('psychologist')
+  const tDash = useTranslations('dashboard')
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -48,37 +51,37 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return <div>Carregando dashboard...</div>
+    return <div>{t('loading')}</div>
   }
 
   if (!data) {
-    return <div>Não foi possível carregar os dados do dashboard.</div>
+    return <div>{t('loadError')}</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-600">Bem-vindo de volta!</p>
+          <h1 className="text-3xl font-bold text-gray-800">{tDash('title')}</h1>
+          <p className="text-gray-600">{t('welcomeBack')}</p>
         </div>
         <div className="flex space-x-3">
           <Button className="bg-purple-600 hover:bg-purple-700" asChild>
             <Link href="/dashboard/ai-assistant">
               <Brain className="w-4 h-4 mr-2" />
-              Assistente IA
+              {t('aiAssistant')}
             </Link>
           </Button>
           <Button className="bg-[#2D9B9B] hover:bg-[#238B8B]" asChild>
             <Link href="/dashboard/patients/new">
               <Plus className="w-4 h-4 mr-2" />
-              Novo Paciente
+              {t('newPatient')}
             </Link>
           </Button>
           <Button variant="outline" asChild>
             <Link href="/dashboard/schedule">
               <Calendar className="w-4 h-4 mr-2" />
-              Agendar Sessão
+              {t('scheduleSession')}
             </Link>
           </Button>
         </div>
@@ -89,7 +92,7 @@ export default function DashboardPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total de Pacientes</p>
+                <p className="text-sm font-medium text-gray-600">{t('totalPatients')}</p>
                 <p className="text-3xl font-bold text-gray-800">{data.stats.totalPatients}</p>
               </div>
               <Users className="w-8 h-8 text-[#2D9B9B]" />
@@ -100,7 +103,7 @@ export default function DashboardPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Sessões Hoje</p>
+                <p className="text-sm font-medium text-gray-600">{t('sessionsToday')}</p>
                 <p className="text-3xl font-bold text-gray-800">{data.stats.sessionsToday}</p>
               </div>
               <Calendar className="w-8 h-8 text-[#F4A261]" />
@@ -115,7 +118,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Calendar className="w-5 h-5 mr-2 text-[#2D9B9B]" />
-              Próximas Sessões
+              {t('upcomingSessions')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -142,7 +145,7 @@ export default function DashboardPage() {
               ))}
             </div>
             <Button variant="outline" className="w-full mt-4 bg-transparent" asChild>
-              <Link href="/dashboard/schedule">Ver Agenda Completa</Link>
+              <Link href="/dashboard/schedule">{t('viewFullSchedule')}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -151,7 +154,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <BookOpen className="w-5 h-5 mr-2 text-[#F4A261]" />
-              Atividades Recentes
+              {t('recentActivities')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -168,7 +171,7 @@ export default function DashboardPage() {
               ))}
             </div>
             <Button variant="outline" className="w-full mt-4 bg-transparent" asChild>
-              <Link href="/dashboard/patients">Ver Todos os Pacientes</Link>
+              <Link href="/dashboard/patients">{t('viewAllPatients')}</Link>
             </Button>
           </CardContent>
         </Card>

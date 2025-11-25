@@ -15,6 +15,7 @@ import { AvatarUpload } from "@/components/ui/avatar-upload"
 import { BillingManagement } from "@/components/settings/billing-management"
 import { CalendarManagement } from "@/components/settings/calendar-management"
 import { Eye, EyeOff } from "lucide-react"
+import { useTranslations } from "@/lib/i18n"
 
 interface UserSettings {
   settings: {
@@ -39,6 +40,8 @@ interface UserSettings {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('settings')
+  const tCommon = useTranslations('common')
   const [data, setData] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -94,8 +97,8 @@ export default function SettingsPage() {
     } catch (error) {
       console.error("Erro ao carregar configurações:", error)
       toast({
-        title: "Erro",
-        description: "Não foi possível carregar as configurações.",
+        title: tCommon('error'),
+        description: t('settingsUpdateError'),
         variant: "destructive",
       })
     } finally {
@@ -114,8 +117,8 @@ export default function SettingsPage() {
 
       if (response.ok) {
         toast({
-          title: "Sucesso",
-          description: "Configurações atualizadas com sucesso!",
+          title: t('success'),
+          description: t('settingsUpdateSuccess'),
         })
         fetchSettings() // Recarregar dados
       } else {
@@ -124,8 +127,8 @@ export default function SettingsPage() {
     } catch (error) {
       console.error("Erro ao atualizar configurações:", error)
       toast({
-        title: "Erro",
-        description: "Não foi possível atualizar as configurações.",
+        title: tCommon('error'),
+        description: t('settingsUpdateError'),
         variant: "destructive",
       })
     } finally {
@@ -143,8 +146,8 @@ export default function SettingsPage() {
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       toast({
-        title: "Erro",
-        description: "As senhas não coincidem.",
+        title: tCommon('error'),
+        description: t('account.passwordMismatch'),
         variant: "destructive",
       })
       return
@@ -152,8 +155,8 @@ export default function SettingsPage() {
 
     if (passwordForm.newPassword.length < 6) {
       toast({
-        title: "Erro",
-        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        title: tCommon('error'),
+        description: t('account.passwordTooShort'),
         variant: "destructive",
       })
       return
@@ -172,8 +175,8 @@ export default function SettingsPage() {
 
       if (response.ok) {
         toast({
-          title: "Sucesso",
-          description: "Senha alterada com sucesso!",
+          title: t('success'),
+          description: t('account.passwordChangeSuccess'),
         })
         setPasswordForm({
           currentPassword: "",
@@ -187,8 +190,8 @@ export default function SettingsPage() {
     } catch (error: any) {
       console.error("Erro ao alterar senha:", error)
       toast({
-        title: "Erro",
-        description: error.message || "Não foi possível alterar a senha.",
+        title: tCommon('error'),
+        description: error.message || t('account.passwordChangeError'),
         variant: "destructive",
       })
     } finally {
@@ -222,7 +225,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-caris-teal mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando configurações...</p>
+          <p className="text-slate-600">{t('loading')}</p>
         </div>
       </div>
     )
@@ -231,9 +234,9 @@ export default function SettingsPage() {
   if (!data) {
     return (
       <div className="text-center py-8">
-        <p className="text-slate-600">Erro ao carregar configurações.</p>
+        <p className="text-slate-600">{t('loadError')}</p>
         <Button onClick={fetchSettings} className="mt-4">
-          Tentar Novamente
+          {t('tryAgain')}
         </Button>
       </div>
     )
@@ -242,27 +245,27 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-800">Configurações</h1>
-        <p className="text-slate-600">Gerencie suas informações de perfil, conta e notificações.</p>
+        <h1 className="text-3xl font-bold text-slate-800">{t('title')}</h1>
+        <p className="text-slate-600">{t('subtitle')}</p>
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="account">Conta</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="calendar">Calendário</TabsTrigger>
-          <TabsTrigger value="billing">Pagamentos</TabsTrigger>
+          <TabsTrigger value="profile">{t('tabs.profile')}</TabsTrigger>
+          <TabsTrigger value="account">{t('tabs.account')}</TabsTrigger>
+          <TabsTrigger value="notifications">{t('tabs.notifications')}</TabsTrigger>
+          <TabsTrigger value="calendar">{t('tabs.calendar')}</TabsTrigger>
+          <TabsTrigger value="billing">{t('tabs.billing')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <Card>
             <CardHeader>
-              <CardTitle>Perfil Público</CardTitle>
+              <CardTitle>{t('profile.title')}</CardTitle>
               <CardDescription>
                 {data.user.role === "psychologist"
-                  ? "Informações que serão vistas por seus pacientes."
-                  : "Suas informações pessoais."}
+                  ? t('profile.descriptionPsychologist')
+                  : t('profile.descriptionPatient')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -275,7 +278,7 @@ export default function SettingsPage() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nome Completo</Label>
+                    <Label htmlFor="name">{t('profile.fullName')}</Label>
                     <Input
                       id="name"
                       value={profileForm.name}
@@ -284,12 +287,12 @@ export default function SettingsPage() {
                   </div>
                   {data.user.role === "psychologist" && (
                     <div className="space-y-2">
-                      <Label htmlFor="crp">CRP</Label>
+                      <Label htmlFor="crp">{t('profile.crp')}</Label>
                       <Input
                         id="crp"
                         value={profileForm.crp}
                         onChange={(e) => setProfileForm({ ...profileForm, crp: e.target.value })}
-                        placeholder="Ex: 06/12345"
+                        placeholder={t('profile.crpPlaceholder')}
                       />
                     </div>
                   )}
@@ -297,18 +300,18 @@ export default function SettingsPage() {
 
                 {data.user.role === "psychologist" && (
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Mini Biografia</Label>
+                    <Label htmlFor="bio">{t('profile.bio')}</Label>
                     <Textarea
                       id="bio"
                       value={profileForm.bio}
                       onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                      placeholder="Fale um pouco sobre sua abordagem terapêutica..."
+                      placeholder={t('profile.bioPlaceholder')}
                     />
                   </div>
                 )}
 
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Salvando..." : "Salvar Alterações"}
+                  {saving ? t('saving') : t('saveChanges')}
                 </Button>
               </form>
             </CardContent>
@@ -320,15 +323,15 @@ export default function SettingsPage() {
             {/* Informações da Conta */}
             <Card>
               <CardHeader>
-                <CardTitle>Informações da Conta</CardTitle>
-                <CardDescription>Suas informações básicas de login.</CardDescription>
+                <CardTitle>{t('account.title')}</CardTitle>
+                <CardDescription>{t('account.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
+                  <Label htmlFor="email">{t('account.email')}</Label>
                   <Input id="email" type="email" value={data.user.email} disabled className="bg-gray-50" />
                   <p className="text-xs text-muted-foreground">
-                    Para alterar seu e-mail, entre em contato com o suporte.
+                    {t('account.emailChangeInfo')}
                   </p>
                 </div>
               </CardContent>
@@ -337,13 +340,13 @@ export default function SettingsPage() {
             {/* Alterar Senha */}
             <Card>
               <CardHeader>
-                <CardTitle>Alterar Senha</CardTitle>
-                <CardDescription>Mantenha sua conta segura com uma senha forte.</CardDescription>
+                <CardTitle>{t('account.changePassword')}</CardTitle>
+                <CardDescription>{t('account.changePasswordDescription')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current-password">Senha Atual</Label>
+                    <Label htmlFor="current-password">{t('account.currentPassword')}</Label>
                     <div className="relative">
                       <Input
                         id="current-password"
@@ -364,7 +367,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
+                    <Label htmlFor="new-password">{t('account.newPassword')}</Label>
                     <div className="relative">
                       <Input
                         id="new-password"
@@ -385,7 +388,7 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
+                    <Label htmlFor="confirm-password">{t('account.confirmPassword')}</Label>
                     <Input
                       id="confirm-password"
                       type="password"
@@ -395,7 +398,7 @@ export default function SettingsPage() {
                   </div>
 
                   <Button type="submit" disabled={saving}>
-                    {saving ? "Atualizando..." : "Atualizar Senha"}
+                    {saving ? t('updating') : t('updatePassword')}
                   </Button>
                 </form>
               </CardContent>
@@ -406,14 +409,14 @@ export default function SettingsPage() {
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle>Notificações</CardTitle>
-              <CardDescription>Escolha como você quer ser notificado.</CardDescription>
+              <CardTitle>{t('notifications.title')}</CardTitle>
+              <CardDescription>{t('notifications.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <Label>Novas mensagens no chat</Label>
-                  <p className="text-sm text-muted-foreground">Receber notificações push e por e-mail.</p>
+                  <Label>{t('notifications.chatMessages')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('notifications.chatMessagesDescription')}</p>
                 </div>
                 <Switch
                   checked={notificationSettings.emailNotifications}
@@ -423,8 +426,8 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <Label>Notificações push</Label>
-                  <p className="text-sm text-muted-foreground">Receber notificações no navegador.</p>
+                  <Label>{t('notifications.pushNotifications')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('notifications.pushNotificationsDescription')}</p>
                 </div>
                 <Switch
                   checked={notificationSettings.pushNotifications}
@@ -434,8 +437,8 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <Label>Lembretes de sessão</Label>
-                  <p className="text-sm text-muted-foreground">24 horas antes de cada sessão.</p>
+                  <Label>{t('notifications.sessionReminders')}</Label>
+                  <p className="text-sm text-muted-foreground">{t('notifications.sessionRemindersDescription')}</p>
                 </div>
                 <Switch
                   checked={notificationSettings.sessionReminders}
@@ -445,11 +448,11 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <Label>{data.user.role === "psychologist" ? "Entradas no diário" : "Lembretes do diário"}</Label>
+                  <Label>{data.user.role === "psychologist" ? t('notifications.diaryEntriesPsychologist') : t('notifications.diaryRemindersPatient')}</Label>
                   <p className="text-sm text-muted-foreground">
                     {data.user.role === "psychologist"
-                      ? "Ser notificado quando um paciente fizer uma nova entrada."
-                      : "Receber lembretes para escrever no diário."}
+                      ? t('notifications.diaryEntriesPsychologistDescription')
+                      : t('notifications.diaryRemindersPatientDescription')}
                   </p>
                 </div>
                 <Switch

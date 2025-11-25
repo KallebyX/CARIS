@@ -31,6 +31,8 @@ import { NotificationCenter } from "@/components/notifications/notification-cent
 import { MobileNav, MobileNavSpacer } from "@/components/mobile-nav"
 import { useIsMobile } from "@/lib/responsive-utils"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { LocaleSwitcherCompact } from "@/components/locale-switcher"
+import { useTranslations } from "@/lib/i18n"
 
 interface User {
   id: number
@@ -45,6 +47,9 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const t = useTranslations('dashboard')
+  const tAuth = useTranslations('auth')
+  const tCommon = useTranslations('common')
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -82,31 +87,31 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const getNavigationItems = () => {
-    const commonItems = [{ href: "/dashboard/settings", icon: Settings, label: "Configurações" }]
+    const commonItems = [{ href: "/dashboard/settings", icon: Settings, label: t('navigation.settings') }]
 
     if (user?.role === "psychologist") {
       return [
-        { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { href: "/dashboard/patients", icon: Users, label: "Pacientes" },
-        { href: "/dashboard/schedule", icon: Calendar, label: "Agenda" },
-        { href: "/dashboard/ai-assistant", icon: Brain, label: "Assistente IA" },
-        { href: "/dashboard/reports", icon: BarChart3, label: "Relatórios" },
-        { href: "/dashboard/library", icon: BookOpen, label: "Biblioteca" },
+        { href: "/dashboard", icon: LayoutDashboard, label: t('navigation.dashboard') },
+        { href: "/dashboard/patients", icon: Users, label: t('navigation.patients') },
+        { href: "/dashboard/schedule", icon: Calendar, label: t('navigation.schedule') },
+        { href: "/dashboard/ai-assistant", icon: Brain, label: t('navigation.aiAssistant') },
+        { href: "/dashboard/reports", icon: BarChart3, label: t('navigation.reports') },
+        { href: "/dashboard/library", icon: BookOpen, label: t('navigation.library') },
         ...commonItems,
       ]
     } else if (user?.role === "patient") {
       return [
-        { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-        { href: "/dashboard/journey", icon: Heart, label: "Jornada" },
-        { href: "/dashboard/diary", icon: FileText, label: "Diário" },
-        { href: "/dashboard/emotional-map", icon: Brain, label: "Mapa Emocional" },
-        { href: "/dashboard/videotherapy", icon: Video, label: "Videoterapia" },
-        { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
-        { href: "/dashboard/sessions", icon: Calendar, label: "Sessões" },
-        { href: "/dashboard/tasks", icon: BookOpen, label: "Tarefas" },
-        { href: "/dashboard/meditation", icon: Flower2, label: "Meditação" },
-        { href: "/dashboard/progress", icon: BarChart3, label: "Progresso" },
-        { href: "/dashboard/sos", icon: Shield, label: "SOS" },
+        { href: "/dashboard", icon: LayoutDashboard, label: t('navigation.dashboard') },
+        { href: "/dashboard/journey", icon: Heart, label: t('navigation.journey') },
+        { href: "/dashboard/diary", icon: FileText, label: t('navigation.diary') },
+        { href: "/dashboard/emotional-map", icon: Brain, label: t('navigation.emotionalMap') },
+        { href: "/dashboard/videotherapy", icon: Video, label: t('navigation.videotherapy') },
+        { href: "/dashboard/chat", icon: MessageSquare, label: t('navigation.chat') },
+        { href: "/dashboard/sessions", icon: Calendar, label: t('navigation.sessions') },
+        { href: "/dashboard/tasks", icon: BookOpen, label: t('navigation.tasks') },
+        { href: "/dashboard/meditation", icon: Flower2, label: t('navigation.meditation') },
+        { href: "/dashboard/progress", icon: BarChart3, label: t('navigation.progress') },
+        { href: "/dashboard/sos", icon: Shield, label: t('navigation.sos') },
         ...commonItems,
       ]
     }
@@ -118,19 +123,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const getMobileNavigationItems = () => {
     if (user?.role === "psychologist") {
       return [
-        { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
-        { href: "/dashboard/patients", icon: Users, label: "Pacientes" },
-        { href: "/dashboard/schedule", icon: Calendar, label: "Agenda" },
-        { href: "/dashboard/reports", icon: BarChart3, label: "Relatórios" },
-        { href: "/dashboard/settings", icon: Settings, label: "Config" },
+        { href: "/dashboard", icon: LayoutDashboard, label: t('navigation.home') },
+        { href: "/dashboard/patients", icon: Users, label: t('navigation.patients') },
+        { href: "/dashboard/schedule", icon: Calendar, label: t('navigation.schedule') },
+        { href: "/dashboard/reports", icon: BarChart3, label: t('navigation.reports') },
+        { href: "/dashboard/settings", icon: Settings, label: t('navigation.config') },
       ]
     } else if (user?.role === "patient") {
       return [
-        { href: "/dashboard", icon: LayoutDashboard, label: "Início" },
-        { href: "/dashboard/chat", icon: MessageSquare, label: "Chat" },
-        { href: "/dashboard/emotional-map", icon: Brain, label: "Emoções" },
-        { href: "/dashboard/sessions", icon: Calendar, label: "Sessões" },
-        { href: "/dashboard/settings", icon: Settings, label: "Config" },
+        { href: "/dashboard", icon: LayoutDashboard, label: t('navigation.home') },
+        { href: "/dashboard/chat", icon: MessageSquare, label: t('navigation.chat') },
+        { href: "/dashboard/emotional-map", icon: Brain, label: t('navigation.emotions') },
+        { href: "/dashboard/sessions", icon: Calendar, label: t('navigation.sessions') },
+        { href: "/dashboard/settings", icon: Settings, label: t('navigation.config') },
       ]
     }
 
@@ -172,7 +177,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">C</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">Cáris</span>
+            <span className="text-xl font-bold text-gray-900">{tCommon('appName')}</span>
           </Link>
 
           <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
@@ -212,7 +217,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
               <p className="text-xs text-gray-500 truncate">
-                {user.role === "psychologist" ? "Psicólogo" : "Paciente"}
+                {user.role === "psychologist" ? t('userRole.psychologist') : t('userRole.patient')}
               </p>
             </div>
           </div>
@@ -225,7 +230,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             disabled={isLoggingOut}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            {isLoggingOut ? "Saindo..." : "Sair"}
+            {isLoggingOut ? t('loggingOut') : tAuth('logout')}
           </Button>
         </div>
       </div>
@@ -242,6 +247,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex items-center space-x-4 ml-auto">
               {/* Notification Center */}
               <NotificationCenter userId={user.id} />
+
+              {/* Language Switcher */}
+              <LocaleSwitcherCompact />
 
               {/* User avatar */}
               <Avatar className="h-8 w-8">
