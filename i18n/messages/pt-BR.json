@@ -299,6 +299,44 @@
       "subtitle": "Explore nossa biblioteca de meditações guiadas e desenvolva uma prática consistente de mindfulness.",
       "yourStats": "Suas Estatísticas",
       "progressOverTime": "Progresso ao Longo do Tempo"
+    },
+    "gamifiedProgressPage": {
+      "title": "Meu Progresso Gamificado",
+      "subtitle": "Acompanhe sua jornada de crescimento com pontos, conquistas e desafios.",
+      "loading": "Carregando seu progresso gamificado...",
+      "loadError": "Erro ao carregar dados de progresso.",
+      "tryAgain": "Tentar Novamente",
+      "stats": {
+        "totalXP": "XP Total",
+        "level": "Nível",
+        "weeklyPoints": "Pontos Semanais",
+        "thisWeek": "Esta semana",
+        "streak": "Sequência",
+        "consecutiveDays": "dias consecutivos",
+        "tasks": "Tarefas",
+        "completed": "concluídas"
+      },
+      "tabs": {
+        "overview": "Visão Geral",
+        "achievements": "Conquistas",
+        "challenges": "Desafios",
+        "leaderboard": "Ranking",
+        "activities": "Atividades"
+      },
+      "recentActivities": {
+        "title": "Atividades Recentes",
+        "empty": "Complete atividades para ganhar XP e pontos!"
+      },
+      "achievements": {
+        "title": "Conquistas",
+        "loading": "Carregando conquistas..."
+      },
+      "challenges": {
+        "loading": "Carregando desafios..."
+      },
+      "emotionalMap": {
+        "title": "Mapa Emocional - Últimos 30 Dias"
+      }
     }
   },
   "psychologist": {

@@ -299,6 +299,44 @@
       "subtitle": "Explore our library of guided meditations and develop a consistent mindfulness practice.",
       "yourStats": "Your Statistics",
       "progressOverTime": "Progress Over Time"
+    },
+    "gamifiedProgressPage": {
+      "title": "My Gamified Progress",
+      "subtitle": "Track your growth journey with points, achievements, and challenges.",
+      "loading": "Loading your gamified progress...",
+      "loadError": "Error loading progress data.",
+      "tryAgain": "Try Again",
+      "stats": {
+        "totalXP": "Total XP",
+        "level": "Level",
+        "weeklyPoints": "Weekly Points",
+        "thisWeek": "This week",
+        "streak": "Streak",
+        "consecutiveDays": "consecutive days",
+        "tasks": "Tasks",
+        "completed": "completed"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "achievements": "Achievements",
+        "challenges": "Challenges",
+        "leaderboard": "Ranking",
+        "activities": "Activities"
+      },
+      "recentActivities": {
+        "title": "Recent Activities",
+        "empty": "Complete activities to earn XP and points!"
+      },
+      "achievements": {
+        "title": "Achievements",
+        "loading": "Loading achievements..."
+      },
+      "challenges": {
+        "loading": "Loading challenges..."
+      },
+      "emotionalMap": {
+        "title": "Emotional Map - Last 30 Days"
+      }
     }
   },
   "psychologist": {
