@@ -115,7 +115,7 @@
     "simple-peer": "^9.11.1",
     "sonner": "^1.7.3",
     "stripe": "^18.3.0",
-    "swagger-ui-react": "^5.30.2",
+    "swagger-ui-react": "^5.30.3",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "twilio": "^5.4.2",
