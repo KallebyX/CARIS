@@ -405,6 +405,25 @@
         "scheduleSession": "Agendar Sessão"
       }
     },
+    "patientDetailPage": {
+      "loading": "Carregando perfil do paciente...",
+      "loadError": "Não foi possível carregar os dados do paciente.",
+      "active": "Ativo",
+      "editRecord": "Editar Prontuário",
+      "email": "Email",
+      "birthDate": "Nascimento",
+      "currentCycle": "Ciclo Atual",
+      "tabs": {
+        "record": "Prontuário",
+        "emotionalMap": "Mapa Emocional",
+        "progress": "Progresso",
+        "goals": "Metas",
+        "diary": "Diário",
+        "sessions": "Sessões",
+        "reports": "Relatórios",
+        "chat": "Chat"
+      }
+    },
     "schedulePage": {
       "title": "Agenda",
       "subtitle": "Gerencie suas sessões e compromissos",

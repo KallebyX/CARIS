@@ -405,6 +405,25 @@
         "scheduleSession": "Schedule Session"
       }
     },
+    "patientDetailPage": {
+      "loading": "Loading patient profile...",
+      "loadError": "Could not load patient data.",
+      "active": "Active",
+      "editRecord": "Edit Record",
+      "email": "Email",
+      "birthDate": "Birth Date",
+      "currentCycle": "Current Cycle",
+      "tabs": {
+        "record": "Record",
+        "emotionalMap": "Emotional Map",
+        "progress": "Progress",
+        "goals": "Goals",
+        "diary": "Diary",
+        "sessions": "Sessions",
+        "reports": "Reports",
+        "chat": "Chat"
+      }
+    },
     "schedulePage": {
       "title": "Schedule",
       "subtitle": "Manage your sessions and appointments",
