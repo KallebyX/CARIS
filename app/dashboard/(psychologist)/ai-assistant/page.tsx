@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Users, Brain } from 'lucide-react'
+import { useTranslations } from '@/lib/i18n'
 
 interface Patient {
   id: number
@@ -17,6 +18,7 @@ interface Patient {
 }
 
 export default function AIAssistantPage() {
+  const t = useTranslations("psychologist.aiAssistantPage")
   const [selectedPatient, setSelectedPatient] = useState<number | undefined>()
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -48,10 +50,10 @@ export default function AIAssistantPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Brain className="h-8 w-8 text-purple-600" />
-            Assistente Clínico IA
+            {t("title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Insights automáticos, análises de progresso e alertas clínicos
+            {t("subtitle")}
           </p>
         </div>
       </div>
@@ -61,21 +63,21 @@ export default function AIAssistantPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Selecionar Paciente
+            {t("selectPatient")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Escolha um paciente para análise detalhada:
+                {t("selectDescription")}
               </label>
-              <Select 
-                value={selectedPatient?.toString()} 
+              <Select
+                value={selectedPatient?.toString()}
                 onValueChange={(value) => setSelectedPatient(parseInt(value))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um paciente..." />
+                  <SelectValue placeholder={t("selectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {patients.map((patient) => (
@@ -99,7 +101,7 @@ export default function AIAssistantPage() {
 
             {selectedPatient && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Paciente selecionado:</label>
+                <label className="text-sm font-medium">{t("selectedPatient")}</label>
                 <div className="p-3 bg-muted rounded-lg">
                   {(() => {
                     const patient = patients.find(p => p.id === selectedPatient)

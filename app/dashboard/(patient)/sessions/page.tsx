@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Video, MapPin, Clock, Plus } from "lucide-react"
+import { useTranslations } from "@/lib/i18n"
 
 interface Session {
   id: number
@@ -18,7 +19,16 @@ interface Session {
   }
 }
 
+// Map API status to translation keys
+const statusToKey: Record<string, string> = {
+  confirmada: "confirmed",
+  agendada: "scheduled",
+  realizada: "completed",
+  cancelada: "canceled",
+}
+
 export default function SessionsPage() {
+  const t = useTranslations("patient.sessionsPage")
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -34,7 +44,7 @@ export default function SessionsPage() {
         setSessions(data)
       }
     } catch (error) {
-      console.error("Erro ao carregar sessões:", error)
+      console.error("Error loading sessions:", error)
     } finally {
       setLoading(false)
     }
@@ -57,6 +67,11 @@ export default function SessionsPage() {
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800"
   }
 
+  const getStatusLabel = (status: string) => {
+    const key = statusToKey[status] || status
+    return t(`status.${key}`)
+  }
+
   const SessionCard = ({ session }: { session: Session }) => (
     <Card className="hover:shadow-lg transition-shadow">
       <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -66,7 +81,7 @@ export default function SessionsPage() {
           </div>
           <div>
             <p className="font-bold text-slate-800">
-              {new Date(session.sessionDate).toLocaleDateString("pt-BR", {
+              {new Date(session.sessionDate).toLocaleDateString(undefined, {
                 weekday: "long",
                 day: "2-digit",
                 month: "long",
@@ -75,18 +90,18 @@ export default function SessionsPage() {
             <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                {new Date(session.sessionDate).toLocaleTimeString("pt-BR", {
+                {new Date(session.sessionDate).toLocaleTimeString(undefined, {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
               </span>
               <span className="flex items-center gap-1">
                 {session.type === "online" ? <Video className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
-                {session.type === "online" ? "Online" : "Presencial"}
+                {session.type === "online" ? t("sessionType.online") : t("sessionType.inPerson")}
               </span>
               <span className="text-xs">{session.durationMinutes}min</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Com {session.psychologist.name}</p>
+            <p className="text-xs text-slate-400 mt-1">{t("withPsychologist", { name: session.psychologist.name })}</p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -94,11 +109,11 @@ export default function SessionsPage() {
             variant={session.status === "confirmada" || session.status === "realizada" ? "default" : "outline"}
             className={getStatusColor(session.status)}
           >
-            {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+            {getStatusLabel(session.status)}
           </Badge>
           {isUpcoming(session.sessionDate) && session.type === "online" && session.status === "confirmada" && (
             <Button size="sm" className="bg-caris-orange hover:bg-caris-orange/90">
-              Entrar na Sessão
+              {t("joinSession")}
             </Button>
           )}
         </div>
@@ -111,7 +126,7 @@ export default function SessionsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-caris-teal mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando suas sessões...</p>
+          <p className="text-slate-600">{t("loading")}</p>
         </div>
       </div>
     )
@@ -121,17 +136,17 @@ export default function SessionsPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Minhas Sessões</h1>
-          <p className="text-slate-600">Acompanhe seus agendamentos e histórico.</p>
+          <h1 className="text-3xl font-bold text-slate-800">{t("title")}</h1>
+          <p className="text-slate-600">{t("subtitle")}</p>
         </div>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
-          Solicitar Agendamento
+          {t("requestAppointment")}
         </Button>
       </div>
 
       <div>
-        <h2 className="text-2xl font-semibold text-slate-700 mb-4">Próximas Sessões</h2>
+        <h2 className="text-2xl font-semibold text-slate-700 mb-4">{t("upcomingSessions")}</h2>
         <div className="space-y-4">
           {upcomingSessions.length > 0 ? (
             upcomingSessions.map((session) => <SessionCard key={session.id} session={session} />)
@@ -139,10 +154,10 @@ export default function SessionsPage() {
             <Card>
               <CardContent className="p-8 text-center">
                 <Calendar className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-500 mb-4">Nenhuma sessão futura agendada.</p>
+                <p className="text-slate-500 mb-4">{t("noUpcomingSessions")}</p>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
-                  Solicitar Agendamento
+                  {t("requestAppointment")}
                 </Button>
               </CardContent>
             </Card>
@@ -151,14 +166,14 @@ export default function SessionsPage() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-semibold text-slate-700 mb-4">Sessões Anteriores</h2>
+        <h2 className="text-2xl font-semibold text-slate-700 mb-4">{t("pastSessions")}</h2>
         <div className="space-y-4">
           {pastSessions.length > 0 ? (
             pastSessions.map((session) => <SessionCard key={session.id} session={session} />)
           ) : (
             <Card>
               <CardContent className="p-8 text-center">
-                <p className="text-slate-500">Nenhuma sessão anterior encontrada.</p>
+                <p className="text-slate-500">{t("noPastSessions")}</p>
               </CardContent>
             </Card>
           )}

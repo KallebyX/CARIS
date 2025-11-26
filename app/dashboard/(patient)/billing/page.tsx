@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from '@/lib/i18n'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -133,7 +134,7 @@ const PLANS: Plan[] = [
   },
 ]
 
-function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
+function AddPaymentMethodForm({ onSuccess, t }: { onSuccess: () => void, t: ReturnType<typeof useTranslations> }) {
   const stripe = useStripe()
   const elements = useElements()
   const [loading, setLoading] = useState(false)
@@ -211,10 +212,10 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Adding...
+            {t("payments.adding")}
           </>
         ) : (
-          'Add Payment Method'
+          t("payments.addButton")
         )}
       </Button>
     </form>
@@ -222,6 +223,7 @@ function AddPaymentMethodForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export default function BillingPage() {
+  const t = useTranslations("billing")
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -332,19 +334,19 @@ export default function BillingPage() {
 
   const getStatusBadge = (status: string) => {
     const config = {
-      active: { variant: 'default' as const, label: 'Active' },
-      past_due: { variant: 'destructive' as const, label: 'Past Due' },
-      canceled: { variant: 'secondary' as const, label: 'Canceled' },
-      paid: { variant: 'default' as const, label: 'Paid' },
-      open: { variant: 'outline' as const, label: 'Unpaid' },
+      active: { variant: 'default' as const, key: 'active' },
+      past_due: { variant: 'destructive' as const, key: 'past_due' },
+      canceled: { variant: 'secondary' as const, key: 'canceled' },
+      paid: { variant: 'default' as const, key: 'paid' },
+      open: { variant: 'outline' as const, key: 'open' },
     }
 
-    const { variant, label } = config[status as keyof typeof config] || {
-      variant: 'outline' as const,
-      label: status,
+    const statusConfig = config[status as keyof typeof config]
+    if (statusConfig) {
+      return <Badge variant={statusConfig.variant}>{t(`status.${statusConfig.key}`)}</Badge>
     }
 
-    return <Badge variant={variant}>{label}</Badge>
+    return <Badge variant="outline">{status}</Badge>
   }
 
   if (loading) {
@@ -358,16 +360,16 @@ export default function BillingPage() {
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-3xl font-bold">Billing & Subscription</h1>
-        <p className="text-muted-foreground">Manage your subscription and payment methods</p>
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        <p className="text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <Tabs defaultValue="subscription" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="subscription">Subscription</TabsTrigger>
-          <TabsTrigger value="payments">Payment Methods</TabsTrigger>
-          <TabsTrigger value="invoices">Invoices</TabsTrigger>
-          <TabsTrigger value="plans">Change Plan</TabsTrigger>
+          <TabsTrigger value="subscription">{t("tabs.subscription")}</TabsTrigger>
+          <TabsTrigger value="payments">{t("tabs.payments")}</TabsTrigger>
+          <TabsTrigger value="invoices">{t("tabs.invoices")}</TabsTrigger>
+          <TabsTrigger value="plans">{t("tabs.plans")}</TabsTrigger>
         </TabsList>
 
         {/* Subscription Tab */}
@@ -376,8 +378,8 @@ export default function BillingPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Current Subscription</CardTitle>
-                  <CardDescription>Your active plan and billing details</CardDescription>
+                  <CardTitle>{t("subscription.title")}</CardTitle>
+                  <CardDescription>{t("subscription.description")}</CardDescription>
                 </div>
                 {subscription && getStatusBadge(subscription.status)}
               </div>
@@ -387,22 +389,22 @@ export default function BillingPage() {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Plan</p>
+                      <p className="text-sm text-muted-foreground">{t("subscription.plan")}</p>
                       <p className="text-lg font-semibold">{subscription.planName}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
+                      <p className="text-sm text-muted-foreground">{t("subscription.status")}</p>
                       <p className="text-lg font-semibold capitalize">{subscription.status}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Current Period</p>
+                      <p className="text-sm text-muted-foreground">{t("subscription.currentPeriod")}</p>
                       <p className="text-sm">
                         {formatDate(subscription.currentPeriodStart)} -{' '}
                         {formatDate(subscription.currentPeriodEnd)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Next Billing Date</p>
+                      <p className="text-sm text-muted-foreground">{t("subscription.nextBilling")}</p>
                       <p className="text-sm flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         {formatDate(subscription.currentPeriodEnd)}
@@ -414,9 +416,9 @@ export default function BillingPage() {
                     <div className="flex items-center gap-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <AlertCircle className="h-5 w-5 text-yellow-600" />
                       <div>
-                        <p className="font-medium text-yellow-900">Subscription Ending</p>
+                        <p className="font-medium text-yellow-900">{t("subscription.ending.title")}</p>
                         <p className="text-sm text-yellow-700">
-                          Your subscription will end on {formatDate(subscription.currentPeriodEnd)}
+                          {t("subscription.ending.message", { date: formatDate(subscription.currentPeriodEnd) })}
                         </p>
                       </div>
                     </div>
@@ -424,8 +426,8 @@ export default function BillingPage() {
                 </>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No active subscription</p>
-                  <Button>Subscribe Now</Button>
+                  <p className="text-muted-foreground mb-4">{t("subscription.noSubscription")}</p>
+                  <Button>{t("subscription.subscribeNow")}</Button>
                 </div>
               )}
             </CardContent>
@@ -433,11 +435,11 @@ export default function BillingPage() {
               <CardFooter className="flex gap-2">
                 {subscription.cancelAtPeriodEnd ? (
                   <Button onClick={handleReactivateSubscription} variant="default">
-                    Reactivate Subscription
+                    {t("subscription.reactivate")}
                   </Button>
                 ) : (
                   <Button onClick={() => setShowCancelDialog(true)} variant="destructive">
-                    Cancel Subscription
+                    {t("subscription.cancel")}
                   </Button>
                 )}
               </CardFooter>
@@ -451,12 +453,12 @@ export default function BillingPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Payment Methods</CardTitle>
-                  <CardDescription>Manage your payment methods</CardDescription>
+                  <CardTitle>{t("payments.title")}</CardTitle>
+                  <CardDescription>{t("payments.description")}</CardDescription>
                 </div>
                 <Button onClick={() => setShowAddPayment(true)} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Method
+                  {t("payments.addMethod")}
                 </Button>
               </div>
             </CardHeader>
@@ -476,16 +478,16 @@ export default function BillingPage() {
                           {method.card.brand.toUpperCase()} •••• {method.card.last4}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Expires {method.card.expMonth}/{method.card.expYear}
+                          {t("payments.expires")} {method.card.expMonth}/{method.card.expYear}
                         </p>
                       </div>
                     </div>
-                    <Badge variant="outline">Default</Badge>
+                    <Badge variant="outline">{t("payments.default")}</Badge>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  No payment methods added yet
+                  {t("payments.noMethods")}
                 </div>
               )}
             </CardContent>
@@ -494,12 +496,13 @@ export default function BillingPage() {
           {showAddPayment && (
             <Card>
               <CardHeader>
-                <CardTitle>Add Payment Method</CardTitle>
-                <CardDescription>Add a new card for payments</CardDescription>
+                <CardTitle>{t("payments.addTitle")}</CardTitle>
+                <CardDescription>{t("payments.addDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Elements stripe={stripePromise}>
                   <AddPaymentMethodForm
+                    t={t}
                     onSuccess={() => {
                       setShowAddPayment(false)
                       loadBillingData()
@@ -515,8 +518,8 @@ export default function BillingPage() {
         <TabsContent value="invoices" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Invoice History</CardTitle>
-              <CardDescription>View and download your invoices</CardDescription>
+              <CardTitle>{t("invoices.title")}</CardTitle>
+              <CardDescription>{t("invoices.description")}</CardDescription>
             </CardHeader>
             <CardContent>
               {invoices.length > 0 ? (
@@ -544,7 +547,7 @@ export default function BillingPage() {
                             onClick={() => downloadInvoice(invoice.id)}
                           >
                             <Download className="h-4 w-4 mr-2" />
-                            Download
+                            {t("invoices.download")}
                           </Button>
                         )}
                       </div>
@@ -552,7 +555,7 @@ export default function BillingPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">No invoices yet</div>
+                <div className="text-center py-8 text-muted-foreground">{t("invoices.noInvoices")}</div>
               )}
             </CardContent>
           </Card>
@@ -569,14 +572,14 @@ export default function BillingPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>{plan.name}</CardTitle>
-                    {plan.isPopular && <Badge>Popular</Badge>}
+                    {plan.isPopular && <Badge>{t("plans.popular")}</Badge>}
                   </div>
                   <div className="mt-4">
                     <span className="text-3xl font-bold">{formatCurrency(plan.priceMonthly)}</span>
-                    <span className="text-muted-foreground">/month</span>
+                    <span className="text-muted-foreground">{t("plans.perMonth")}</span>
                   </div>
                   <CardDescription className="text-sm">
-                    or {formatCurrency(plan.priceYearly)}/year (2 months free)
+                    or {formatCurrency(plan.priceYearly)}{t("plans.perYear")} ({t("plans.twoMonthsFree")})
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -592,7 +595,7 @@ export default function BillingPage() {
                 <CardFooter>
                   {subscription?.planId === plan.id ? (
                     <Button variant="outline" className="w-full" disabled>
-                      Current Plan
+                      {t("plans.currentPlan")}
                     </Button>
                   ) : (
                     <Button
@@ -600,7 +603,7 @@ export default function BillingPage() {
                       className="w-full"
                       onClick={() => handleUpgradePlan(plan.id)}
                     >
-                      {subscription ? 'Change to this plan' : 'Subscribe'}
+                      {subscription ? t("plans.changeTo") : t("plans.subscribe")}
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   )}
@@ -615,17 +618,15 @@ export default function BillingPage() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+            <AlertDialogTitle>{t("cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Your subscription will remain active until the end of your current billing period (
-              {subscription && formatDate(subscription.currentPeriodEnd)}). After that, you'll lose
-              access to all premium features.
+              {t("cancelDialog.description", { date: subscription ? formatDate(subscription.currentPeriodEnd) : '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Subscription</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancelDialog.keep")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleCancelSubscription} className="bg-destructive">
-              Yes, Cancel
+              {t("cancelDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

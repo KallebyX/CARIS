@@ -13,6 +13,7 @@ import { SecureChatLayout } from "@/components/chat/chat-layout"
 import { ProgressDashboard } from "@/components/patient-management/progress-dashboard"
 import { GoalsManager } from "@/components/patient-management/goals-manager"
 import { ReportsGenerator } from "@/components/patient-management/reports-generator"
+import { useTranslations } from "@/lib/i18n"
 
 interface PatientData {
   patient: {
@@ -30,6 +31,7 @@ interface PatientData {
 }
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("psychologist.patientDetailPage")
   const [data, setData] = useState<PatientData | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<{ id: number; role: "psychologist" | "patient" } | null>(null)
@@ -66,11 +68,11 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   }, [params])
 
   if (loading) {
-    return <div>Carregando perfil do paciente...</div>
+    return <div>{t("loading")}</div>
   }
 
   if (!data) {
-    return <div>Não foi possível carregar os dados do paciente.</div>
+    return <div>{t("loadError")}</div>
   }
 
   const { patient, emotionalMapData } = data
@@ -93,13 +95,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               <h1 className="text-2xl font-bold text-slate-800">{patient.name}</h1>
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <span>ID: {params.id}</span>
-                <Badge className={"bg-green-100 text-green-800"}>Ativo</Badge>
+                <Badge className={"bg-green-100 text-green-800"}>{t("active")}</Badge>
               </div>
             </div>
           </div>
         </div>
         <Button>
-          <Edit className="mr-2 h-4 w-4" /> Editar Prontuário
+          <Edit className="mr-2 h-4 w-4" /> {t("editRecord")}
         </Button>
       </div>
 
@@ -108,14 +110,14 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex items-center gap-3">
             <Mail className="h-8 w-8 text-teal-500" />
             <div>
-              <p className="text-xs text-slate-500">Email</p>
+              <p className="text-xs text-slate-500">{t("email")}</p>
               <p className="font-medium text-slate-700">{patient.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="h-8 w-8 text-teal-500" />
             <div>
-              <p className="text-xs text-slate-500">Nascimento</p>
+              <p className="text-xs text-slate-500">{t("birthDate")}</p>
               <p className="font-medium text-slate-700">
                 {patient.patientProfile.birthDate
                   ? new Date(patient.patientProfile.birthDate).toLocaleDateString("pt-BR")
@@ -126,7 +128,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-teal-500" />
             <div>
-              <p className="text-xs text-slate-500">Ciclo Atual</p>
+              <p className="text-xs text-slate-500">{t("currentCycle")}</p>
               <p className="font-medium text-slate-700 capitalize">{patient.patientProfile.currentCycle || "N/A"}</p>
             </div>
           </div>
@@ -137,35 +139,35 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-7">
           <TabsTrigger value="overview">
             <FileText className="w-4 h-4 mr-2" />
-            Prontuário
+            {t("tabs.record")}
           </TabsTrigger>
           <TabsTrigger value="emotional-map">
             <Map className="w-4 h-4 mr-2" />
-            Mapa Emocional
+            {t("tabs.emotionalMap")}
           </TabsTrigger>
           <TabsTrigger value="progress">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Progresso
+            {t("tabs.progress")}
           </TabsTrigger>
           <TabsTrigger value="goals">
             <Shield className="w-4 h-4 mr-2" />
-            Metas
+            {t("tabs.goals")}
           </TabsTrigger>
           <TabsTrigger value="diary">
             <Brain className="w-4 h-4 mr-2" />
-            Diário
+            {t("tabs.diary")}
           </TabsTrigger>
           <TabsTrigger value="sessions">
             <Calendar className="w-4 h-4 mr-2" />
-            Sessões
+            {t("tabs.sessions")}
           </TabsTrigger>
           <TabsTrigger value="reports">
             <FileText className="w-4 h-4 mr-2" />
-            Relatórios
+            {t("tabs.reports")}
           </TabsTrigger>
           <TabsTrigger value="chat">
             <MessageSquare className="w-4 h-4 mr-2" />
-            Chat
+            {t("tabs.chat")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="emotional-map">

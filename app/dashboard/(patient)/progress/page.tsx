@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, CheckCircle, Heart, Calendar, TrendingUp, Clock, Target, Star, Award } from "lucide-react"
 import { EmotionalMap } from "@/components/emotional-map"
 import { GamificationSummary } from "@/components/gamification/gamification-summary"
+import { useTranslations } from "@/lib/i18n"
 
 interface ProgressData {
   stats: {
@@ -61,6 +62,7 @@ interface Task {
 }
 
 export default function ProgressPage() {
+  const t = useTranslations("patient.progressPage")
   const [data, setData] = useState<ProgressData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -76,7 +78,7 @@ export default function ProgressPage() {
         setData(progressData)
       }
     } catch (error) {
-      console.error("Erro ao carregar dados de progresso:", error)
+      console.error("Error loading progress data:", error)
     } finally {
       setLoading(false)
     }
@@ -91,11 +93,10 @@ export default function ProgressPage() {
       })
 
       if (response.ok) {
-        // Recarregar dados
         fetchProgressData()
       }
     } catch (error) {
-      console.error("Erro ao atualizar tarefa:", error)
+      console.error("Error updating task:", error)
     }
   }
 
@@ -120,36 +121,36 @@ export default function ProgressPage() {
   const achievements = [
     {
       id: "firstEntry",
-      title: "Primeira Entrada",
-      description: "Fez sua primeira entrada no diário",
+      title: t("achievements.firstEntry"),
+      description: t("achievements.firstEntryDesc"),
       icon: BookOpen,
       unlocked: data?.achievementProgress.firstEntry || false,
     },
     {
       id: "weekStreak",
-      title: "Semana Consistente",
-      description: "7 dias consecutivos de entradas no diário",
+      title: t("achievements.weekStreak"),
+      description: t("achievements.weekStreakDesc"),
       icon: Calendar,
       unlocked: data?.achievementProgress.weekStreak || false,
     },
     {
       id: "sosUsage",
-      title: "Ato de Coragem",
-      description: "Usou as ferramentas SOS quando precisou",
+      title: t("achievements.actOfCourage"),
+      description: t("achievements.actOfCourageDesc"),
       icon: Heart,
       unlocked: data?.achievementProgress.sosUsage || false,
     },
     {
       id: "taskCompletion",
-      title: "Primeira Tarefa",
-      description: "Concluiu sua primeira tarefa terapêutica",
+      title: t("achievements.firstTask"),
+      description: t("achievements.firstTaskDesc"),
       icon: CheckCircle,
       unlocked: data?.achievementProgress.taskCompletion || false,
     },
     {
       id: "monthlyGoal",
-      title: "Meta Mensal",
-      description: "Atingiu sua meta mensal de progresso",
+      title: t("achievements.monthlyGoal"),
+      description: t("achievements.monthlyGoalDesc"),
       icon: Target,
       unlocked: data?.achievementProgress.monthlyGoal || false,
     },
@@ -160,7 +161,7 @@ export default function ProgressPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-caris-teal mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando seu progresso...</p>
+          <p className="text-slate-600">{t("loading")}</p>
         </div>
       </div>
     )
@@ -169,9 +170,9 @@ export default function ProgressPage() {
   if (!data) {
     return (
       <div className="text-center py-8">
-        <p className="text-slate-600">Erro ao carregar dados de progresso.</p>
+        <p className="text-slate-600">{t("loadError")}</p>
         <Button onClick={fetchProgressData} className="mt-4">
-          Tentar Novamente
+          {t("tryAgain")}
         </Button>
       </div>
     )
@@ -183,19 +184,19 @@ export default function ProgressPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-800">Meu Progresso</h1>
-        <p className="text-slate-600">Acompanhe sua jornada de crescimento e bem-estar.</p>
+        <h1 className="text-3xl font-bold text-slate-800">{t("title")}</h1>
+        <p className="text-slate-600">{t("subtitle")}</p>
       </div>
 
-      {/* Cards de Estatísticas */}
+      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Entradas no Diário</p>
+                <p className="text-sm font-medium text-slate-600">{t("stats.diaryEntries")}</p>
                 <p className="text-2xl font-bold text-slate-800">{data.stats.diary.total}</p>
-                <p className="text-xs text-slate-500">{data.stats.diary.recent} nos últimos 30 dias</p>
+                <p className="text-xs text-slate-500">{data.stats.diary.recent} {t("stats.inLast30Days")}</p>
               </div>
               <BookOpen className="w-8 h-8 text-caris-teal" />
             </div>
@@ -206,9 +207,9 @@ export default function ProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Tarefas Concluídas</p>
+                <p className="text-sm font-medium text-slate-600">{t("stats.completedTasks")}</p>
                 <p className="text-2xl font-bold text-slate-800">{data.stats.tasks.completed}</p>
-                <p className="text-xs text-slate-500">{completionRate}% de conclusão</p>
+                <p className="text-xs text-slate-500">{t("stats.completionRate", { rate: completionRate })}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
@@ -219,9 +220,9 @@ export default function ProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Uso do SOS</p>
+                <p className="text-sm font-medium text-slate-600">{t("stats.sosUsage")}</p>
                 <p className="text-2xl font-bold text-slate-800">{data.stats.sos.total}</p>
-                <p className="text-xs text-slate-500">{data.stats.sos.totalMinutes} minutos totais</p>
+                <p className="text-xs text-slate-500">{t("stats.totalMinutes", { minutes: data.stats.sos.totalMinutes })}</p>
               </div>
               <Heart className="w-8 h-8 text-red-500" />
             </div>
@@ -232,9 +233,9 @@ export default function ProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Sessões</p>
+                <p className="text-sm font-medium text-slate-600">{t("stats.sessions")}</p>
                 <p className="text-2xl font-bold text-slate-800">{data.stats.sessions.completed}</p>
-                <p className="text-xs text-slate-500">{data.stats.sessions.upcoming} próximas</p>
+                <p className="text-xs text-slate-500">{t("stats.upcoming", { count: data.stats.sessions.upcoming })}</p>
               </div>
               <Calendar className="w-8 h-8 text-blue-500" />
             </div>
@@ -244,42 +245,42 @@ export default function ProgressPage() {
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="tasks">Tarefas</TabsTrigger>
-          <TabsTrigger value="achievements">Conquistas</TabsTrigger>
-          <TabsTrigger value="emotional">Mapa Emocional</TabsTrigger>
+          <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="tasks">{t("tabs.tasks")}</TabsTrigger>
+          <TabsTrigger value="achievements">{t("tabs.achievements")}</TabsTrigger>
+          <TabsTrigger value="emotional">{t("tabs.emotional")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Gamification Summary */}
             <GamificationSummary />
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-caris-teal" />
-                  Progresso Geral
+                  {t("overview.overallProgress")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Conclusão de Tarefas</span>
+                    <span>{t("overview.taskCompletion")}</span>
                     <span>{completionRate}%</span>
                   </div>
                   <Progress value={completionRate} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Atividade no Diário</span>
+                    <span>{t("overview.diaryActivity")}</span>
                     <span>{Math.min(100, (data.stats.diary.recent / 30) * 100).toFixed(0)}%</span>
                   </div>
                   <Progress value={Math.min(100, (data.stats.diary.recent / 30) * 100)} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span>Uso de Ferramentas SOS</span>
+                    <span>{t("overview.sosToolsUsage")}</span>
                     <span>{Math.min(100, data.stats.sos.recent * 10)}%</span>
                   </div>
                   <Progress value={Math.min(100, data.stats.sos.recent * 10)} className="h-2" />
@@ -293,7 +294,7 @@ export default function ProgressPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Star className="w-5 h-5 text-yellow-500" />
-                  Conquistas Recentes
+                  {t("overview.recentAchievements")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -311,8 +312,8 @@ export default function ProgressPage() {
                   </div>
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-slate-500 mb-2">Continue sua jornada para desbloquear conquistas!</p>
-                    <p className="text-sm text-slate-400">Experimente o novo dashboard gamificado para ver todas as suas conquistas.</p>
+                    <p className="text-slate-500 mb-2">{t("overview.continueJourney")}</p>
+                    <p className="text-sm text-slate-400">{t("overview.tryGamifiedDashboard")}</p>
                   </div>
                 )}
               </CardContent>
@@ -323,7 +324,7 @@ export default function ProgressPage() {
         <TabsContent value="tasks" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Minhas Tarefas</CardTitle>
+              <CardTitle>{t("tasks.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               {data.recentTasks.length > 0 ? (
@@ -336,11 +337,11 @@ export default function ProgressPage() {
                           {task.description && <p className="text-sm text-slate-600 mt-1">{task.description}</p>}
                           <div className="flex items-center gap-4 mt-2">
                             <Badge className={getTaskStatusColor(task.status)}>{task.status.replace("_", " ")}</Badge>
-                            <span className="text-xs text-slate-500">Por: {task.psychologist.name}</span>
+                            <span className="text-xs text-slate-500">{t("tasks.byPsychologist", { name: task.psychologist.name })}</span>
                             {task.dueDate && (
                               <span className="text-xs text-slate-500 flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                {new Date(task.dueDate).toLocaleDateString("pt-BR")}
+                                {new Date(task.dueDate).toLocaleDateString(undefined)}
                               </span>
                             )}
                           </div>
@@ -352,12 +353,12 @@ export default function ProgressPage() {
                               variant="outline"
                               onClick={() => updateTaskStatus(task.id, "em_progresso")}
                             >
-                              Iniciar
+                              {t("tasks.start")}
                             </Button>
                           )}
                           {task.status === "em_progresso" && (
                             <Button size="sm" onClick={() => updateTaskStatus(task.id, "concluida")}>
-                              Concluir
+                              {t("tasks.complete")}
                             </Button>
                           )}
                         </div>
@@ -367,7 +368,7 @@ export default function ProgressPage() {
                 </div>
               ) : (
                 <p className="text-slate-500 text-center py-8">
-                  Nenhuma tarefa encontrada. Seu psicólogo pode prescrever tarefas durante as sessões.
+                  {t("tasks.noTasks")}
                 </p>
               )}
             </CardContent>
@@ -395,7 +396,7 @@ export default function ProgressPage() {
                     </div>
                     <h3 className="font-semibold text-slate-800 mb-2">{achievement.title}</h3>
                     <p className="text-sm text-slate-600">{achievement.description}</p>
-                    {achievement.unlocked && <Badge className="mt-3 bg-yellow-100 text-yellow-800">Desbloqueada</Badge>}
+                    {achievement.unlocked && <Badge className="mt-3 bg-yellow-100 text-yellow-800">{t("achievements.unlocked")}</Badge>}
                   </CardContent>
                 </Card>
               )
@@ -406,7 +407,7 @@ export default function ProgressPage() {
         <TabsContent value="emotional" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Mapa Emocional - Últimos 30 Dias</CardTitle>
+              <CardTitle>{t("emotionalMap.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <EmotionalMap data={data.emotionalMapData} />

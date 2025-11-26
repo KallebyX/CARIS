@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,30 +13,39 @@ import { Brain, Sparkles, Send, Heart, Shield, TrendingUp, CopyIcon as CreateIco
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
+import { useTranslations } from "@/lib/i18n"
 
 const moodEmojis = ["😔", "😕", "😐", "🙂", "😄"]
-const prompts = [
-  "Como você descreveria seu dia em cores ou metáforas?",
-  "Qual foi o momento mais desafiador de hoje e como você lidou com ele?",
-  "Pelo que você sentiu gratidão hoje?",
-  "Se sua ansiedade pudesse falar, o que ela diria?",
-]
-const cycles = [
-  { name: "Criar", icon: CreateIcon, color: "text-emerald-500" },
-  { name: "Cuidar", icon: Shield, color: "text-blue-500" },
-  { name: "Crescer", icon: TrendingUp, color: "text-purple-500" },
-  { name: "Curar", icon: Heart, color: "text-orange-500" },
-]
-const emotions = ["Alegria", "Tristeza", "Raiva", "Ansiedade", "Medo", "Surpresa", "Calma", "Gratidão"]
+
+// Cycle keys for API (lowercase)
+const cycleKeys = ["create", "care", "grow", "heal"] as const
+type CycleKey = typeof cycleKeys[number]
+
+// Map cycle keys to icons and colors
+const cycleConfig = {
+  create: { icon: CreateIcon, color: "text-emerald-500" },
+  care: { icon: Shield, color: "text-blue-500" },
+  grow: { icon: TrendingUp, color: "text-purple-500" },
+  heal: { icon: Heart, color: "text-orange-500" },
+}
+
+// Emotion keys for translation
+const emotionKeys = ["joy", "sadness", "anger", "anxiety", "fear", "surprise", "calm", "gratitude"] as const
+type EmotionKey = typeof emotionKeys[number]
+
+// Prompt keys for translation
+const promptKeys = ["colors", "challenge", "gratitude", "anxiety"] as const
 
 export default function DiaryPage() {
   const { toast } = useToast()
+  const t = useTranslations("patient.diaryPage")
+
   const [mood, setMood] = useState(2)
   const [intensity, setIntensity] = useState(5)
   const [entry, setEntry] = useState("")
-  const [currentPrompt, setCurrentPrompt] = useState(prompts[0])
-  const [selectedCycle, setSelectedCycle] = useState<string | null>(null)
-  const [selectedEmotions, setSelectedEmotions] = useState<string[]>([])
+  const [currentPromptKey, setCurrentPromptKey] = useState<typeof promptKeys[number]>(promptKeys[0])
+  const [selectedCycle, setSelectedCycle] = useState<CycleKey | null>(null)
+  const [selectedEmotions, setSelectedEmotions] = useState<EmotionKey[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("text")
 
@@ -47,12 +56,15 @@ export default function DiaryPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [imageAnalysis, setImageAnalysis] = useState("")
 
+  // Get translated prompt
+  const currentPrompt = t(`prompts.${currentPromptKey}`)
+
   const handleNewPrompt = () => {
-    const newPrompt = prompts[Math.floor(Math.random() * prompts.length)]
-    setCurrentPrompt(newPrompt)
+    const newPromptKey = promptKeys[Math.floor(Math.random() * promptKeys.length)]
+    setCurrentPromptKey(newPromptKey)
   }
 
-  const toggleEmotion = (emotion: string) => {
+  const toggleEmotion = (emotion: EmotionKey) => {
     setSelectedEmotions((prev) => (prev.includes(emotion) ? prev.filter((e) => e !== emotion) : [...prev, emotion]))
   }
 
@@ -115,19 +127,27 @@ export default function DiaryPage() {
     }
   }
 
+  // Map cycle keys to Portuguese API values
+  const cycleToApiValue: Record<CycleKey, "criar" | "cuidar" | "crescer" | "curar"> = {
+    create: "criar",
+    care: "cuidar",
+    grow: "crescer",
+    heal: "curar",
+  }
+
   const handleSubmit = async () => {
     if (!entry && !audioBlob && !photoFile) {
       toast({
-        title: "Campo obrigatório",
-        description: "Por favor, adicione algum conteúdo (texto, áudio ou imagem).",
+        title: t("validation.contentRequired"),
+        description: t("validation.contentRequiredDescription"),
         variant: "destructive",
       })
       return
     }
     if (!selectedCycle) {
       toast({
-        title: "Campo obrigatório",
-        description: "Por favor, selecione um ciclo.",
+        title: t("validation.cycleRequired"),
+        description: t("validation.cycleRequiredDescription"),
         variant: "destructive",
       })
       return
@@ -153,7 +173,7 @@ export default function DiaryPage() {
         moodRating: mood,
         intensityRating: intensity,
         content: entry,
-        cycle: selectedCycle.toLowerCase() as "criar" | "cuidar" | "crescer" | "curar",
+        cycle: cycleToApiValue[selectedCycle],
         emotions: selectedEmotions,
         audioUrl,
         audioTranscription,
@@ -169,18 +189,18 @@ export default function DiaryPage() {
 
       if (!res.ok) {
         const errorData = await res.json()
-        throw new Error(errorData.error || "Falha ao salvar a entrada.")
+        throw new Error(errorData.error || t("error.saveError"))
       }
 
       toast({
-        title: "Sucesso!",
-        description: "Sua entrada multimodal no diário foi salva.",
+        title: t("success.title"),
+        description: t("success.description"),
         className: "bg-teal-100 border-teal-200 text-teal-800",
       })
       resetForm()
     } catch (error: any) {
       toast({
-        title: "Erro",
+        title: t("error.title"),
         description: error.message,
         variant: "destructive",
       })
@@ -192,21 +212,21 @@ export default function DiaryPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-slate-800">Diário Multimodal</h1>
-        <p className="text-slate-600">Expresse-se através de texto, voz e imagens.</p>
+        <h1 className="text-3xl font-bold text-slate-800">{t("title")}</h1>
+        <p className="text-slate-600">{t("subtitle")}</p>
       </div>
 
       <Card className="overflow-hidden">
         <div className="bg-caris-gradient p-6 text-white">
           <CardTitle className="flex items-center gap-3">
             <Brain className="w-6 h-6" />
-            Nova Entrada - {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+            {t("newEntry")} - {new Date().toLocaleDateString(undefined, { day: "2-digit", month: "long", year: "numeric" })}
           </CardTitle>
         </div>
         <CardContent className="p-6 space-y-8">
           {/* Mood Selection */}
           <div className="space-y-4">
-            <Label className="text-lg font-medium text-slate-700">Como você está se sentindo agora?</Label>
+            <Label className="text-lg font-medium text-slate-700">{t("moodQuestion")}</Label>
             <div className="flex justify-between items-center">
               {moodEmojis.map((emoji, index) => (
                 <motion.button
@@ -227,7 +247,7 @@ export default function DiaryPage() {
           {/* Intensity Slider */}
           <div className="space-y-4">
             <Label htmlFor="intensity" className="text-lg font-medium text-slate-700">
-              Qual a intensidade desse sentimento? <span className="font-bold text-teal-600">{intensity}</span>
+              {t("intensityQuestion")} <span className="font-bold text-teal-600">{intensity}</span>
             </Label>
             <Slider
               id="intensity"
@@ -241,42 +261,46 @@ export default function DiaryPage() {
 
           {/* Cycle Selection */}
           <div className="space-y-4">
-            <Label className="text-lg font-medium text-slate-700">A qual ciclo essa entrada se refere?</Label>
+            <Label className="text-lg font-medium text-slate-700">{t("cycleQuestion")}</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {cycles.map((cycle) => (
-                <button
-                  key={cycle.name}
-                  onClick={() => setSelectedCycle(cycle.name)}
-                  className={cn(
-                    "p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all",
-                    selectedCycle === cycle.name
-                      ? "border-caris-teal bg-teal-50"
-                      : "border-slate-200 hover:border-slate-300",
-                  )}
-                >
-                  <cycle.icon className={cn("w-6 h-6", cycle.color)} />
-                  <span className="font-medium text-slate-700">{cycle.name}</span>
-                </button>
-              ))}
+              {cycleKeys.map((cycleKey) => {
+                const config = cycleConfig[cycleKey]
+                const Icon = config.icon
+                return (
+                  <button
+                    key={cycleKey}
+                    onClick={() => setSelectedCycle(cycleKey)}
+                    className={cn(
+                      "p-4 rounded-lg border-2 flex flex-col items-center gap-2 transition-all",
+                      selectedCycle === cycleKey
+                        ? "border-caris-teal bg-teal-50"
+                        : "border-slate-200 hover:border-slate-300",
+                    )}
+                  >
+                    <Icon className={cn("w-6 h-6", config.color)} />
+                    <span className="font-medium text-slate-700">{t(`cycles.${cycleKey}`)}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {/* Emotion Tagging */}
           <div className="space-y-4">
-            <Label className="text-lg font-medium text-slate-700">Quais emoções você identifica? (Opcional)</Label>
+            <Label className="text-lg font-medium text-slate-700">{t("emotionsQuestion")}</Label>
             <div className="flex flex-wrap gap-2">
-              {emotions.map((emotion) => (
+              {emotionKeys.map((emotionKey) => (
                 <button
-                  key={emotion}
-                  onClick={() => toggleEmotion(emotion)}
+                  key={emotionKey}
+                  onClick={() => toggleEmotion(emotionKey)}
                   className={cn(
                     "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
-                    selectedEmotions.includes(emotion)
+                    selectedEmotions.includes(emotionKey)
                       ? "bg-caris-teal text-white border-caris-teal"
                       : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200",
                   )}
                 >
-                  {emotion}
+                  {t(`emotions.${emotionKey}`)}
                 </button>
               ))}
             </div>
@@ -284,30 +308,30 @@ export default function DiaryPage() {
 
           {/* Multimodal Content */}
           <div className="space-y-4">
-            <Label className="text-lg font-medium text-slate-700">Escolha como expressar seus sentimentos</Label>
-            
+            <Label className="text-lg font-medium text-slate-700">{t("expressionLabel")}</Label>
+
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="text" className="flex items-center gap-2">
                   <Type className="w-4 h-4" />
-                  Texto
+                  {t("tabs.text")}
                 </TabsTrigger>
                 <TabsTrigger value="voice" className="flex items-center gap-2">
                   <Mic className="w-4 h-4" />
-                  Voz
+                  {t("tabs.voice")}
                 </TabsTrigger>
                 <TabsTrigger value="photo" className="flex items-center gap-2">
                   <Camera className="w-4 h-4" />
-                  Foto
+                  {t("tabs.photo")}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="text" className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <Label className="text-lg font-medium text-slate-700">Sua reflexão</Label>
+                  <Label className="text-lg font-medium text-slate-700">{t("yourReflection")}</Label>
                   <Button variant="ghost" size="sm" onClick={handleNewPrompt}>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Novo prompt
+                    {t("newPrompt")}
                   </Button>
                 </div>
                 <Textarea
@@ -341,10 +365,10 @@ export default function DiaryPage() {
             disabled={isLoading}
           >
             {isLoading ? (
-              "Salvando..."
+              t("saving")
             ) : (
               <>
-                <Send className="w-5 h-5 mr-2" /> Salvar Entrada Multimodal
+                <Send className="w-5 h-5 mr-2" /> {t("saveMultimodalEntry")}
               </>
             )}
           </Button>

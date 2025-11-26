@@ -6,27 +6,30 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Search, FileText, Video, Mic, MoreVertical } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useTranslations } from "@/lib/i18n"
 
+// Type keys map to translation keys
 const libraryItems = [
-  { id: 1, type: "Artigo", title: "Entendendo a Ansiedade", category: "Psicoeducação", icon: FileText },
-  { id: 2, type: "Exercício", title: "Técnica de Respiração 4-7-8", category: "Relaxamento", icon: Mic },
-  { id: 3, type: "Vídeo", title: "Introdução ao Mindfulness", category: "Meditação", icon: Video },
-  { id: 4, type: "Artigo", title: "O Ciclo do Hábito", category: "TCC", icon: FileText },
-  { id: 5, type: "Exercício", title: "Diário de Gratidão", category: "Psicologia Positiva", icon: Mic },
-  { id: 6, type: "Vídeo", title: "Comunicação Não-Violenta", category: "Relacionamentos", icon: Video },
+  { id: 1, typeKey: "article", title: "Entendendo a Ansiedade", category: "Psicoeducação", icon: FileText },
+  { id: 2, typeKey: "exercise", title: "Técnica de Respiração 4-7-8", category: "Relaxamento", icon: Mic },
+  { id: 3, typeKey: "video", title: "Introdução ao Mindfulness", category: "Meditação", icon: Video },
+  { id: 4, typeKey: "article", title: "O Ciclo do Hábito", category: "TCC", icon: FileText },
+  { id: 5, typeKey: "exercise", title: "Diário de Gratidão", category: "Psicologia Positiva", icon: Mic },
+  { id: 6, typeKey: "video", title: "Comunicação Não-Violenta", category: "Relacionamentos", icon: Video },
 ]
 
 export default function LibraryPage() {
+  const t = useTranslations("psychologist.libraryPage")
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Biblioteca de Conteúdos</h1>
-          <p className="text-slate-600">Gerencie e prescreva materiais para seus pacientes.</p>
+          <h1 className="text-3xl font-bold text-slate-800">{t("title")}</h1>
+          <p className="text-slate-600">{t("subtitle")}</p>
         </div>
         <Button className="bg-caris-teal hover:bg-caris-teal/90">
           <Plus className="w-4 h-4 mr-2" />
-          Adicionar Material
+          {t("addMaterial")}
         </Button>
       </div>
 
@@ -35,14 +38,14 @@ export default function LibraryPage() {
           <Tabs defaultValue="all">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
               <TabsList>
-                <TabsTrigger value="all">Todos</TabsTrigger>
-                <TabsTrigger value="articles">Artigos</TabsTrigger>
-                <TabsTrigger value="videos">Vídeos</TabsTrigger>
-                <TabsTrigger value="exercises">Exercícios</TabsTrigger>
+                <TabsTrigger value="all">{t("tabs.all")}</TabsTrigger>
+                <TabsTrigger value="articles">{t("tabs.articles")}</TabsTrigger>
+                <TabsTrigger value="videos">{t("tabs.videos")}</TabsTrigger>
+                <TabsTrigger value="exercises">{t("tabs.exercises")}</TabsTrigger>
               </TabsList>
               <div className="relative w-full md:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Buscar na biblioteca..." className="pl-9" />
+                <Input placeholder={t("searchLibrary")} className="pl-9" />
               </div>
             </div>
             <TabsContent value="all">
@@ -56,7 +59,7 @@ export default function LibraryPage() {
                             <item.icon className="w-6 h-6 text-caris-teal" />
                           </div>
                           <div>
-                            <p className="text-xs text-slate-500">{item.type}</p>
+                            <p className="text-xs text-slate-500">{t(`contentTypes.${item.typeKey}`)}</p>
                             <p className="font-semibold text-slate-700">{item.title}</p>
                           </div>
                         </div>
@@ -67,15 +70,15 @@ export default function LibraryPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Prescrever</DropdownMenuItem>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">Excluir</DropdownMenuItem>
+                            <DropdownMenuItem>{t("actions.prescribe")}</DropdownMenuItem>
+                            <DropdownMenuItem>{t("actions.edit")}</DropdownMenuItem>
+                            <DropdownMenuItem className="text-red-600">{t("actions.delete")}</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                       <div className="mt-auto pt-4">
                         <Button variant="outline" size="sm" className="w-full bg-transparent">
-                          Pré-visualizar
+                          {t("actions.preview")}
                         </Button>
                       </div>
                     </CardContent>

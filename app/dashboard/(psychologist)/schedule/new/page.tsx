@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, User, MapPin, Video, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useTranslations } from "@/lib/i18n"
 
 interface Patient {
   id: number
@@ -44,6 +45,7 @@ interface FormData {
 }
 
 export default function NewSessionPage() {
+  const t = useTranslations("psychologist.newSessionPage")
   const router = useRouter()
   const [patients, setPatients] = useState<Patient[]>([])
   const [availability, setAvailability] = useState<AvailabilityData | null>(null)
@@ -81,11 +83,11 @@ export default function NewSessionPage() {
         const data = await res.json()
         setPatients(data.patients || [])
       } else {
-        toast.error("Erro ao carregar pacientes")
+        toast.error(t("toast.loadError"))
       }
     } catch (error) {
       console.error("Error fetching patients:", error)
-      toast.error("Erro ao carregar pacientes")
+      toast.error(t("toast.loadError"))
     } finally {
       setLoading(false)
     }
@@ -112,12 +114,12 @@ export default function NewSessionPage() {
         }
       } else {
         const error = await res.json()
-        toast.error(error.error || "Erro ao verificar disponibilidade")
+        toast.error(error.error || t("toast.availabilityError"))
         setAvailability(null)
       }
     } catch (error) {
       console.error("Error checking availability:", error)
-      toast.error("Erro ao verificar disponibilidade")
+      toast.error(t("toast.availabilityError"))
       setAvailability(null)
     } finally {
       setCheckingAvailability(false)
@@ -128,31 +130,31 @@ export default function NewSessionPage() {
     const newErrors: Partial<FormData> = {}
 
     if (!formData.patientId) {
-      newErrors.patientId = "Selecione um paciente"
+      newErrors.patientId = t("validation.selectPatient")
     }
 
     if (!formData.sessionDate) {
-      newErrors.sessionDate = "Selecione uma data"
+      newErrors.sessionDate = t("validation.selectDate")
     } else {
       const selectedDate = new Date(formData.sessionDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
       if (selectedDate < today) {
-        newErrors.sessionDate = "Não é possível agendar para datas passadas"
+        newErrors.sessionDate = t("validation.pastDate")
       }
     }
 
     if (!formData.sessionTime) {
-      newErrors.sessionTime = "Selecione um horário"
+      newErrors.sessionTime = t("validation.selectTime")
     }
 
     if (!formData.durationMinutes || Number.parseInt(formData.durationMinutes) < 15) {
-      newErrors.durationMinutes = "Duração deve ser de pelo menos 15 minutos"
+      newErrors.durationMinutes = t("validation.minDuration")
     }
 
     if (!formData.type) {
-      newErrors.type = "Selecione o tipo de sessão"
+      newErrors.type = t("validation.selectType")
     }
 
     setErrors(newErrors)
@@ -163,7 +165,7 @@ export default function NewSessionPage() {
     e.preventDefault()
 
     if (!validateForm()) {
-      toast.error("Por favor, corrija os erros no formulário")
+      toast.error(t("toast.validationError"))
       return
     }
 
@@ -192,15 +194,15 @@ export default function NewSessionPage() {
       })
 
       if (res.ok) {
-        toast.success("Sessão agendada com sucesso!")
+        toast.success(t("toast.success"))
         router.push("/dashboard/schedule")
       } else {
         const error = await res.json()
-        toast.error(error.error || "Erro ao agendar sessão")
+        toast.error(error.error || t("toast.error"))
       }
     } catch (error) {
       console.error("Error creating session:", error)
-      toast.error("Erro ao agendar sessão")
+      toast.error(t("toast.error"))
     } finally {
       setSubmitting(false)
     }
@@ -225,12 +227,12 @@ export default function NewSessionPage() {
         <Button variant="outline" size="sm" asChild>
           <Link href="/dashboard/schedule">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
+            {t("back")}
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Nova Sessão</h1>
-          <p className="text-gray-600">Agende uma nova sessão com seu paciente</p>
+          <h1 className="text-3xl font-bold text-gray-800">{t("title")}</h1>
+          <p className="text-gray-600">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -241,29 +243,29 @@ export default function NewSessionPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2 text-[#2D9B9B]" />
-                Detalhes da Sessão
+                {t("sessionDetails")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Seleção do Paciente */}
                 <div className="space-y-2">
-                  <Label htmlFor="patient">Paciente *</Label>
+                  <Label htmlFor="patient">{t("patient")} *</Label>
                   <Select
                     value={formData.patientId}
                     onValueChange={(value) => setFormData((prev) => ({ ...prev, patientId: value }))}
                   >
                     <SelectTrigger className={errors.patientId ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Selecione um paciente" />
+                      <SelectValue placeholder={t("selectPatient")} />
                     </SelectTrigger>
                     <SelectContent>
                       {loading ? (
                         <SelectItem value="" disabled>
-                          Carregando pacientes...
+                          {t("loadingPatients")}
                         </SelectItem>
                       ) : patients.length === 0 ? (
                         <SelectItem value="" disabled>
-                          Nenhum paciente encontrado
+                          {t("noPatients")}
                         </SelectItem>
                       ) : (
                         patients.map((patient) => (
@@ -289,7 +291,7 @@ export default function NewSessionPage() {
                 {/* Data da Sessão */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="sessionDate">Data da Sessão *</Label>
+                    <Label htmlFor="sessionDate">{t("sessionDate")} *</Label>
                     <Input
                       id="sessionDate"
                       type="date"
@@ -307,7 +309,7 @@ export default function NewSessionPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="duration">Duração (minutos) *</Label>
+                    <Label htmlFor="duration">{t("duration")} *</Label>
                     <Select
                       value={formData.durationMinutes}
                       onValueChange={(value) => setFormData((prev) => ({ ...prev, durationMinutes: value }))}
@@ -316,11 +318,11 @@ export default function NewSessionPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="30">30 minutos</SelectItem>
-                        <SelectItem value="45">45 minutos</SelectItem>
-                        <SelectItem value="50">50 minutos</SelectItem>
-                        <SelectItem value="60">60 minutos</SelectItem>
-                        <SelectItem value="90">90 minutos</SelectItem>
+                        <SelectItem value="30">30 {t("minutes")}</SelectItem>
+                        <SelectItem value="45">45 {t("minutes")}</SelectItem>
+                        <SelectItem value="50">50 {t("minutes")}</SelectItem>
+                        <SelectItem value="60">60 {t("minutes")}</SelectItem>
+                        <SelectItem value="90">90 {t("minutes")}</SelectItem>
                       </SelectContent>
                     </Select>
                     {errors.durationMinutes && (
@@ -335,11 +337,11 @@ export default function NewSessionPage() {
                 {/* Horários Disponíveis */}
                 {formData.sessionDate && (
                   <div className="space-y-2">
-                    <Label>Horário Disponível *</Label>
+                    <Label>{t("availableTime")} *</Label>
                     {checkingAvailability ? (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Clock className="w-4 h-4 animate-spin" />
-                        <span>Verificando disponibilidade...</span>
+                        <span>{t("checkingAvailability")}</span>
                       </div>
                     ) : availability ? (
                       <div className="space-y-3">
@@ -347,10 +349,10 @@ export default function NewSessionPage() {
                           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                             <div className="flex items-center space-x-2 text-red-700">
                               <AlertCircle className="w-5 h-5" />
-                              <span className="font-medium">Nenhum horário disponível</span>
+                              <span className="font-medium">{t("noAvailableSlots")}</span>
                             </div>
                             <p className="text-sm text-red-600 mt-1">
-                              Tente uma data diferente ou ajuste a duração da sessão.
+                              {t("tryDifferentDate")}
                             </p>
                           </div>
                         ) : (
@@ -373,7 +375,7 @@ export default function NewSessionPage() {
                         {/* Sessões Existentes */}
                         {availability.existingSessions.length > 0 && (
                           <div className="mt-4">
-                            <Label className="text-sm text-gray-600">Sessões já agendadas:</Label>
+                            <Label className="text-sm text-gray-600">{t("existingSessions")}</Label>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {availability.existingSessions.map((session, index) => (
                                 <Badge key={index} variant="secondary" className="text-xs">
@@ -388,7 +390,7 @@ export default function NewSessionPage() {
                       <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-center space-x-2 text-yellow-700">
                           <AlertCircle className="w-5 h-5" />
-                          <span>Selecione uma data para ver os horários disponíveis</span>
+                          <span>{t("selectDateForSlots")}</span>
                         </div>
                       </div>
                     ) : null}
@@ -405,7 +407,7 @@ export default function NewSessionPage() {
                 {/* Tipo e Status */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="type">Tipo de Sessão *</Label>
+                    <Label htmlFor="type">{t("sessionType")} *</Label>
                     <Select
                       value={formData.type}
                       onValueChange={(value: "online" | "presencial") =>
@@ -413,19 +415,19 @@ export default function NewSessionPage() {
                       }
                     >
                       <SelectTrigger className={errors.type ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Selecione o tipo" />
+                        <SelectValue placeholder={t("selectType")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="online">
                           <div className="flex items-center space-x-2">
                             <Video className="w-4 h-4" />
-                            <span>Online</span>
+                            <span>{t("online")}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="presencial">
                           <div className="flex items-center space-x-2">
                             <MapPin className="w-4 h-4" />
-                            <span>Presencial</span>
+                            <span>{t("inPerson")}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -439,7 +441,7 @@ export default function NewSessionPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="status">Status Inicial</Label>
+                    <Label htmlFor="status">{t("initialStatus")}</Label>
                     <Select
                       value={formData.status}
                       onValueChange={(value: "agendada" | "confirmada") =>
@@ -450,8 +452,8 @@ export default function NewSessionPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="agendada">Agendada</SelectItem>
-                        <SelectItem value="confirmada">Confirmada</SelectItem>
+                        <SelectItem value="agendada">{t("scheduled")}</SelectItem>
+                        <SelectItem value="confirmada">{t("confirmed")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -459,10 +461,10 @@ export default function NewSessionPage() {
 
                 {/* Observações */}
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Observações</Label>
+                  <Label htmlFor="notes">{t("notes")}</Label>
                   <Textarea
                     id="notes"
-                    placeholder="Observações sobre a sessão (opcional)"
+                    placeholder={t("notesPlaceholder")}
                     value={formData.notes}
                     onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                     rows={3}
@@ -472,7 +474,7 @@ export default function NewSessionPage() {
                 {/* Botões de Ação */}
                 <div className="flex justify-end space-x-4 pt-6 border-t">
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/dashboard/schedule">Cancelar</Link>
+                    <Link href="/dashboard/schedule">{t("cancel")}</Link>
                   </Button>
                   <Button
                     type="submit"
@@ -482,12 +484,12 @@ export default function NewSessionPage() {
                     {submitting ? (
                       <>
                         <Clock className="w-4 h-4 mr-2 animate-spin" />
-                        Agendando...
+                        {t("scheduling")}
                       </>
                     ) : (
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Agendar Sessão
+                        {t("scheduleSession")}
                       </>
                     )}
                   </Button>
@@ -502,7 +504,7 @@ export default function NewSessionPage() {
           {/* Resumo da Sessão */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Resumo da Sessão</CardTitle>
+              <CardTitle className="text-lg">{t("sessionSummary")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {selectedPatient ? (
@@ -517,14 +519,14 @@ export default function NewSessionPage() {
                   </div>
                 </div>
               ) : (
-                <div className="p-3 bg-gray-50 rounded-lg text-center text-gray-500">Selecione um paciente</div>
+                <div className="p-3 bg-gray-50 rounded-lg text-center text-gray-500">{t("selectAPatient")}</div>
               )}
 
               {formData.sessionDate && (
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Data:</span>
+                    <span className="text-sm text-gray-600">{t("date")}</span>
                   </div>
                   <p className="font-medium">
                     {new Date(formData.sessionDate).toLocaleDateString("pt-BR", {
@@ -541,7 +543,7 @@ export default function NewSessionPage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Horário:</span>
+                    <span className="text-sm text-gray-600">{t("time")}</span>
                   </div>
                   <p className="font-medium">{formData.sessionTime}</p>
                 </div>
@@ -551,9 +553,9 @@ export default function NewSessionPage() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Duração:</span>
+                    <span className="text-sm text-gray-600">{t("duration")}:</span>
                   </div>
-                  <p className="font-medium">{formData.durationMinutes} minutos</p>
+                  <p className="font-medium">{formData.durationMinutes} {t("minutes")}</p>
                 </div>
               )}
 
@@ -565,9 +567,9 @@ export default function NewSessionPage() {
                     ) : (
                       <MapPin className="w-4 h-4 text-gray-400" />
                     )}
-                    <span className="text-sm text-gray-600">Tipo:</span>
+                    <span className="text-sm text-gray-600">{t("type")}</span>
                   </div>
-                  <p className="font-medium capitalize">{formData.type}</p>
+                  <p className="font-medium">{formData.type === "online" ? t("online") : t("inPerson")}</p>
                 </div>
               )}
             </CardContent>
@@ -576,24 +578,24 @@ export default function NewSessionPage() {
           {/* Dicas */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Dicas</CardTitle>
+              <CardTitle className="text-lg">{t("tips")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start space-x-2">
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                <p className="text-sm text-gray-600">Verifique a disponibilidade antes de confirmar</p>
+                <p className="text-sm text-gray-600">{t("tip1")}</p>
               </div>
               <div className="flex items-start space-x-2">
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                <p className="text-sm text-gray-600">Sessões online requerem link de videochamada</p>
+                <p className="text-sm text-gray-600">{t("tip2")}</p>
               </div>
               <div className="flex items-start space-x-2">
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                <p className="text-sm text-gray-600">Adicione observações importantes sobre a sessão</p>
+                <p className="text-sm text-gray-600">{t("tip3")}</p>
               </div>
               <div className="flex items-start space-x-2">
                 <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
-                <p className="text-sm text-gray-600">Confirme os dados antes de finalizar</p>
+                <p className="text-sm text-gray-600">{t("tip4")}</p>
               </div>
             </CardContent>
           </Card>

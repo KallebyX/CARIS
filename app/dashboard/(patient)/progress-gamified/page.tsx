@@ -12,6 +12,7 @@ import { AchievementBadge } from "@/components/gamification/achievement-badge"
 import { ChallengeWidget } from "@/components/gamification/challenge-widget"
 import { LeaderboardDisplay } from "@/components/gamification/leaderboard-display"
 import { LevelUpNotification, useLevelUpNotification } from "@/components/gamification/level-up-notification"
+import { useTranslations } from "@/lib/i18n"
 
 interface GamificationData {
   user: {
@@ -75,13 +76,14 @@ interface ProgressData {
 }
 
 export default function GamifiedProgressPage() {
+  const t = useTranslations("patient.gamifiedProgressPage")
   const [data, setData] = useState<ProgressData | null>(null)
   const [gamificationData, setGamificationData] = useState<GamificationData | null>(null)
   const [achievementsData, setAchievementsData] = useState<any>(null)
   const [challengesData, setChallengesData] = useState<any>(null)
   const [leaderboardData, setLeaderboardData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  
+
   const { notification, showLevelUp, hideLevelUp } = useLevelUpNotification()
 
   useEffect(() => {
@@ -206,7 +208,7 @@ export default function GamifiedProgressPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-caris-teal mx-auto mb-4"></div>
-          <p className="text-slate-600">Carregando seu progresso gamificado...</p>
+          <p className="text-slate-600">{t("loading")}</p>
         </div>
       </div>
     )
@@ -215,9 +217,9 @@ export default function GamifiedProgressPage() {
   if (!data || !gamificationData) {
     return (
       <div className="text-center py-8">
-        <p className="text-slate-600">Erro ao carregar dados de progresso.</p>
+        <p className="text-slate-600">{t("loadError")}</p>
         <Button onClick={fetchAllData} className="mt-4">
-          Tentar Novamente
+          {t("tryAgain")}
         </Button>
       </div>
     )
@@ -237,8 +239,8 @@ export default function GamifiedProgressPage() {
       />
 
       <div>
-        <h1 className="text-3xl font-bold text-slate-800">Meu Progresso Gamificado</h1>
-        <p className="text-slate-600">Acompanhe sua jornada de crescimento com pontos, conquistas e desafios.</p>
+        <h1 className="text-3xl font-bold text-slate-800">{t("title")}</h1>
+        <p className="text-slate-600">{t("subtitle")}</p>
       </div>
 
       {/* XP Progress Bar */}
@@ -255,9 +257,9 @@ export default function GamifiedProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-100">XP Total</p>
+                <p className="text-sm font-medium text-blue-100">{t("stats.totalXP")}</p>
                 <p className="text-2xl font-bold">{gamificationData.user.totalXP.toLocaleString()}</p>
-                <p className="text-xs text-blue-200">Nível {gamificationData.user.currentLevel}</p>
+                <p className="text-xs text-blue-200">{t("stats.level")} {gamificationData.user.currentLevel}</p>
               </div>
               <Star className="w-8 h-8 text-blue-200" />
             </div>
@@ -268,9 +270,9 @@ export default function GamifiedProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-100">Pontos Semanais</p>
+                <p className="text-sm font-medium text-green-100">{t("stats.weeklyPoints")}</p>
                 <p className="text-2xl font-bold">{gamificationData.user.weeklyPoints}</p>
-                <p className="text-xs text-green-200">Esta semana</p>
+                <p className="text-xs text-green-200">{t("stats.thisWeek")}</p>
               </div>
               <Zap className="w-8 h-8 text-green-200" />
             </div>
@@ -281,9 +283,9 @@ export default function GamifiedProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-100">Sequência</p>
+                <p className="text-sm font-medium text-orange-100">{t("stats.streak")}</p>
                 <p className="text-2xl font-bold">{gamificationData.user.streak}</p>
-                <p className="text-xs text-orange-200">dias consecutivos</p>
+                <p className="text-xs text-orange-200">{t("stats.consecutiveDays")}</p>
               </div>
               <Calendar className="w-8 h-8 text-orange-200" />
             </div>
@@ -294,9 +296,9 @@ export default function GamifiedProgressPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-600">Tarefas</p>
+                <p className="text-sm font-medium text-slate-600">{t("stats.tasks")}</p>
                 <p className="text-2xl font-bold text-slate-800">{data.stats.tasks.completed}</p>
-                <p className="text-xs text-slate-500">{completionRate}% concluídas</p>
+                <p className="text-xs text-slate-500">{completionRate}% {t("stats.completed")}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
@@ -306,11 +308,11 @@ export default function GamifiedProgressPage() {
 
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="achievements">Conquistas</TabsTrigger>
-          <TabsTrigger value="challenges">Desafios</TabsTrigger>
-          <TabsTrigger value="leaderboard">Ranking</TabsTrigger>
-          <TabsTrigger value="activities">Atividades</TabsTrigger>
+          <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="achievements">{t("tabs.achievements")}</TabsTrigger>
+          <TabsTrigger value="challenges">{t("tabs.challenges")}</TabsTrigger>
+          <TabsTrigger value="leaderboard">{t("tabs.leaderboard")}</TabsTrigger>
+          <TabsTrigger value="activities">{t("tabs.activities")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -320,7 +322,7 @@ export default function GamifiedProgressPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-caris-teal" />
-                  Atividades Recentes
+                  {t("recentActivities.title")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -346,7 +348,7 @@ export default function GamifiedProgressPage() {
                   </div>
                 ) : (
                   <p className="text-slate-500 text-center py-4">
-                    Complete atividades para ganhar XP e pontos!
+                    {t("recentActivities.empty")}
                   </p>
                 )}
               </CardContent>
@@ -368,7 +370,7 @@ export default function GamifiedProgressPage() {
                 <Card key={category}>
                   <CardHeader>
                     <CardTitle className="capitalize">
-                      Conquistas - {category}
+                      {t("achievements.title")} - {category}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -388,20 +390,20 @@ export default function GamifiedProgressPage() {
           ) : (
             <div className="text-center py-8">
               <Award className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-slate-600">Carregando conquistas...</p>
+              <p className="text-slate-600">{t("achievements.loading")}</p>
             </div>
           )}
         </TabsContent>
 
         <TabsContent value="challenges" className="space-y-6">
           {challengesData ? (
-            <ChallengeWidget 
+            <ChallengeWidget
               challenges={challengesData.activeChallenges || []}
             />
           ) : (
             <div className="text-center py-8">
               <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-slate-600">Carregando desafios...</p>
+              <p className="text-slate-600">{t("challenges.loading")}</p>
             </div>
           )}
         </TabsContent>
@@ -416,7 +418,7 @@ export default function GamifiedProgressPage() {
         <TabsContent value="activities" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Mapa Emocional - Últimos 30 Dias</CardTitle>
+              <CardTitle>{t("emotionalMap.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <EmotionalMap data={data.emotionalMapData} />

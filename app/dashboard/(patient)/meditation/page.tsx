@@ -13,6 +13,7 @@ import { getUserIdFromRequest } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import jwt from 'jsonwebtoken'
+import { getTranslations } from 'next-intl/server'
 
 // ================================================================
 // CODE SPLITTING: Dynamic Imports
@@ -68,7 +69,9 @@ const MeditationCharts = dynamic(
 )
 
 export default async function MeditationPage() {
-  // Verificar autenticação
+  const t = await getTranslations('patient.meditationPage')
+
+  // Verify authentication
   const cookieStore = await cookies()
   const token = cookieStore.get('token')?.value
 
@@ -77,14 +80,14 @@ export default async function MeditationPage() {
   }
 
   let userId: number
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number, role: string }
-    
+
     if (decoded.role !== 'patient') {
       redirect('/dashboard')
     }
-    
+
     userId = decoded.userId
   } catch (error) {
     redirect('/login')
@@ -93,9 +96,9 @@ export default async function MeditationPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Centro de Meditação</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('title')}</h1>
         <p className="text-gray-600">
-          Explore nossa biblioteca de meditações guiadas e desenvolva uma prática consistente de mindfulness.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -124,7 +127,7 @@ export default async function MeditationPage() {
         This section is typically below the fold
       */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Suas Estatísticas</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('yourStats')}</h2>
         <Suspense fallback={<div className="h-40 bg-gray-100 rounded animate-pulse"></div>}>
           <MeditationStats userId={userId} />
         </Suspense>
@@ -136,7 +139,7 @@ export default async function MeditationPage() {
         Only load when user scrolls to this section
       */}
       <div className="mt-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Progresso ao Longo do Tempo</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('progressOverTime')}</h2>
         <Suspense fallback={<div className="h-96 bg-gray-100 rounded animate-pulse"></div>}>
           <MeditationCharts userId={userId} />
         </Suspense>

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Search, MoreHorizontal, Eye, Edit, Calendar, Download, Filter } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from "@/lib/i18n"
 
 interface Patient {
   id: number
@@ -21,6 +22,7 @@ interface Patient {
 }
 
 export default function PatientsPage() {
+  const t = useTranslations("psychologist.patientsPage")
   const [searchTerm, setSearchTerm] = useState("")
   const [patients, setPatients] = useState<Patient[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,7 +36,7 @@ export default function PatientsPage() {
           setPatients(data)
         }
       } catch (error) {
-        console.error("Falha ao buscar pacientes:", error)
+        console.error("Failed to fetch patients:", error)
       } finally {
         setLoading(false)
       }
@@ -66,18 +68,18 @@ export default function PatientsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Pacientes</h1>
-          <p className="text-gray-600">Gerencie todos os seus pacientes</p>
+          <h1 className="text-3xl font-bold text-gray-800">{t("title")}</h1>
+          <p className="text-gray-600">{t("subtitle")}</p>
         </div>
         <div className="flex space-x-3">
           <Button variant="outline" className="flex items-center bg-transparent">
             <Download className="w-4 h-4 mr-2" />
-            Exportar
+            {t("export")}
           </Button>
           <Button className="bg-[#2D9B9B] hover:bg-[#238B8B]" asChild>
             <Link href="/dashboard/patients/new">
               <Plus className="w-4 h-4 mr-2" />
-              Novo Paciente
+              {t("newPatient")}
             </Link>
           </Button>
         </div>
@@ -85,14 +87,14 @@ export default function PatientsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Pacientes</CardTitle>
+          <CardTitle>{t("patientList")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Buscar pacientes..."
+                placeholder={t("searchPatients")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -100,7 +102,7 @@ export default function PatientsPage() {
             </div>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
-              Filtros
+              {t("filters")}
             </Button>
           </div>
 
@@ -108,10 +110,10 @@ export default function PatientsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Ciclo Atual</TableHead>
-                  <TableHead>Última Atividade</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("tableHeaders.name")}</TableHead>
+                  <TableHead>{t("tableHeaders.currentCycle")}</TableHead>
+                  <TableHead>{t("tableHeaders.lastActivity")}</TableHead>
+                  <TableHead>{t("tableHeaders.status")}</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -119,7 +121,7 @@ export default function PatientsPage() {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center">
-                      Carregando...
+                      {t("loading")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -154,16 +156,16 @@ export default function PatientsPage() {
                             <DropdownMenuItem asChild>
                               <Link href={`/dashboard/patients/${patient.id}`}>
                                 <Eye className="w-4 h-4 mr-2" />
-                                Ver Detalhes
+                                {t("actions.viewDetails")}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Edit className="w-4 h-4 mr-2" />
-                              Editar
+                              {t("actions.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Calendar className="w-4 h-4 mr-2" />
-                              Agendar Sessão
+                              {t("actions.scheduleSession")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
