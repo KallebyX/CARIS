@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Shield, Download, Trash2, Eye, Clock, AlertTriangle, CheckCircle } from "lucide-react"
 import { toast } from "react-hot-toast"
+import { useTranslations } from "@/lib/i18n"
 
 interface PrivacySettings {
   dataProcessingConsent: boolean
@@ -48,6 +49,7 @@ interface DataExport {
 }
 
 export default function PrivacyPage() {
+  const t = useTranslations("privacy")
   const [settings, setSettings] = useState<PrivacySettings | null>(null)
   const [consents, setConsents] = useState<ConsentRecord[]>([])
   const [exports, setExports] = useState<DataExport[]>([])
@@ -96,8 +98,8 @@ export default function PrivacyPage() {
         setExports(exportsData.data || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar dados de privacidade:', error)
-      toast.error('Erro ao carregar configurações de privacidade')
+      console.error('Error loading privacy data:', error)
+      toast.error(t("toast.loadError"))
     } finally {
       setLoading(false)
     }
@@ -116,13 +118,13 @@ export default function PrivacyPage() {
 
       if (response.ok) {
         setSettings({ ...settings, ...updates })
-        toast.success('Configurações atualizadas com sucesso')
+        toast.success(t("toast.updateSuccess"))
       } else {
-        throw new Error('Falha ao atualizar configurações')
+        throw new Error('Failed to update settings')
       }
     } catch (error) {
-      console.error('Erro ao atualizar configurações:', error)
-      toast.error('Erro ao atualizar configurações')
+      console.error('Error updating settings:', error)
+      toast.error(t("toast.updateError"))
     } finally {
       setSaving(false)
     }
@@ -142,14 +144,14 @@ export default function PrivacyPage() {
       })
 
       if (response.ok) {
-        toast.success(`Consentimento ${consentGiven ? 'concedido' : 'revogado'} com sucesso`)
-        loadPrivacyData() // Recarrega os dados
+        toast.success(consentGiven ? t("toast.consentGranted") : t("toast.consentRevoked"))
+        loadPrivacyData()
       } else {
-        throw new Error('Falha ao registrar consentimento')
+        throw new Error('Failed to record consent')
       }
     } catch (error) {
-      console.error('Erro ao registrar consentimento:', error)
-      toast.error('Erro ao registrar consentimento')
+      console.error('Error recording consent:', error)
+      toast.error(t("toast.consentError"))
     }
   }
 
@@ -162,15 +164,15 @@ export default function PrivacyPage() {
       })
 
       if (response.ok) {
-        toast.success('Solicitação de exportação criada. Você será notificado quando estiver pronta.')
-        loadPrivacyData() // Recarrega os dados
+        toast.success(t("toast.exportRequested"))
+        loadPrivacyData()
       } else {
         const error = await response.json()
-        throw new Error(error.error || 'Falha ao solicitar exportação')
+        throw new Error(error.error || 'Failed to request export')
       }
     } catch (error) {
-      console.error('Erro ao solicitar exportação:', error)
-      toast.error(error instanceof Error ? error.message : 'Erro ao solicitar exportação')
+      console.error('Error requesting export:', error)
+      toast.error(error instanceof Error ? error.message : t("toast.exportError"))
     }
   }
 
@@ -180,7 +182,7 @@ export default function PrivacyPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Carregando configurações de privacidade...</p>
+            <p className="mt-4 text-gray-600">{t("loading")}</p>
           </div>
         </div>
       </div>
@@ -193,7 +195,7 @@ export default function PrivacyPage() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Erro ao carregar configurações de privacidade. Tente recarregar a página.
+            {t("loadError")}
           </AlertDescription>
         </Alert>
       </div>
@@ -205,8 +207,8 @@ export default function PrivacyPage() {
       <div className="flex items-center gap-3 mb-6">
         <Shield className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-3xl font-bold">Privacidade e Proteção de Dados</h1>
-          <p className="text-gray-600">Gerencie seus dados e preferências de privacidade conforme LGPD/GDPR</p>
+          <h1 className="text-3xl font-bold">{t("title")}</h1>
+          <p className="text-gray-600">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -214,27 +216,25 @@ export default function PrivacyPage() {
         <Alert className="border-blue-200 bg-blue-50">
           <Shield className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-900">
-            <strong>Consentimento de IA Necessário:</strong> Para usar recursos de análise por Inteligência Artificial,
-            você precisa primeiro consentir com o processamento de dados por IA. Role para baixo e ative a opção
-            "Análise por Inteligência Artificial" nas configurações.
+            <strong>{t("aiConsentAlert.title")}</strong> {t("aiConsentAlert.message")}
           </AlertDescription>
         </Alert>
       )}
 
       <Tabs defaultValue="settings" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="settings">Configurações</TabsTrigger>
-          <TabsTrigger value="consents">Consentimentos</TabsTrigger>
-          <TabsTrigger value="exports">Exportar Dados</TabsTrigger>
-          <TabsTrigger value="deletion">Exclusão de Dados</TabsTrigger>
+          <TabsTrigger value="settings">{t("tabs.settings")}</TabsTrigger>
+          <TabsTrigger value="consents">{t("tabs.consents")}</TabsTrigger>
+          <TabsTrigger value="exports">{t("tabs.exports")}</TabsTrigger>
+          <TabsTrigger value="deletion">{t("tabs.deletion")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="settings" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Configurações de Privacidade</CardTitle>
+              <CardTitle>{t("settings.title")}</CardTitle>
               <CardDescription>
-                Controle como seus dados são processados e utilizados
+                {t("settings.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -242,16 +242,16 @@ export default function PrivacyPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Processamento de Dados</Label>
+                      <Label>{t("settings.dataProcessing.label")}</Label>
                       <p className="text-sm text-gray-600">
-                        Permite o processamento básico de seus dados para funcionamento da plataforma
+                        {t("settings.dataProcessing.description")}
                       </p>
                     </div>
                     <Switch
                       checked={settings.dataProcessingConsent}
                       onCheckedChange={(checked) => {
                         updateSettings({ dataProcessingConsent: checked })
-                        recordConsent('data_processing', checked, 'Funcionamento básico da plataforma')
+                        recordConsent('data_processing', checked, 'Basic platform operation')
                       }}
                       disabled={saving}
                     />
@@ -260,20 +260,20 @@ export default function PrivacyPage() {
                   <div id="ai-consent-toggle" className="flex items-center justify-between border-l-4 border-blue-500 pl-4 bg-blue-50/30 p-3 rounded">
                     <div className="space-y-0.5">
                       <Label className="flex items-center gap-2">
-                        Análise por Inteligência Artificial
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">LGPD/GDPR</span>
+                        {t("settings.aiAnalysis.label")}
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{t("settings.aiAnalysis.badge")}</span>
                       </Label>
                       <p className="text-sm text-gray-600">
-                        Permite análise de dados por IA para insights emocionais, previsões e recomendações personalizadas
+                        {t("settings.aiAnalysis.description")}
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Necessário para: análise emocional, predição de humor, recomendações, relatórios de progresso
+                        {t("settings.aiAnalysis.requiredFor")}
                       </p>
                     </div>
                     <Switch
                       checked={consents.some(c => c.consentType === 'ai_analysis' && c.consentGiven)}
                       onCheckedChange={(checked) => {
-                        recordConsent('ai_analysis', checked, 'Processamento de dados por Inteligência Artificial para análises terapêuticas')
+                        recordConsent('ai_analysis', checked, 'AI data processing for therapeutic analysis')
                         setShowAIConsentAlert(false)
                       }}
                       disabled={saving}
@@ -282,16 +282,16 @@ export default function PrivacyPage() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Marketing</Label>
+                      <Label>{t("settings.marketing.label")}</Label>
                       <p className="text-sm text-gray-600">
-                        Receber comunicações de marketing e novidades
+                        {t("settings.marketing.description")}
                       </p>
                     </div>
                     <Switch
                       checked={settings.marketingConsent}
                       onCheckedChange={(checked) => {
                         updateSettings({ marketingConsent: checked })
-                        recordConsent('marketing', checked, 'Comunicações de marketing')
+                        recordConsent('marketing', checked, 'Marketing communications')
                       }}
                       disabled={saving}
                     />
@@ -299,16 +299,16 @@ export default function PrivacyPage() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Analytics</Label>
+                      <Label>{t("settings.analytics.label")}</Label>
                       <p className="text-sm text-gray-600">
-                        Permitir análise de uso para melhorar a plataforma
+                        {t("settings.analytics.description")}
                       </p>
                     </div>
                     <Switch
                       checked={settings.analyticsConsent}
                       onCheckedChange={(checked) => {
                         updateSettings({ analyticsConsent: checked })
-                        recordConsent('analytics', checked, 'Análise de uso da plataforma')
+                        recordConsent('analytics', checked, 'Platform usage analysis')
                       }}
                       disabled={saving}
                     />
@@ -318,9 +318,9 @@ export default function PrivacyPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Compartilhar com Psicólogo</Label>
+                      <Label>{t("settings.shareWithPsychologist.label")}</Label>
                       <p className="text-sm text-gray-600">
-                        Permite compartilhamento de dados relevantes com seu psicólogo
+                        {t("settings.shareWithPsychologist.description")}
                       </p>
                     </div>
                     <Switch
@@ -332,9 +332,9 @@ export default function PrivacyPage() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Permitir Exportação</Label>
+                      <Label>{t("settings.allowExport.label")}</Label>
                       <p className="text-sm text-gray-600">
-                        Habilitar funcionalidade de exportação de dados
+                        {t("settings.allowExport.description")}
                       </p>
                     </div>
                     <Switch
@@ -346,9 +346,9 @@ export default function PrivacyPage() {
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label>Anonimizar após Exclusão</Label>
+                      <Label>{t("settings.anonymizeAfterDeletion.label")}</Label>
                       <p className="text-sm text-gray-600">
-                        Anonimizar dados ao invés de deletar completamente
+                        {t("settings.anonymizeAfterDeletion.description")}
                       </p>
                     </div>
                     <Switch
@@ -361,7 +361,7 @@ export default function PrivacyPage() {
               </div>
 
               <div className="space-y-4">
-                <Label>Período de Retenção de Dados (dias)</Label>
+                <Label>{t("settings.dataRetention.label")}</Label>
                 <Select
                   value={settings.dataRetentionPreference.toString()}
                   onValueChange={(value) => updateSettings({ dataRetentionPreference: parseInt(value) })}
@@ -370,11 +370,11 @@ export default function PrivacyPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="365">1 ano</SelectItem>
-                    <SelectItem value="1095">3 anos</SelectItem>
-                    <SelectItem value="1825">5 anos</SelectItem>
-                    <SelectItem value="2555">7 anos (padrão)</SelectItem>
-                    <SelectItem value="3650">10 anos</SelectItem>
+                    <SelectItem value="365">{t("settings.dataRetention.years.1")}</SelectItem>
+                    <SelectItem value="1095">{t("settings.dataRetention.years.3")}</SelectItem>
+                    <SelectItem value="1825">{t("settings.dataRetention.years.5")}</SelectItem>
+                    <SelectItem value="2555">{t("settings.dataRetention.years.7")}</SelectItem>
+                    <SelectItem value="3650">{t("settings.dataRetention.years.10")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -385,14 +385,14 @@ export default function PrivacyPage() {
         <TabsContent value="consents" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Histórico de Consentimentos</CardTitle>
+              <CardTitle>{t("consents.title")}</CardTitle>
               <CardDescription>
-                Visualize todos os consentimentos concedidos e revogados
+                {t("consents.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {consents.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">Nenhum consentimento registrado</p>
+                <p className="text-gray-600 text-center py-8">{t("consents.noConsents")}</p>
               ) : (
                 <div className="space-y-4">
                   {consents.map((consent) => (
@@ -411,7 +411,7 @@ export default function PrivacyPage() {
                           <AlertTriangle className="h-5 w-5 text-red-500" />
                         )}
                         <span className={`text-sm ${consent.consentGiven ? 'text-green-600' : 'text-red-600'}`}>
-                          {consent.consentGiven ? 'Concedido' : 'Revogado'}
+                          {consent.consentGiven ? t("consents.granted") : t("consents.revoked")}
                         </span>
                       </div>
                     </div>
@@ -425,29 +425,29 @@ export default function PrivacyPage() {
         <TabsContent value="exports" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Exportação de Dados</CardTitle>
+              <CardTitle>{t("exports.title")}</CardTitle>
               <CardDescription>
-                Solicite a exportação de todos os seus dados (direito à portabilidade)
+                {t("exports.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex gap-4">
-                <Button 
+                <Button
                   onClick={() => requestDataExport('json')}
                   disabled={!settings.allowDataExport}
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Exportar JSON
+                  {t("exports.exportJson")}
                 </Button>
-                <Button 
+                <Button
                   onClick={() => requestDataExport('csv')}
                   disabled={!settings.allowDataExport}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Exportar CSV
+                  {t("exports.exportCsv")}
                 </Button>
               </div>
 
@@ -455,15 +455,15 @@ export default function PrivacyPage() {
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Exportação de dados está desabilitada nas suas configurações de privacidade.
+                    {t("exports.exportDisabled")}
                   </AlertDescription>
                 </Alert>
               )}
 
               <div className="space-y-4">
-                <h4 className="font-medium">Solicitações de Exportação</h4>
+                <h4 className="font-medium">{t("exports.requestsTitle")}</h4>
                 {exports.length === 0 ? (
-                  <p className="text-gray-600">Nenhuma exportação solicitada</p>
+                  <p className="text-gray-600">{t("exports.noExports")}</p>
                 ) : (
                   <div className="space-y-2">
                     {exports.map((exportRecord) => (
@@ -471,7 +471,7 @@ export default function PrivacyPage() {
                         <div>
                           <p className="font-medium">{exportRecord.format.toUpperCase()}</p>
                           <p className="text-sm text-gray-600">
-                            Solicitado em {new Date(exportRecord.requestedAt).toLocaleDateString('pt-BR')}
+                            {t("exports.requestedOn")} {new Date(exportRecord.requestedAt).toLocaleDateString('pt-BR')}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -503,50 +503,49 @@ export default function PrivacyPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <Trash2 className="h-5 w-5" />
-                Exclusão e Anonimização de Dados
+                {t("deletion.title")}
               </CardTitle>
               <CardDescription>
-                Solicite a anonimização ou exclusão dos seus dados (direito ao esquecimento)
+                {t("deletion.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Atenção:</strong> A anonimização/exclusão de dados é irreversível. 
-                  Certifique-se de exportar seus dados antes de prosseguir, se necessário.
+                  <strong>{t("deletion.warning.title")}</strong> {t("deletion.warning.message")}
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-4">
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Anonimização de Dados</h4>
+                  <h4 className="font-medium mb-2">{t("deletion.anonymization.title")}</h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    Remove informações pessoais identificáveis mantendo dados agregados para pesquisa.
+                    {t("deletion.anonymization.description")}
                   </p>
                   <Button variant="outline" className="text-orange-600 hover:text-orange-700">
-                    Solicitar Anonimização
+                    {t("deletion.anonymization.button")}
                   </Button>
                 </div>
 
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Exclusão Completa</h4>
+                  <h4 className="font-medium mb-2">{t("deletion.complete.title")}</h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    Remove completamente todos os seus dados da plataforma.
+                    {t("deletion.complete.description")}
                   </p>
                   <Button variant="destructive">
-                    Solicitar Exclusão Completa
+                    {t("deletion.complete.button")}
                   </Button>
                 </div>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Informações Importantes</h4>
+                <h4 className="font-medium mb-2">{t("deletion.importantInfo.title")}</h4>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Alguns dados podem ser mantidos por obrigações legais</li>
-                  <li>• Logs de auditoria são preservados por requisitos de compliance</li>
-                  <li>• O processo pode levar até 30 dias para ser concluído</li>
-                  <li>• Você receberá confirmação por email quando concluído</li>
+                  <li>• {t("deletion.importantInfo.item1")}</li>
+                  <li>• {t("deletion.importantInfo.item2")}</li>
+                  <li>• {t("deletion.importantInfo.item3")}</li>
+                  <li>• {t("deletion.importantInfo.item4")}</li>
                 </ul>
               </div>
             </CardContent>

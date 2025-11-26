@@ -494,6 +494,209 @@
       }
     }
   },
+  "privacy": {
+    "title": "Privacy and Data Protection",
+    "subtitle": "Manage your data and privacy preferences according to LGPD/GDPR",
+    "loading": "Loading privacy settings...",
+    "loadError": "Error loading privacy settings. Try reloading the page.",
+    "toast": {
+      "loadError": "Error loading privacy settings",
+      "updateSuccess": "Settings updated successfully",
+      "updateError": "Error updating settings",
+      "consentGranted": "Consent granted successfully",
+      "consentRevoked": "Consent revoked successfully",
+      "consentError": "Error recording consent",
+      "exportRequested": "Export request created. You will be notified when ready.",
+      "exportError": "Error requesting export"
+    },
+    "tabs": {
+      "settings": "Settings",
+      "consents": "Consents",
+      "exports": "Export Data",
+      "deletion": "Data Deletion"
+    },
+    "aiConsentAlert": {
+      "title": "AI Consent Required:",
+      "message": "To use AI analysis features, you need to first consent to AI data processing. Scroll down and enable the \"Artificial Intelligence Analysis\" option in the settings."
+    },
+    "settings": {
+      "title": "Privacy Settings",
+      "description": "Control how your data is processed and used",
+      "dataProcessing": {
+        "label": "Data Processing",
+        "description": "Allows basic processing of your data for platform operation"
+      },
+      "aiAnalysis": {
+        "label": "Artificial Intelligence Analysis",
+        "badge": "LGPD/GDPR",
+        "description": "Allows AI data analysis for emotional insights, predictions and personalized recommendations",
+        "requiredFor": "Required for: emotional analysis, mood prediction, recommendations, progress reports"
+      },
+      "marketing": {
+        "label": "Marketing",
+        "description": "Receive marketing communications and news"
+      },
+      "analytics": {
+        "label": "Analytics",
+        "description": "Allow usage analysis to improve the platform"
+      },
+      "shareWithPsychologist": {
+        "label": "Share with Psychologist",
+        "description": "Allows sharing relevant data with your psychologist"
+      },
+      "allowExport": {
+        "label": "Allow Export",
+        "description": "Enable data export functionality"
+      },
+      "anonymizeAfterDeletion": {
+        "label": "Anonymize after Deletion",
+        "description": "Anonymize data instead of completely deleting"
+      },
+      "dataRetention": {
+        "label": "Data Retention Period (days)",
+        "years": {
+          "1": "1 year",
+          "3": "3 years",
+          "5": "5 years",
+          "7": "7 years (default)",
+          "10": "10 years"
+        }
+      }
+    },
+    "consents": {
+      "title": "Consent History",
+      "description": "View all consents granted and revoked",
+      "noConsents": "No consents recorded",
+      "granted": "Granted",
+      "revoked": "Revoked"
+    },
+    "exports": {
+      "title": "Data Export",
+      "description": "Request export of all your data (right to portability)",
+      "exportJson": "Export JSON",
+      "exportCsv": "Export CSV",
+      "exportDisabled": "Data export is disabled in your privacy settings.",
+      "requestsTitle": "Export Requests",
+      "noExports": "No exports requested",
+      "requestedOn": "Requested on"
+    },
+    "deletion": {
+      "title": "Data Deletion and Anonymization",
+      "description": "Request anonymization or deletion of your data (right to be forgotten)",
+      "warning": {
+        "title": "Attention:",
+        "message": "Data anonymization/deletion is irreversible. Make sure to export your data before proceeding, if needed."
+      },
+      "anonymization": {
+        "title": "Data Anonymization",
+        "description": "Removes personally identifiable information while keeping aggregated data for research.",
+        "button": "Request Anonymization"
+      },
+      "complete": {
+        "title": "Complete Deletion",
+        "description": "Completely removes all your data from the platform.",
+        "button": "Request Complete Deletion"
+      },
+      "importantInfo": {
+        "title": "Important Information",
+        "item1": "Some data may be kept due to legal obligations",
+        "item2": "Audit logs are preserved for compliance requirements",
+        "item3": "The process may take up to 30 days to complete",
+        "item4": "You will receive email confirmation when completed"
+      }
+    }
+  },
+  "billing": {
+    "title": "Billing & Subscription",
+    "subtitle": "Manage your subscription and payment methods",
+    "tabs": {
+      "subscription": "Subscription",
+      "payments": "Payment Methods",
+      "invoices": "Invoices",
+      "plans": "Change Plan"
+    },
+    "subscription": {
+      "title": "Current Subscription",
+      "description": "Your active plan and billing details",
+      "plan": "Plan",
+      "status": "Status",
+      "currentPeriod": "Current Period",
+      "nextBilling": "Next Billing Date",
+      "ending": {
+        "title": "Subscription Ending",
+        "message": "Your subscription will end on {date}"
+      },
+      "noSubscription": "No active subscription",
+      "subscribeNow": "Subscribe Now",
+      "reactivate": "Reactivate Subscription",
+      "cancel": "Cancel Subscription"
+    },
+    "payments": {
+      "title": "Payment Methods",
+      "description": "Manage your payment methods",
+      "addMethod": "Add Method",
+      "expires": "Expires",
+      "default": "Default",
+      "noMethods": "No payment methods added yet",
+      "addTitle": "Add Payment Method",
+      "addDescription": "Add a new card for payments",
+      "adding": "Adding...",
+      "addButton": "Add Payment Method"
+    },
+    "invoices": {
+      "title": "Invoice History",
+      "description": "View and download your invoices",
+      "download": "Download",
+      "noInvoices": "No invoices yet"
+    },
+    "plans": {
+      "popular": "Popular",
+      "perMonth": "/month",
+      "perYear": "/year",
+      "twoMonthsFree": "2 months free",
+      "currentPlan": "Current Plan",
+      "changeTo": "Change to this plan",
+      "subscribe": "Subscribe"
+    },
+    "cancelDialog": {
+      "title": "Cancel Subscription?",
+      "description": "Your subscription will remain active until the end of your current billing period ({date}). After that, you'll lose access to all premium features.",
+      "keep": "Keep Subscription",
+      "confirm": "Yes, Cancel"
+    },
+    "status": {
+      "active": "Active",
+      "past_due": "Past Due",
+      "canceled": "Canceled",
+      "paid": "Paid",
+      "open": "Unpaid"
+    },
+    "planFeatures": {
+      "essential": {
+        "patients": "Up to 10 active patients",
+        "calendar": "Calendar and Electronic Medical Records",
+        "diary": "Emotional Diary and Basic Map",
+        "video": "Integrated Video Therapy",
+        "support": "Email support"
+      },
+      "professional": {
+        "unlimited": "Unlimited patients",
+        "includes": "Everything from Essential plan",
+        "aiMap": "Emotional Map with Predictive AI",
+        "gamification": "Gamification and Task Prescription",
+        "reports": "Advanced Reports",
+        "chat": "Priority Chat Support"
+      },
+      "clinic": {
+        "includes": "Everything from Professional plan",
+        "multiPsy": "Multi-psychologist management",
+        "billing": "Centralized billing",
+        "dashboard": "Administrative dashboard",
+        "whiteLabel": "White-label options",
+        "manager": "Dedicated account manager"
+      }
+    }
+  },
   "admin": {
     "dashboard": "Admin Dashboard",
     "users": "Users",

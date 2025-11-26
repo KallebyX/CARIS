@@ -494,6 +494,209 @@
       }
     }
   },
+  "privacy": {
+    "title": "Privacidade e Proteção de Dados",
+    "subtitle": "Gerencie seus dados e preferências de privacidade conforme LGPD/GDPR",
+    "loading": "Carregando configurações de privacidade...",
+    "loadError": "Erro ao carregar configurações de privacidade. Tente recarregar a página.",
+    "toast": {
+      "loadError": "Erro ao carregar configurações de privacidade",
+      "updateSuccess": "Configurações atualizadas com sucesso",
+      "updateError": "Erro ao atualizar configurações",
+      "consentGranted": "Consentimento concedido com sucesso",
+      "consentRevoked": "Consentimento revogado com sucesso",
+      "consentError": "Erro ao registrar consentimento",
+      "exportRequested": "Solicitação de exportação criada. Você será notificado quando estiver pronta.",
+      "exportError": "Erro ao solicitar exportação"
+    },
+    "tabs": {
+      "settings": "Configurações",
+      "consents": "Consentimentos",
+      "exports": "Exportar Dados",
+      "deletion": "Exclusão de Dados"
+    },
+    "aiConsentAlert": {
+      "title": "Consentimento de IA Necessário:",
+      "message": "Para usar recursos de análise por Inteligência Artificial, você precisa primeiro consentir com o processamento de dados por IA. Role para baixo e ative a opção \"Análise por Inteligência Artificial\" nas configurações."
+    },
+    "settings": {
+      "title": "Configurações de Privacidade",
+      "description": "Controle como seus dados são processados e utilizados",
+      "dataProcessing": {
+        "label": "Processamento de Dados",
+        "description": "Permite o processamento básico de seus dados para funcionamento da plataforma"
+      },
+      "aiAnalysis": {
+        "label": "Análise por Inteligência Artificial",
+        "badge": "LGPD/GDPR",
+        "description": "Permite análise de dados por IA para insights emocionais, previsões e recomendações personalizadas",
+        "requiredFor": "Necessário para: análise emocional, predição de humor, recomendações, relatórios de progresso"
+      },
+      "marketing": {
+        "label": "Marketing",
+        "description": "Receber comunicações de marketing e novidades"
+      },
+      "analytics": {
+        "label": "Analytics",
+        "description": "Permitir análise de uso para melhorar a plataforma"
+      },
+      "shareWithPsychologist": {
+        "label": "Compartilhar com Psicólogo",
+        "description": "Permite compartilhamento de dados relevantes com seu psicólogo"
+      },
+      "allowExport": {
+        "label": "Permitir Exportação",
+        "description": "Habilitar funcionalidade de exportação de dados"
+      },
+      "anonymizeAfterDeletion": {
+        "label": "Anonimizar após Exclusão",
+        "description": "Anonimizar dados ao invés de deletar completamente"
+      },
+      "dataRetention": {
+        "label": "Período de Retenção de Dados (dias)",
+        "years": {
+          "1": "1 ano",
+          "3": "3 anos",
+          "5": "5 anos",
+          "7": "7 anos (padrão)",
+          "10": "10 anos"
+        }
+      }
+    },
+    "consents": {
+      "title": "Histórico de Consentimentos",
+      "description": "Visualize todos os consentimentos concedidos e revogados",
+      "noConsents": "Nenhum consentimento registrado",
+      "granted": "Concedido",
+      "revoked": "Revogado"
+    },
+    "exports": {
+      "title": "Exportação de Dados",
+      "description": "Solicite a exportação de todos os seus dados (direito à portabilidade)",
+      "exportJson": "Exportar JSON",
+      "exportCsv": "Exportar CSV",
+      "exportDisabled": "Exportação de dados está desabilitada nas suas configurações de privacidade.",
+      "requestsTitle": "Solicitações de Exportação",
+      "noExports": "Nenhuma exportação solicitada",
+      "requestedOn": "Solicitado em"
+    },
+    "deletion": {
+      "title": "Exclusão e Anonimização de Dados",
+      "description": "Solicite a anonimização ou exclusão dos seus dados (direito ao esquecimento)",
+      "warning": {
+        "title": "Atenção:",
+        "message": "A anonimização/exclusão de dados é irreversível. Certifique-se de exportar seus dados antes de prosseguir, se necessário."
+      },
+      "anonymization": {
+        "title": "Anonimização de Dados",
+        "description": "Remove informações pessoais identificáveis mantendo dados agregados para pesquisa.",
+        "button": "Solicitar Anonimização"
+      },
+      "complete": {
+        "title": "Exclusão Completa",
+        "description": "Remove completamente todos os seus dados da plataforma.",
+        "button": "Solicitar Exclusão Completa"
+      },
+      "importantInfo": {
+        "title": "Informações Importantes",
+        "item1": "Alguns dados podem ser mantidos por obrigações legais",
+        "item2": "Logs de auditoria são preservados por requisitos de compliance",
+        "item3": "O processo pode levar até 30 dias para ser concluído",
+        "item4": "Você receberá confirmação por email quando concluído"
+      }
+    }
+  },
+  "billing": {
+    "title": "Faturamento e Assinatura",
+    "subtitle": "Gerencie sua assinatura e métodos de pagamento",
+    "tabs": {
+      "subscription": "Assinatura",
+      "payments": "Métodos de Pagamento",
+      "invoices": "Faturas",
+      "plans": "Alterar Plano"
+    },
+    "subscription": {
+      "title": "Assinatura Atual",
+      "description": "Seu plano ativo e detalhes de faturamento",
+      "plan": "Plano",
+      "status": "Status",
+      "currentPeriod": "Período Atual",
+      "nextBilling": "Próxima Data de Faturamento",
+      "ending": {
+        "title": "Assinatura Encerrando",
+        "message": "Sua assinatura terminará em {date}"
+      },
+      "noSubscription": "Sem assinatura ativa",
+      "subscribeNow": "Assinar Agora",
+      "reactivate": "Reativar Assinatura",
+      "cancel": "Cancelar Assinatura"
+    },
+    "payments": {
+      "title": "Métodos de Pagamento",
+      "description": "Gerencie seus métodos de pagamento",
+      "addMethod": "Adicionar Método",
+      "expires": "Expira",
+      "default": "Padrão",
+      "noMethods": "Nenhum método de pagamento adicionado",
+      "addTitle": "Adicionar Método de Pagamento",
+      "addDescription": "Adicione um novo cartão para pagamentos",
+      "adding": "Adicionando...",
+      "addButton": "Adicionar Método de Pagamento"
+    },
+    "invoices": {
+      "title": "Histórico de Faturas",
+      "description": "Visualize e baixe suas faturas",
+      "download": "Baixar",
+      "noInvoices": "Nenhuma fatura ainda"
+    },
+    "plans": {
+      "popular": "Popular",
+      "perMonth": "/mês",
+      "perYear": "/ano",
+      "twoMonthsFree": "2 meses grátis",
+      "currentPlan": "Plano Atual",
+      "changeTo": "Mudar para este plano",
+      "subscribe": "Assinar"
+    },
+    "cancelDialog": {
+      "title": "Cancelar Assinatura?",
+      "description": "Sua assinatura permanecerá ativa até o final do seu período de faturamento atual ({date}). Após isso, você perderá acesso a todos os recursos premium.",
+      "keep": "Manter Assinatura",
+      "confirm": "Sim, Cancelar"
+    },
+    "status": {
+      "active": "Ativo",
+      "past_due": "Vencido",
+      "canceled": "Cancelado",
+      "paid": "Pago",
+      "open": "Não Pago"
+    },
+    "planFeatures": {
+      "essential": {
+        "patients": "Até 10 pacientes ativos",
+        "calendar": "Agenda e Prontuário Eletrônico",
+        "diary": "Diário Emocional e Mapa Básico",
+        "video": "Videoterapia Integrada",
+        "support": "Suporte por e-mail"
+      },
+      "professional": {
+        "unlimited": "Pacientes ilimitados",
+        "includes": "Tudo do plano Essencial",
+        "aiMap": "Mapa Emocional com IA Preditiva",
+        "gamification": "Gamificação e Prescrição de Tarefas",
+        "reports": "Relatórios Avançados",
+        "chat": "Suporte Prioritário via Chat"
+      },
+      "clinic": {
+        "includes": "Tudo do plano Profissional",
+        "multiPsy": "Gestão de múltiplos psicólogos",
+        "billing": "Faturamento centralizado",
+        "dashboard": "Dashboard administrativo",
+        "whiteLabel": "Opções de White-label",
+        "manager": "Gerente de conta dedicado"
+      }
+    }
+  },
   "admin": {
     "dashboard": "Dashboard Admin",
     "users": "Usuários",
