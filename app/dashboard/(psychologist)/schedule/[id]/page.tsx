@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, User, MapPin, Video, ArrowLeft, Edit, Trash2, Loader2, FileText, Mail } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { useTranslations } from "@/lib/i18n"
 
 interface Session {
   id: number
@@ -27,6 +28,7 @@ interface Session {
 }
 
 export default function SessionDetailsPage() {
+  const t = useTranslations("psychologist.sessionDetailPage")
   const params = useParams()
   const router = useRouter()
   const sessionId = params.id as string
@@ -49,12 +51,12 @@ export default function SessionDetailsPage() {
         const data = await res.json()
         setSession(data)
       } else {
-        toast.error("Sessão não encontrada")
+        toast.error(t("toast.notFound"))
         router.push("/dashboard/schedule")
       }
     } catch (error) {
       console.error("Error fetching session:", error)
-      toast.error("Erro ao carregar sessão")
+      toast.error(t("toast.loadError"))
       router.push("/dashboard/schedule")
     } finally {
       setLoading(false)
@@ -62,7 +64,7 @@ export default function SessionDetailsPage() {
   }
 
   const handleDelete = async () => {
-    if (!confirm("Tem certeza que deseja deletar esta sessão? Esta ação não pode ser desfeita.")) {
+    if (!confirm(t("toast.deleteConfirm"))) {
       return
     }
 
@@ -73,15 +75,15 @@ export default function SessionDetailsPage() {
       })
 
       if (res.ok) {
-        toast.success("Sessão deletada com sucesso")
+        toast.success(t("toast.deleteSuccess"))
         router.push("/dashboard/schedule")
       } else {
         const error = await res.json()
-        toast.error(error.error || "Erro ao deletar sessão")
+        toast.error(error.error || t("toast.deleteError"))
       }
     } catch (error) {
       console.error("Error deleting session:", error)
-      toast.error("Erro ao deletar sessão")
+      toast.error(t("toast.deleteError"))
     } finally {
       setDeleting(false)
     }
@@ -112,7 +114,7 @@ export default function SessionDetailsPage() {
       <div className="flex items-center justify-center min-h-96">
         <div className="flex items-center space-x-2">
           <Loader2 className="w-6 h-6 animate-spin text-[#2D9B9B]" />
-          <span>Carregando sessão...</span>
+          <span>{t("loading")}</span>
         </div>
       </div>
     )
@@ -122,10 +124,10 @@ export default function SessionDetailsPage() {
     return (
       <div className="text-center py-12">
         <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">Sessão não encontrada</h2>
-        <p className="text-gray-600 mb-4">A sessão que você está procurando não existe ou foi removida.</p>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">{t("notFound")}</h2>
+        <p className="text-gray-600 mb-4">{t("notFoundDescription")}</p>
         <Button asChild>
-          <Link href="/dashboard/schedule">Voltar para Agenda</Link>
+          <Link href="/dashboard/schedule">{t("backToSchedule")}</Link>
         </Button>
       </div>
     )
@@ -139,12 +141,12 @@ export default function SessionDetailsPage() {
           <Button variant="outline" size="sm" asChild>
             <Link href="/dashboard/schedule">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              {t("back")}
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Detalhes da Sessão</h1>
-            <p className="text-gray-600">Informações completas da sessão</p>
+            <h1 className="text-3xl font-bold text-gray-800">{t("title")}</h1>
+            <p className="text-gray-600">{t("subtitle")}</p>
           </div>
         </div>
 
@@ -155,7 +157,7 @@ export default function SessionDetailsPage() {
           <Button variant="outline" size="sm" asChild>
             <Link href={`/dashboard/schedule/${session.id}/edit`}>
               <Edit className="w-4 h-4 mr-2" />
-              Editar
+              {t("edit")}
             </Link>
           </Button>
           <Button
@@ -166,7 +168,7 @@ export default function SessionDetailsPage() {
             className="text-red-600 hover:text-red-700 bg-transparent"
           >
             {deleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-            Deletar
+            {t("delete")}
           </Button>
         </div>
       </div>
@@ -179,14 +181,14 @@ export default function SessionDetailsPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Calendar className="w-5 h-5 mr-2 text-[#2D9B9B]" />
-                Informações da Sessão
+                {t("sessionInfo")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Data e Horário</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">{t("dateTime")}</h3>
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <span className="font-medium">
@@ -210,7 +212,7 @@ export default function SessionDetailsPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Duração</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">{t("duration")}</h3>
                     <div className="flex items-center space-x-2">
                       <Clock className="w-4 h-4 text-gray-400" />
                       <span className="font-medium">{session.durationMinutes} minutos</span>
@@ -220,7 +222,7 @@ export default function SessionDetailsPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Tipo de Sessão</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">{t("sessionType")}</h3>
                     <div className="flex items-center space-x-2">
                       {session.type === "online" ? (
                         <Video className="w-4 h-4 text-gray-400" />
@@ -232,7 +234,7 @@ export default function SessionDetailsPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
+                    <h3 className="text-sm font-medium text-gray-500 mb-1">{t("status")}</h3>
                     <Badge className={getStatusColor(session.status)} variant="secondary">
                       {session.status}
                     </Badge>
@@ -242,7 +244,7 @@ export default function SessionDetailsPage() {
 
               {session.notes && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Observações</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">{t("observations")}</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-start space-x-2">
                       <FileText className="w-4 h-4 text-gray-400 mt-0.5" />
@@ -257,14 +259,14 @@ export default function SessionDetailsPage() {
           {/* Histórico */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Histórico</CardTitle>
+              <CardTitle className="text-lg">{t("history")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">Sessão criada</p>
+                    <p className="text-sm font-medium text-gray-800">{t("sessionCreated")}</p>
                     <p className="text-xs text-gray-600">
                       {new Date(session.createdAt).toLocaleDateString("pt-BR")} às{" "}
                       {new Date(session.createdAt).toLocaleTimeString("pt-BR", {
@@ -279,7 +281,7 @@ export default function SessionDetailsPage() {
                   <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">Última atualização</p>
+                      <p className="text-sm font-medium text-gray-800">{t("lastUpdate")}</p>
                       <p className="text-xs text-gray-600">
                         {new Date(session.updatedAt).toLocaleDateString("pt-BR")} às{" "}
                         {new Date(session.updatedAt).toLocaleTimeString("pt-BR", {
@@ -300,7 +302,7 @@ export default function SessionDetailsPage() {
           {/* Informações do Paciente */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Paciente</CardTitle>
+              <CardTitle className="text-lg">{t("patient")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-3 mb-4">
@@ -323,7 +325,7 @@ export default function SessionDetailsPage() {
 
               <div className="mt-4 pt-4 border-t">
                 <Button variant="outline" size="sm" className="w-full bg-transparent" asChild>
-                  <Link href={`/dashboard/patients/${session.patient.id}`}>Ver Perfil Completo</Link>
+                  <Link href={`/dashboard/patients/${session.patient.id}`}>{t("viewFullProfile")}</Link>
                 </Button>
               </div>
             </CardContent>
@@ -332,27 +334,27 @@ export default function SessionDetailsPage() {
           {/* Ações Rápidas */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Ações Rápidas</CardTitle>
+              <CardTitle className="text-lg">{t("quickActions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="outline" size="sm" className="w-full bg-transparent" asChild>
                 <Link href={`/dashboard/patients/${session.patient.id}/chat`}>
                   <Mail className="w-4 h-4 mr-2" />
-                  Enviar Mensagem
+                  {t("sendMessage")}
                 </Link>
               </Button>
 
               <Button variant="outline" size="sm" className="w-full bg-transparent" asChild>
                 <Link href={`/dashboard/schedule/new?patientId=${session.patient.id}`}>
                   <Calendar className="w-4 h-4 mr-2" />
-                  Nova Sessão
+                  {t("newSession")}
                 </Link>
               </Button>
 
               {session.type === "online" && (
                 <Button variant="outline" size="sm" className="w-full bg-transparent">
                   <Video className="w-4 h-4 mr-2" />
-                  Iniciar Videochamada
+                  {t("startVideoCall")}
                 </Button>
               )}
             </CardContent>
@@ -361,15 +363,15 @@ export default function SessionDetailsPage() {
           {/* Informações Técnicas */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Informações Técnicas</CardTitle>
+              <CardTitle className="text-lg">{t("technicalInfo")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <p className="text-sm text-gray-600">ID da Sessão</p>
+                <p className="text-sm text-gray-600">{t("sessionId")}</p>
                 <p className="font-mono text-sm">{session.id}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Criada em</p>
+                <p className="text-sm text-gray-600">{t("createdAt")}</p>
                 <p className="text-sm">
                   {new Date(session.createdAt).toLocaleDateString("pt-BR")} às{" "}
                   {new Date(session.createdAt).toLocaleTimeString("pt-BR")}
@@ -377,7 +379,7 @@ export default function SessionDetailsPage() {
               </div>
               {session.updatedAt !== session.createdAt && (
                 <div>
-                  <p className="text-sm text-gray-600">Atualizada em</p>
+                  <p className="text-sm text-gray-600">{t("updatedAt")}</p>
                   <p className="text-sm">
                     {new Date(session.updatedAt).toLocaleDateString("pt-BR")} às{" "}
                     {new Date(session.updatedAt).toLocaleTimeString("pt-BR")}
