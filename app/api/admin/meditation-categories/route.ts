@@ -15,13 +15,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const includeInactive = searchParams.get('includeInactive') === 'true'
 
-    let query = db.select().from(meditationCategories)
+    // Build where clause conditionally
+    const whereClause = !includeInactive ? eq(meditationCategories.isActive, true) : undefined
 
-    if (!includeInactive) {
-      query = query.where(eq(meditationCategories.isActive, true))
-    }
-
-    const categories = await query.orderBy(meditationCategories.displayOrder)
+    const categories = await db
+      .select()
+      .from(meditationCategories)
+      .where(whereClause)
+      .orderBy(meditationCategories.displayOrder)
 
     return NextResponse.json({
       success: true,

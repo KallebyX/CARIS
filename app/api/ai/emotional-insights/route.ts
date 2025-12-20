@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { diaryEntries } from '@/db/schema'
-import { eq, desc, gte } from 'drizzle-orm'
+import { eq, desc, gte, and } from 'drizzle-orm'
 import {
   analyzeMultiModalEmotion,
   trackEmotionTrajectory,
@@ -64,8 +64,10 @@ export async function POST(req: NextRequest) {
       const recentEntries = await db
         .select()
         .from(diaryEntries)
-        .where(eq(diaryEntries.patientId, patientId))
-        .where(gte(diaryEntries.entryDate, sevenDaysAgo))
+        .where(and(
+          eq(diaryEntries.patientId, patientId),
+          gte(diaryEntries.entryDate, sevenDaysAgo)
+        ))
         .orderBy(desc(diaryEntries.entryDate))
 
       const emotionSequence = recentEntries.map((e) => ({
@@ -85,8 +87,10 @@ export async function POST(req: NextRequest) {
       const entries = await db
         .select()
         .from(diaryEntries)
-        .where(eq(diaryEntries.patientId, patientId))
-        .where(gte(diaryEntries.entryDate, thirtyDaysAgo))
+        .where(and(
+          eq(diaryEntries.patientId, patientId),
+          gte(diaryEntries.entryDate, thirtyDaysAgo)
+        ))
         .orderBy(desc(diaryEntries.entryDate))
         .limit(20)
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { diaryEntries, moodTracking, users } from '@/db/schema'
-import { eq, desc, gte } from 'drizzle-orm'
+import { eq, desc, gte, and } from 'drizzle-orm'
 import { predictMoodTrends } from '@/lib/ai/predictive-analytics'
 import { getUserIdFromRequest } from '@/lib/auth'
 import { requireAIConsent } from '@/lib/consent'
@@ -40,16 +40,20 @@ export async function POST(req: NextRequest) {
     const moodHistory = await db
       .select()
       .from(moodTracking)
-      .where(gte(moodTracking.date, thirtyDaysAgo))
-      .where(eq(moodTracking.patientId, patientId))
+      .where(and(
+        gte(moodTracking.date, thirtyDaysAgo),
+        eq(moodTracking.patientId, patientId)
+      ))
       .orderBy(desc(moodTracking.date))
       .limit(30)
 
     const diaryHistory = await db
       .select()
       .from(diaryEntries)
-      .where(gte(diaryEntries.entryDate, thirtyDaysAgo))
-      .where(eq(diaryEntries.patientId, patientId))
+      .where(and(
+        gte(diaryEntries.entryDate, thirtyDaysAgo),
+        eq(diaryEntries.patientId, patientId)
+      ))
       .orderBy(desc(diaryEntries.entryDate))
       .limit(14)
 

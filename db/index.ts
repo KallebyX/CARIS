@@ -23,12 +23,12 @@ const connectionConfig: postgres.Options<{}> = {
 
   // Error handling and logging
   onnotice: process.env.NODE_ENV === 'development'
-    ? (notice) => console.log('[DB_NOTICE]', notice)
+    ? (notice) => console.info('[DB_NOTICE]', notice)
     : undefined,
   debug: process.env.DB_DEBUG === 'true'
     ? (connection, query, params) => {
-        console.log('[DB_QUERY]', query)
-        console.log('[DB_PARAMS]', params)
+        console.info('[DB_QUERY]', query)
+        console.info('[DB_PARAMS]', params)
       }
     : undefined,
 
@@ -56,7 +56,7 @@ export const db = drizzle(sql, { schema })
 export async function closeDatabase() {
   try {
     await sql.end({ timeout: 5 }) // Wait up to 5 seconds for connections to close
-    console.log('[DB] Database connections closed')
+    console.info('[DB] Database connections closed')
   } catch (error) {
     console.error('[DB] Error closing database connections:', error)
   }

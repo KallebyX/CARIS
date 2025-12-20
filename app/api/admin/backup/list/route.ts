@@ -9,7 +9,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { databaseBackupService } from '@/lib/backup/database-backup';
-import { fileBackupService } from '@/lib/backup/file-backup';
+import { fileBackupService, type FileBackupMetadata } from '@/lib/backup/file-backup';
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const dbBackups = await databaseBackupService.listBackups();
 
     // Get file backups
-    let fileBackups = [];
+    let fileBackups: FileBackupMetadata[] = [];
     if (includeFiles) {
       fileBackups = await fileBackupService.listBackups();
     }

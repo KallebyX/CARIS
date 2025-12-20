@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { db } from "@/db"
 import { auditLogs, users } from "@/db/schema"
-import { eq, desc, and, gte, lte, like, or, sql } from "drizzle-orm"
+import { eq, desc, and, gte, lte, like, or, sql, SQL } from "drizzle-orm"
 import { z } from "zod"
 
 const AuditLogsQuerySchema = z.object({
@@ -61,8 +61,56 @@ export async function GET(request: NextRequest) {
       search
     } = AuditLogsQuerySchema.parse(queryParams)
 
-    // Constrói a query
-    let query = db
+    // Build conditions array
+    const conditions: (SQL | undefined)[] = []
+
+    if (filterUserId) {
+      conditions.push(eq(auditLogs.userId, filterUserId))
+    }
+
+    if (action) {
+      conditions.push(eq(auditLogs.action, action))
+    }
+
+    if (resourceType) {
+      conditions.push(eq(auditLogs.resourceType, resourceType))
+    }
+
+    if (severity) {
+      conditions.push(eq(auditLogs.severity, severity))
+    }
+
+    if (complianceOnly) {
+      conditions.push(eq(auditLogs.complianceRelated, true))
+    }
+
+    if (dateFrom) {
+      conditions.push(gte(auditLogs.timestamp, new Date(dateFrom)))
+    }
+
+    if (dateTo) {
+      conditions.push(lte(auditLogs.timestamp, new Date(dateTo)))
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          like(auditLogs.action, `%${search}%`),
+          like(auditLogs.resourceType, `%${search}%`),
+          like(users.name, `%${search}%`),
+          like(users.email, `%${search}%`)
+        )
+      )
+    }
+
+    // Build where clause
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+    // Ordenação e paginação
+    const offset = (page - 1) * limit
+
+    // Execute query with all conditions
+    const logs = await db
       .select({
         id: auditLogs.id,
         userId: auditLogs.userId,
@@ -80,71 +128,19 @@ export async function GET(request: NextRequest) {
       })
       .from(auditLogs)
       .leftJoin(users, eq(auditLogs.userId, users.id))
-
-    // Aplica filtros
-    const conditions = []
-    
-    if (filterUserId) {
-      conditions.push(eq(auditLogs.userId, filterUserId))
-    }
-    
-    if (action) {
-      conditions.push(eq(auditLogs.action, action))
-    }
-    
-    if (resourceType) {
-      conditions.push(eq(auditLogs.resourceType, resourceType))
-    }
-    
-    if (severity) {
-      conditions.push(eq(auditLogs.severity, severity))
-    }
-    
-    if (complianceOnly) {
-      conditions.push(eq(auditLogs.complianceRelated, true))
-    }
-    
-    if (dateFrom) {
-      conditions.push(gte(auditLogs.timestamp, new Date(dateFrom)))
-    }
-    
-    if (dateTo) {
-      conditions.push(lte(auditLogs.timestamp, new Date(dateTo)))
-    }
-    
-    if (search) {
-      conditions.push(
-        or(
-          like(auditLogs.action, `%${search}%`),
-          like(auditLogs.resourceType, `%${search}%`),
-          like(users.name, `%${search}%`),
-          like(users.email, `%${search}%`)
-        )
-      )
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions))
-    }
-
-    // Ordenação e paginação
-    const offset = (page - 1) * limit
-    const logs = await query
+      .where(whereClause)
       .orderBy(desc(auditLogs.timestamp))
       .limit(limit)
       .offset(offset)
 
-    // Conta total para paginação
-    let countQuery = db
+    // Count query for pagination
+    const countResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(auditLogs)
       .leftJoin(users, eq(auditLogs.userId, users.id))
+      .where(whereClause)
 
-    if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions))
-    }
-
-    const [{ count: totalCount }] = await countQuery
+    const totalCount = countResult[0]?.count ?? 0
 
     // Estatísticas rápidas
     const stats = await db
