@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
             language: source.language,
             quality: source.quality,
             format: source.format,
-            downloadUrl: source.downloadUrl,
-            embedUrl: source.embedUrl,
+            downloadUrl: 'downloadUrl' in source ? source.downloadUrl : null,
+            embedUrl: 'embedUrl' in source ? source.embedUrl : null,
             isVerified: false, // Novas fontes precisam ser verificadas
             addedBy: userId,
             createdAt: new Date(),
