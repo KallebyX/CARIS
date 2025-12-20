@@ -120,14 +120,14 @@ export function ErrorBanner({
   autoHideDuration,
   className,
 }: ErrorBannerProps) {
-  if (!show) return null
-
   React.useEffect(() => {
-    if (autoHideDuration && onClose) {
+    if (show && autoHideDuration && onClose) {
       const timer = setTimeout(onClose, autoHideDuration)
       return () => clearTimeout(timer)
     }
-  }, [autoHideDuration, onClose])
+  }, [show, autoHideDuration, onClose])
+
+  if (!show) return null
 
   const isError = type === "error"
   const Icon = isError ? AlertCircleIcon : AlertTriangleIcon

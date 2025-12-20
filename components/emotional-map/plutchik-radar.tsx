@@ -273,7 +273,7 @@ export function PlutchikRadar({ data, period = 'month', onPeriodChange }: Plutch
             {stats.improvingEmotions.length > 0 && (
               <div>
                 <div className={`flex items-center gap-2 mb-2 ${isMobile ? 'text-sm' : ''}`}>
-                  <TrendingUp className={isMobile ? 'w-3 h-3' : 'w-4 h-4'} className="text-green-500" />
+                  <TrendingUp className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-green-500`} />
                   <span className="font-medium">Emoções em Melhora</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
