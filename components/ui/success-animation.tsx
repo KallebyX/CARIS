@@ -185,14 +185,14 @@ export function SuccessBanner({
   autoHideDuration,
   className,
 }: SuccessBannerProps) {
-  if (!show) return null
-
   React.useEffect(() => {
-    if (autoHideDuration && onClose) {
+    if (show && autoHideDuration && onClose) {
       const timer = setTimeout(onClose, autoHideDuration)
       return () => clearTimeout(timer)
     }
-  }, [autoHideDuration, onClose])
+  }, [show, autoHideDuration, onClose])
+
+  if (!show) return null
 
   return (
     <motion.div
