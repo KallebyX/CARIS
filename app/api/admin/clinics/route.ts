@@ -29,15 +29,6 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true
           }
-        },
-        subscriptions: {
-          columns: {
-            status: true,
-            amount: true,
-            planType: true
-          },
-          limit: 1,
-          orderBy: (subscriptions, { desc }) => [desc(subscriptions.createdAt)]
         }
       }
     })
@@ -58,7 +49,7 @@ export async function GET(request: NextRequest) {
         return {
           ...clinic,
           totalUsers: userCount[0]?.count || 0,
-          currentSubscription: clinic.subscriptions[0] || null
+          currentSubscription: null // Note: Subscription relation not available on clinics
         }
       })
     )

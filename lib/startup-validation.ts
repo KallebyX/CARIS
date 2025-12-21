@@ -64,7 +64,7 @@ function validateJWTSecret(): void {
     )
   }
 
-  console.log('✅ JWT_SECRET validation passed')
+  console.info('✅ JWT_SECRET validation passed')
 }
 
 /**
@@ -99,7 +99,7 @@ function validateEncryptionConfig(): void {
     )
   }
 
-  console.log('✅ Encryption configuration validated')
+  console.info('✅ Encryption configuration validated')
 }
 
 /**
@@ -123,7 +123,7 @@ function validateDatabaseConfig(): void {
     )
   }
 
-  console.log('✅ Database configuration validated')
+  console.info('✅ Database configuration validated')
 }
 
 /**
@@ -142,7 +142,7 @@ function validateNodeEnvironment(): void {
       throw new Error('❌ CRITICAL: Production deployment requires JWT_SECRET >= 64 characters')
     }
 
-    console.log('✅ Production environment checks passed')
+    console.info('✅ Production environment checks passed')
   }
 }
 
@@ -163,7 +163,7 @@ function validatePusherConfig(): void {
     return
   }
 
-  console.log('✅ Pusher configuration found')
+  console.info('✅ Pusher configuration found')
 }
 
 /**
@@ -181,7 +181,7 @@ function validateSecurityConfig(): void {
       '   For distributed rate limiting, configure Upstash Redis.'
     )
   } else {
-    console.log('✅ Rate limiting (Redis) configured')
+    console.info('✅ Rate limiting (Redis) configured')
   }
 }
 
@@ -190,7 +190,7 @@ function validateSecurityConfig(): void {
  * Call this at application startup
  */
 export function validateStartupConfiguration(): void {
-  console.log('\n🔐 Running CÁRIS Platform Security Validation...\n')
+  console.info('\n🔐 Running CÁRIS Platform Security Validation...\n')
 
   try {
     validateNodeEnvironment()
@@ -200,7 +200,7 @@ export function validateStartupConfiguration(): void {
     validatePusherConfig()
     validateSecurityConfig()
 
-    console.log('\n✅ All critical validations passed - Application is secure to start\n')
+    console.info('\n✅ All critical validations passed - Application is secure to start\n')
   } catch (error) {
     console.error('\n' + (error instanceof Error ? error.message : 'Unknown validation error'))
     console.error('\n❌ Application startup aborted due to security validation failure.\n')

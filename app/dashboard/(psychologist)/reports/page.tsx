@@ -1,14 +1,44 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import dynamic from "next/dynamic"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AdvancedCharts } from "@/components/reports/advanced-charts"
-import { PatientReport } from "@/components/reports/patient-report"
-import { BarChart3, Users, Activity, TrendingUp, Download, FileText } from "lucide-react"
+import { BarChart3, Users, Activity, TrendingUp, Download, FileText, Loader2 } from "lucide-react"
 import { useTranslations } from "@/lib/i18n"
+
+// Dynamic imports for heavy chart components to reduce initial bundle size
+const AdvancedCharts = dynamic(
+  () => import("@/components/reports/advanced-charts").then(mod => ({ default: mod.AdvancedCharts })),
+  {
+    ssr: false,
+    loading: () => (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" />
+          <p className="mt-2 text-slate-600">Carregando gráficos...</p>
+        </CardContent>
+      </Card>
+    ),
+  }
+)
+
+const PatientReport = dynamic(
+  () => import("@/components/reports/patient-report").then(mod => ({ default: mod.PatientReport })),
+  {
+    ssr: false,
+    loading: () => (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" />
+          <p className="mt-2 text-slate-600">Carregando relatório...</p>
+        </CardContent>
+      </Card>
+    ),
+  }
+)
 
 export default function ReportsPage() {
   const t = useTranslations("psychologist.reportsPage")

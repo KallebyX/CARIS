@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -41,31 +42,32 @@ import {
   Download,
   RefreshCw,
   XCircle,
+  Loader2,
 } from 'lucide-react'
-import { Line, Bar } from 'react-chartjs-2'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
+// Dynamic imports for heavy Chart.js components to reduce initial bundle size
+const RevenueLineChart = dynamic(
+  () => import('@/components/charts/payment-charts').then(mod => ({ default: mod.RevenueLineChart })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
+)
+
+const SubscriptionBarChart = dynamic(
+  () => import('@/components/charts/payment-charts').then(mod => ({ default: mod.SubscriptionBarChart })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    ),
+  }
 )
 
 interface PaymentStats {
@@ -384,7 +386,7 @@ export default function AdminPaymentsPage() {
             <CardDescription>Monthly revenue over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <Line data={revenueChartData} options={revenueChartOptions} />
+            <RevenueLineChart data={revenueChartData} options={revenueChartOptions} />
           </CardContent>
         </Card>
 
@@ -394,7 +396,7 @@ export default function AdminPaymentsPage() {
             <CardDescription>Distribution across plans</CardDescription>
           </CardHeader>
           <CardContent>
-            <Bar data={subscriptionsByPlanData} options={subscriptionsByPlanOptions} />
+            <SubscriptionBarChart data={subscriptionsByPlanData} options={subscriptionsByPlanOptions} />
           </CardContent>
         </Card>
       </div>

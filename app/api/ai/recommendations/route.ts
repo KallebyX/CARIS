@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { diaryEntries, moodTracking, users, patientProfiles } from '@/db/schema'
-import { eq, desc, gte } from 'drizzle-orm'
+import { eq, desc, gte, and } from 'drizzle-orm'
 import { generateWeeklyInsight, generateWellnessTips, predictGoalAchievement } from '@/lib/ai/insights-generator'
 import { recommendMeditations } from '@/lib/ai/emotional-intelligence'
 import { getUserIdFromRequest } from '@/lib/auth'
@@ -99,20 +99,26 @@ export async function POST(req: NextRequest) {
       const thisWeekEntries = await db
         .select()
         .from(diaryEntries)
-        .where(eq(diaryEntries.patientId, patientId))
-        .where(gte(diaryEntries.entryDate, sevenDaysAgo))
+        .where(and(
+          eq(diaryEntries.patientId, patientId),
+          gte(diaryEntries.entryDate, sevenDaysAgo)
+        ))
 
       const thisWeekMoods = await db
         .select()
         .from(moodTracking)
-        .where(eq(moodTracking.patientId, patientId))
-        .where(gte(moodTracking.date, sevenDaysAgo))
+        .where(and(
+          eq(moodTracking.patientId, patientId),
+          gte(moodTracking.date, sevenDaysAgo)
+        ))
 
       const lastWeekMoods = await db
         .select()
         .from(moodTracking)
-        .where(eq(moodTracking.patientId, patientId))
-        .where(gte(moodTracking.date, fourteenDaysAgo))
+        .where(and(
+          eq(moodTracking.patientId, patientId),
+          gte(moodTracking.date, fourteenDaysAgo)
+        ))
 
       const avgMood =
         thisWeekMoods.reduce((sum, m) => sum + (m.mood || 0), 0) / Math.max(thisWeekMoods.length, 1)

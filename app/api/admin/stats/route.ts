@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { db } from "@/db"
-import { clinics, clinicUsers, users, subscriptions, sessions } from "@/db/schema"
+import { clinics, clinicUsers, users, subscriptions, subscriptionPlans, sessions } from "@/db/schema"
 import { eq, and, count, sum, gte, sql } from "drizzle-orm"
 import { withCache, CachePresets, generateCacheKey } from "@/lib/api-cache"
 import { apiUnauthorized, apiForbidden, apiSuccess, handleApiError } from "@/lib/api-response"
@@ -69,12 +69,13 @@ export async function GET(request: NextRequest) {
             )
           )
 
-        // Total revenue (sum of active subscriptions)
+        // Total revenue (sum of active subscriptions joined with plans)
         const totalRevenueResult = await db
           .select({
-            total: sql<number>`COALESCE(SUM(${subscriptions.amount}), 0)`
+            total: sql<number>`COALESCE(SUM(${subscriptionPlans.priceMonthly}), 0)`
           })
           .from(subscriptions)
+          .innerJoin(subscriptionPlans, eq(subscriptions.planId, subscriptionPlans.id))
           .where(eq(subscriptions.status, "active"))
 
         // Sessions this month

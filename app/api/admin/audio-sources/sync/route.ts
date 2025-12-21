@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
             language: source.language,
             quality: source.quality,
             format: source.format,
-            downloadUrl: source.downloadUrl,
-            embedUrl: source.embedUrl,
+            downloadUrl: 'downloadUrl' in source ? source.downloadUrl : null,
+            embedUrl: 'embedUrl' in source ? source.embedUrl : null,
             isVerified: source.isVerified,
             addedBy: userId,
             createdAt: new Date(),
@@ -95,16 +95,14 @@ export async function POST(request: NextRequest) {
             url: source.url,
             license: source.license,
             licenseDetails: source.licenseDetails || '',
-            attribution: source.attribution,
+            attribution: source.attribution || null,
             author: source.author,
             duration: source.duration,
             category: source.category,
             tags: source.tags || [],
-            language: source.language,
+            language: source.language || null,
             quality: source.quality,
             format: source.format,
-            downloadUrl: 'downloadUrl' in source ? source.downloadUrl : null,
-            embedUrl: 'embedUrl' in source ? source.embedUrl : null,
             isVerified: false, // Novas fontes precisam ser verificadas
             addedBy: userId,
             createdAt: new Date(),
@@ -135,25 +133,45 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Interface for discovered sources with all optional fields explicitly defined
+interface DiscoveredSource {
+  id: string
+  title: string
+  description: string
+  url: string
+  license: 'creative_commons' | 'public_domain' | 'royalty_free' | 'fair_use'
+  licenseDetails: string
+  attribution?: string
+  author: string
+  duration: number
+  category: 'meditation' | 'nature' | 'binaural' | 'music' | 'voice'
+  tags: string[]
+  language?: 'pt-BR' | 'pt-PT' | 'en' | 'es'
+  quality: 'low' | 'medium' | 'high'
+  format: 'mp3' | 'wav' | 'ogg'
+  isVerified: boolean
+  addedAt: Date
+}
+
 // Simulação de busca externa (placeholder para implementação real)
-async function simulateExternalSearch() {
+async function simulateExternalSearch(): Promise<DiscoveredSource[]> {
   // Simular descoberta de fontes adicionais
-  const discoveredSources = [
+  const discoveredSources: DiscoveredSource[] = [
     {
       id: `discovered-${Date.now()}-1`,
       title: 'Meditação Matinal - Sons da Floresta',
       description: 'Meditação guiada com sons naturais da floresta brasileira',
       url: 'https://example.com/meditation/forest-morning',
-      license: 'creative_commons' as const,
+      license: 'creative_commons',
       licenseDetails: 'CC BY-SA 4.0',
       attribution: 'Instituto de Mindfulness Brasil',
       author: 'Dr. Maria Silva',
       duration: 900, // 15 minutos
-      category: 'meditation' as const,
+      category: 'meditation',
       tags: ['meditação', 'manhã', 'floresta', 'natureza', 'português'],
-      language: 'pt-BR' as const,
-      quality: 'high' as const,
-      format: 'mp3' as const,
+      language: 'pt-BR',
+      quality: 'high',
+      format: 'mp3',
       isVerified: false,
       addedAt: new Date()
     },
@@ -162,15 +180,16 @@ async function simulateExternalSearch() {
       title: 'Respiração Consciente para Ansiedade',
       description: 'Técnica de respiração para reduzir ansiedade e estresse',
       url: 'https://example.com/meditation/anxiety-breathing',
-      license: 'public_domain' as const,
+      license: 'public_domain',
       licenseDetails: 'Domínio Público',
+      attribution: 'Centro de Bem-Estar Mental',
       author: 'Centro de Bem-Estar Mental',
       duration: 600, // 10 minutos
-      category: 'meditation' as const,
+      category: 'meditation',
       tags: ['ansiedade', 'respiração', 'estresse', 'calma'],
-      language: 'pt-BR' as const,
-      quality: 'medium' as const,
-      format: 'mp3' as const,
+      language: 'pt-BR',
+      quality: 'medium',
+      format: 'mp3',
       isVerified: false,
       addedAt: new Date()
     },
@@ -179,14 +198,16 @@ async function simulateExternalSearch() {
       title: 'Sons Binaurais para Sono Profundo',
       description: 'Frequências binaurais específicas para induzir sono relaxante',
       url: 'https://example.com/binaural/deep-sleep',
-      license: 'royalty_free' as const,
+      license: 'royalty_free',
       licenseDetails: 'Royalty Free License',
+      attribution: 'SoundTherapy Labs',
       author: 'SoundTherapy Labs',
       duration: 3600, // 60 minutos
-      category: 'binaural' as const,
+      category: 'binaural',
       tags: ['binaural', 'sono', 'delta', 'relaxamento'],
-      quality: 'high' as const,
-      format: 'wav' as const,
+      language: 'pt-BR',
+      quality: 'high',
+      format: 'wav',
       isVerified: false,
       addedAt: new Date()
     }

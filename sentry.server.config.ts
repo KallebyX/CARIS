@@ -59,7 +59,7 @@ if (isSentryEnabled) {
     beforeSend(event, hint) {
       // Don't send events in development
       if (ENVIRONMENT === "development") {
-        console.log("Sentry event (not sent in dev):", event)
+        // Silently drop events in development - no logging needed
         return null
       }
 
@@ -145,9 +145,9 @@ if (isSentryEnabled) {
         },
       }
 
-      // Log to console in staging
+      // Log to console in staging for debugging
       if (ENVIRONMENT === "staging") {
-        console.log("Sentry event:", event, hint)
+        console.info("Sentry event:", event)
       }
 
       return event

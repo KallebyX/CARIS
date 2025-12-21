@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { meditationAudios, meditationCategories, users } from '@/db/schema'
 import { getUserIdFromRequest } from '@/lib/auth'
-import { eq, desc, and, ilike, or, sql } from 'drizzle-orm'
+import { eq, desc, and, ilike, or, sql, SQL } from 'drizzle-orm'
 import jwt from 'jsonwebtoken'
 import { parsePagePagination } from '@/lib/pagination'
 
@@ -27,7 +27,36 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const { limit, offset, page } = parsePagePagination(searchParams, 20)
 
-    let query = db
+    // Build conditions array
+    const conditions: (SQL | undefined)[] = []
+
+    if (category && category !== 'all') {
+      conditions.push(eq(meditationAudios.categoryId, category))
+    }
+
+    if (difficulty && difficulty !== 'all') {
+      conditions.push(eq(meditationAudios.difficulty, difficulty))
+    }
+
+    if (status && status !== 'all') {
+      conditions.push(eq(meditationAudios.status, status))
+    }
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(meditationAudios.title, `%${search}%`),
+          ilike(meditationAudios.description, `%${search}%`),
+          ilike(meditationAudios.instructor, `%${search}%`)
+        )
+      )
+    }
+
+    // Build where clause
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+    // Execute query with all conditions
+    const audios = await db
       .select({
         id: meditationAudios.id,
         title: meditationAudios.title,
@@ -53,51 +82,18 @@ export async function GET(request: NextRequest) {
       })
       .from(meditationAudios)
       .leftJoin(meditationCategories, eq(meditationAudios.categoryId, meditationCategories.id))
-
-    // Aplicar filtros
-    const conditions = []
-
-    if (category && category !== 'all') {
-      conditions.push(eq(meditationAudios.categoryId, category))
-    }
-
-    if (difficulty && difficulty !== 'all') {
-      conditions.push(eq(meditationAudios.difficulty, difficulty))
-    }
-
-    if (status && status !== 'all') {
-      conditions.push(eq(meditationAudios.status, status))
-    }
-
-    if (search) {
-      conditions.push(
-        or(
-          ilike(meditationAudios.title, `%${search}%`),
-          ilike(meditationAudios.description, `%${search}%`),
-          ilike(meditationAudios.instructor, `%${search}%`)
-        )
-      )
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions))
-    }
-
-    const audios = await query
+      .where(whereClause)
       .orderBy(desc(meditationAudios.createdAt))
       .limit(limit)
       .offset(offset)
 
-    // Contar total para paginação
-    const totalQuery = db
+    // Count total for pagination
+    const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(meditationAudios)
+      .where(whereClause)
 
-    if (conditions.length > 0) {
-      totalQuery.where(and(...conditions))
-    }
-
-    const [{ count }] = await totalQuery
+    const [{ count }] = totalResult
 
     return NextResponse.json({
       success: true,
