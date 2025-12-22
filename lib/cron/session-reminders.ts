@@ -1,5 +1,5 @@
 import cron from "node-cron"
-import SessionReminderService from "@/lib/session-reminders"
+import sessionReminderService, { SessionReminderService } from "@/lib/session-reminders"
 
 /**
  * Cron Jobs for Session Reminders
@@ -15,7 +15,7 @@ export class SessionReminderCronJobs {
   private jobs: Map<string, cron.ScheduledTask> = new Map()
 
   constructor() {
-    this.reminderService = SessionReminderService.getInstance()
+    this.reminderService = sessionReminderService
   }
 
   static getInstance(): SessionReminderCronJobs {

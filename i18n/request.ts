@@ -11,9 +11,17 @@ import { defaultLocale, type Locale } from '@/i18n.config'
 
 export default getRequestConfig(async () => {
   // Get locale from cookie or use default
-  const cookieStore = await cookies()
-  const localeCookie = cookieStore.get('NEXT_LOCALE')?.value as Locale | undefined
-  const locale = localeCookie || defaultLocale
+  // Use try-catch to handle static generation context
+  let locale: Locale = defaultLocale
+
+  try {
+    const cookieStore = await cookies()
+    const localeCookie = cookieStore.get('NEXT_LOCALE')?.value as Locale | undefined
+    locale = localeCookie || defaultLocale
+  } catch {
+    // During static generation, cookies are not available
+    locale = defaultLocale
+  }
 
   return {
     locale,

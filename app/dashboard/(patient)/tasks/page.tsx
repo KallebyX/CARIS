@@ -1,8 +1,10 @@
 import { TaskLibrary } from '@/components/tasks/task-library'
-import { getUserIdFromRequest } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import jwt from 'jsonwebtoken'
+
+// Force dynamic rendering for this page as it requires authentication
+export const dynamic = 'force-dynamic'
 
 export default async function TasksPage() {
   // Verificar autenticação

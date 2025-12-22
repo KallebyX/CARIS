@@ -5,6 +5,10 @@ import type { Metadata, Viewport } from "next"
 // import { Inter, Lora } from 'next/font/google'
 
 import "./globals.css"
+
+// Force dynamic rendering for all pages to avoid static generation issues with
+// cookies, authentication, and i18n during build
+export const dynamic = 'force-dynamic'
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { QueryProvider } from "./providers"

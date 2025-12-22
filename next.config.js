@@ -37,6 +37,14 @@ const nextConfig = {
   // ================================================================
   // EXPERIMENTAL FEATURES
   // ================================================================
+  // Packages that should not be bundled for server components
+  serverExternalPackages: [
+    'swagger-ui-react',
+    'swagger-client',
+    'isomorphic-dompurify',
+    'jsdom',
+  ],
+
   experimental: {
     // Note: esmExternals was removed as it's no longer needed and causes warnings in Next.js 15
     // The default behavior now handles ESM externals correctly
@@ -260,7 +268,7 @@ const nextConfig = {
   // ================================================================
   // WEBPACK CONFIGURATION
   // ================================================================
-  webpack: (config, { isServer, webpack }) => {
+  webpack: (config, { isServer }) => {
     // Client-side: Disable Node.js modules that aren't needed
     if (!isServer) {
       config.resolve.fallback = {
@@ -280,74 +288,8 @@ const nextConfig = {
       }
     }
 
-    // Server-side: Define browser globals that some packages expect
-    if (isServer) {
-      config.plugins.push(
-        new webpack.DefinePlugin({
-          'self': 'globalThis',
-          'window': 'undefined',
-        })
-      )
-    }
-
     // Externalize native database modules
     config.externals = [...(config.externals || []), 'pg-native']
-
-    // ================================================================
-    // PERFORMANCE OPTIMIZATIONS
-    // ================================================================
-
-    // Split chunks for better caching
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          // Vendor chunk for stable dependencies
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name(module) {
-              // Group by package name
-              const packageName = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/)?.[1]
-              return `npm.${packageName?.replace('@', '')}`
-            },
-            priority: 10,
-          },
-          // Separate chunk for React and related libraries
-          react: {
-            test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
-            name: 'react-vendor',
-            priority: 20,
-          },
-          // Separate chunk for UI components
-          ui: {
-            test: /[\\/]node_modules[\\/](@radix-ui)[\\/]/,
-            name: 'ui-vendor',
-            priority: 15,
-          },
-          // Separate chunk for charting libraries (can be large)
-          charts: {
-            test: /[\\/]node_modules[\\/](recharts|chart\.js|d3)[\\/]/,
-            name: 'charts-vendor',
-            priority: 15,
-          },
-          // Common chunk for shared code
-          common: {
-            minChunks: 2,
-            priority: 5,
-            reuseExistingChunk: true,
-          },
-        },
-      },
-    }
-
-    // Add bundle size warnings
-    config.performance = {
-      ...config.performance,
-      hints: process.env.NODE_ENV === 'production' ? 'warning' : false,
-      maxEntrypointSize: 512000, // 500KB
-      maxAssetSize: 512000, // 500KB
-    }
 
     return config
   },
@@ -367,27 +309,6 @@ const nextConfig = {
   // ================================================================
   poweredByHeader: false, // Remove X-Powered-By header
 
-  // ================================================================
-  // ESLINT
-  // ================================================================
-  eslint: {
-    // ESLint will now run during builds and fail on errors
-    // Configured to show warnings for common patterns while catching real issues
-    // See .eslintrc.json for rule configuration
-    ignoreDuringBuilds: false,
-  },
-
-  // ================================================================
-  // TYPESCRIPT
-  // ================================================================
-  typescript: {
-    // TypeScript errors will now fail the build
-    // This ensures type safety and catches errors during development
-    ignoreBuildErrors: false,
-
-    // Enable incremental type checking for better performance
-    // tsconfigPath: './tsconfig.json',
-  },
 }
 
 // ================================================================

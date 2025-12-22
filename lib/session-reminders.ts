@@ -4,7 +4,7 @@ import { eq, and, gte, lte } from "drizzle-orm"
 import { EmailService } from "./email"
 import { formatInTimeZone, toZonedTime } from "date-fns-tz"
 import { addMinutes, addHours, addDays, isBefore, isAfter } from "date-fns"
-import twilio from "twilio"
+// Twilio is imported dynamically to avoid initialization issues
 
 /**
  * Session Reminder Service
@@ -12,10 +12,24 @@ import twilio from "twilio"
  * Supports configurable reminder preferences and timezone handling
  */
 
-// Initialize Twilio client
-const twilioClient = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  : null
+// Helper to get Twilio client only when properly configured
+async function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID
+  const authToken = process.env.TWILIO_AUTH_TOKEN
+
+  // Validate credentials exist and accountSid starts with 'AC'
+  if (!accountSid || !authToken || !accountSid.startsWith('AC')) {
+    return null
+  }
+
+  try {
+    const twilio = (await import('twilio')).default
+    return twilio(accountSid, authToken)
+  } catch (error) {
+    console.warn('Failed to initialize Twilio client:', error)
+    return null
+  }
+}
 
 export interface ReminderPreferences {
   emailRemindersEnabled: boolean
@@ -300,8 +314,14 @@ export class SessionReminderService {
     sessionData: SessionReminderData,
     reminderType: ReminderType
   ): Promise<boolean> {
-    if (!twilioClient || !sessionData.patientPhone) {
-      console.log("SMS reminder skipped: Twilio not configured or no phone number")
+    if (!sessionData.patientPhone) {
+      console.log("SMS reminder skipped: No phone number")
+      return false
+    }
+
+    const twilioClient = await getTwilioClient()
+    if (!twilioClient) {
+      console.log("SMS reminder skipped: Twilio not configured")
       return false
     }
 

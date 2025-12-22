@@ -6,7 +6,16 @@ const vapidKeys = {
   privateKey: process.env.VAPID_PRIVATE_KEY || "",
 }
 
-webpush.setVapidDetails("mailto:admin@caris.com", vapidKeys.publicKey, vapidKeys.privateKey)
+// Only configure VAPID if keys are properly set (65 bytes when decoded)
+const isVapidConfigured = vapidKeys.publicKey.length > 0 && vapidKeys.privateKey.length > 0
+
+if (isVapidConfigured) {
+  try {
+    webpush.setVapidDetails("mailto:admin@caris.com", vapidKeys.publicKey, vapidKeys.privateKey)
+  } catch (error) {
+    console.warn("Failed to configure VAPID keys:", error)
+  }
+}
 
 interface PushSubscription {
   endpoint: string
