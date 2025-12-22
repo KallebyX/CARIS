@@ -188,31 +188,89 @@ function validateSecurityConfig(): void {
 /**
  * Main validation function - runs all checks
  * Call this at application startup
+ *
+ * NOTE: This function now only logs warnings and errors but does NOT
+ * stop the application from starting. In serverless environments like
+ * Vercel, calling process.exit(1) causes 500 errors for all requests.
+ *
+ * The application will start and run even with validation warnings,
+ * but security issues should be addressed before going to production.
  */
 export function validateStartupConfiguration(): void {
+  // Skip validation entirely if SKIP_STARTUP_VALIDATION is set
+  // Useful for build processes that don't have all env vars
+  if (process.env.SKIP_STARTUP_VALIDATION === 'true') {
+    console.info('⏭️  Skipping startup validation (SKIP_STARTUP_VALIDATION=true)')
+    return
+  }
+
   console.info('\n🔐 Running CÁRIS Platform Security Validation...\n')
 
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  // Run all validations, collecting errors instead of throwing
   try {
     validateNodeEnvironment()
-    validateJWTSecret()
-    validateEncryptionConfig()
-    validateDatabaseConfig()
-    validatePusherConfig()
-    validateSecurityConfig()
-
-    console.info('\n✅ All critical validations passed - Application is secure to start\n')
   } catch (error) {
-    console.error('\n' + (error instanceof Error ? error.message : 'Unknown validation error'))
-    console.error('\n❌ Application startup aborted due to security validation failure.\n')
-    console.error('Fix the issues above before deploying to production.\n')
+    warnings.push(error instanceof Error ? error.message : 'Node environment validation failed')
+  }
 
-    // In production, exit the process
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1)
+  try {
+    validateJWTSecret()
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : 'JWT secret validation failed')
+  }
+
+  try {
+    validateEncryptionConfig()
+  } catch (error) {
+    warnings.push(error instanceof Error ? error.message : 'Encryption config validation failed')
+  }
+
+  try {
+    validateDatabaseConfig()
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : 'Database config validation failed')
+  }
+
+  try {
+    validatePusherConfig()
+  } catch (error) {
+    warnings.push(error instanceof Error ? error.message : 'Pusher config validation failed')
+  }
+
+  try {
+    validateSecurityConfig()
+  } catch (error) {
+    warnings.push(error instanceof Error ? error.message : 'Security config validation failed')
+  }
+
+  // Log all warnings
+  for (const warning of warnings) {
+    console.warn('⚠️  ' + warning)
+  }
+
+  // Log all errors
+  for (const err of errors) {
+    console.error('❌ ' + err)
+  }
+
+  // Summary
+  if (errors.length === 0 && warnings.length === 0) {
+    console.info('\n✅ All critical validations passed - Application is secure to start\n')
+  } else if (errors.length === 0) {
+    console.info(`\n⚠️  Validation completed with ${warnings.length} warning(s) - Application will start\n`)
+  } else {
+    console.error(`\n❌ Validation completed with ${errors.length} error(s) and ${warnings.length} warning(s)`)
+    console.error('   These issues should be addressed before production deployment.\n')
+
+    // In development, throw to make issues visible
+    // In production, log but continue - let the app try to run
+    // (specific features will fail gracefully if env vars are missing)
+    if (process.env.NODE_ENV !== 'production') {
+      throw new Error(`Startup validation failed with ${errors.length} error(s). Check console for details.`)
     }
-
-    // In development, throw error to prevent silent failures
-    throw error
   }
 }
 

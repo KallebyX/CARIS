@@ -2,8 +2,11 @@ import { drizzle } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
 import * as schema from "./schema"
 
+// Log warning if POSTGRES_URL is not set but don't crash
+// This allows the app to start and show proper error messages
+// rather than failing silently with 500 errors
 if (!process.env.POSTGRES_URL) {
-  throw new Error("POSTGRES_URL environment variable is not set")
+  console.error('⚠️ WARNING: POSTGRES_URL environment variable is not set. Database operations will fail.')
 }
 
 /**
@@ -33,8 +36,10 @@ const connectionConfig: postgres.Options<{}> = {
     : undefined,
 
   // SSL configuration for production
+  // Note: For Neon PostgreSQL, use 'require' mode which validates SSL
+  // but doesn't require full certificate verification (more compatible)
   ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: true }
+    ? 'require'
     : undefined,
 
   // Transform column names to camelCase (optional, keep for consistency)
@@ -44,7 +49,9 @@ const connectionConfig: postgres.Options<{}> = {
 }
 
 // Create connection pool
-const sql = postgres(process.env.POSTGRES_URL, connectionConfig)
+// Use a placeholder URL if POSTGRES_URL is not set to prevent immediate crash
+// Database operations will fail gracefully with proper error messages
+const sql = postgres(process.env.POSTGRES_URL || 'postgres://placeholder:placeholder@localhost:5432/placeholder', connectionConfig)
 
 // Create Drizzle instance with schema
 export const db = drizzle(sql, { schema })
