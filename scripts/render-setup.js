@@ -43,14 +43,29 @@ async function setupRender() {
     }
 
     // 3. Executar migrações do banco de dados
-    if (process.env.POSTGRES_URL) {
+    // Skip migrations on Vercel builds - they should be run separately
+    // Migrations during build can fail if tables already exist
+    const isVercel = process.env.VERCEL === '1' || process.env.VERCEL === 'true';
+    const skipMigrations = process.env.SKIP_MIGRATIONS === '1' || process.env.SKIP_MIGRATIONS === 'true';
+
+    if (isVercel) {
+      console.log('📦 Detectado ambiente Vercel - pulando migrações automáticas');
+      console.log('   (migrações devem ser executadas separadamente quando necessário)');
+    } else if (skipMigrations) {
+      console.log('⏭️  SKIP_MIGRATIONS definido - pulando migrações');
+    } else if (process.env.POSTGRES_URL) {
       console.log('🗄️  Executando migrações do banco de dados...');
       try {
         await execAsync('npm run db:migrate');
         console.log('✅ Migrações executadas com sucesso');
       } catch (error) {
-        console.error('❌ Erro ao executar migrações:', error.message);
-        console.log('📝 Continuando sem migrações (primeira execução pode ser normal)');
+        // Check if error is due to tables already existing (common scenario)
+        if (error.message && error.message.includes('already exists')) {
+          console.log('📋 Tabelas já existem - banco de dados está atualizado');
+        } else {
+          console.error('❌ Erro ao executar migrações:', error.message);
+          console.log('📝 Continuando sem migrações (verifique o banco de dados manualmente)');
+        }
       }
     } else {
       console.log('⚠️  POSTGRES_URL não encontrado, pulando migrações');

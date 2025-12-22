@@ -33,10 +33,15 @@ export function stopCronJobs(): void {
   console.log("✓ All cron jobs stopped")
 }
 
-// Auto-initialize in production or when explicitly enabled
-if (
-  process.env.NODE_ENV === "production" ||
-  process.env.ENABLE_CRON === "true"
-) {
+// Auto-initialize in production runtime only (not during build)
+// During Vercel/Next.js build, NODE_ENV is production but we shouldn't start cron jobs
+const isVercelBuild = process.env.VERCEL === "1" && process.env.NEXT_PHASE === "phase-production-build"
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build"
+const shouldInitCron =
+  !isBuildPhase &&
+  !isVercelBuild &&
+  (process.env.NODE_ENV === "production" || process.env.ENABLE_CRON === "true")
+
+if (shouldInitCron) {
   initializeCronJobs()
 }
