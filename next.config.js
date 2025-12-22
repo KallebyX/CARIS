@@ -177,6 +177,21 @@ const nextConfig = {
   },
 
   // ================================================================
+  // REWRITES (Favicon fallback)
+  // ================================================================
+  rewrites: async () => {
+    return {
+      beforeFiles: [
+        // Fallback for favicon.ico to use the static icon
+        {
+          source: '/favicon.ico',
+          destination: '/icons/icon-72x72.png',
+        },
+      ],
+    }
+  },
+
+  // ================================================================
   // HEADERS (PWA + Security + Performance)
   // ================================================================
   headers: async () => {
