@@ -75,7 +75,6 @@ export async function PATCH(request: Request) {
           .set({
             bio: bio || undefined,
             crp: crp || undefined,
-            updatedAt: new Date(),
           })
           .where(eq(psychologistProfiles.userId, userId))
       }
@@ -85,15 +84,28 @@ export async function PATCH(request: Request) {
 
     if (type === "notifications") {
       // Atualizar configurações de notificação
-      const { emailNotifications, pushNotifications, sessionReminders, diaryReminders } = data
+      const {
+        emailNotifications,
+        pushNotifications,
+        smsNotifications,
+        emailRemindersEnabled,
+        smsRemindersEnabled,
+        reminderBefore24h,
+        reminderBefore1h,
+        reminderBefore15min,
+      } = data
 
       await db
         .update(userSettings)
         .set({
           emailNotifications,
           pushNotifications,
-          sessionReminders,
-          diaryReminders,
+          smsNotifications,
+          emailRemindersEnabled,
+          smsRemindersEnabled,
+          reminderBefore24h,
+          reminderBefore1h,
+          reminderBefore15min,
           updatedAt: new Date(),
         })
         .where(eq(userSettings.userId, userId))

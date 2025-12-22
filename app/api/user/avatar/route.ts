@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/db"
-import { users, psychologistProfiles, patientProfiles } from "@/db/schema"
+import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
 import { writeFile } from "fs/promises"
@@ -43,27 +43,11 @@ export async function POST(request: Request) {
 
     const avatarUrl = `/uploads/avatars/${fileName}`
 
-    // Buscar dados do usuário
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 })
-    }
-
-    // Atualizar avatar no perfil apropriado
-    if (user.role === "psychologist") {
-      await db
-        .update(psychologistProfiles)
-        .set({ avatar: avatarUrl, updatedAt: new Date() })
-        .where(eq(psychologistProfiles.userId, userId))
-    } else if (user.role === "patient") {
-      await db
-        .update(patientProfiles)
-        .set({ avatar: avatarUrl, updatedAt: new Date() })
-        .where(eq(patientProfiles.userId, userId))
-    }
+    // Update avatar in users table
+    await db
+      .update(users)
+      .set({ avatarUrl, updatedAt: new Date() })
+      .where(eq(users.id, userId))
 
     return NextResponse.json({ avatarUrl })
   } catch (error) {

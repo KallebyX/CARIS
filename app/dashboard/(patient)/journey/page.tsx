@@ -50,25 +50,25 @@ export default function JourneyPage() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" asChild>
-          <Link href="/dashboard/diary">
+        <Link href="/dashboard/diary">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="p-6 text-center">
               <Brain className="w-12 h-12 text-[#2D9B9B] mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{t('emotionalDiary')}</h3>
               <p className="text-gray-600 text-sm">{t('emotionalDiaryDescription')}</p>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer" asChild>
-          <Link href="/dashboard/sessions">
+        <Link href="/dashboard/sessions">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
             <CardContent className="p-6 text-center">
               <Calendar className="w-12 h-12 text-[#F4A261] mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{t('nextSession')}</h3>
               <p className="text-gray-600 text-sm">{t('sessionTime')}</p>
             </CardContent>
-          </Link>
-        </Card>
+          </Card>
+        </Link>
       </div>
     </div>
   )

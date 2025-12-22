@@ -49,8 +49,8 @@ export async function GET(request: Request) {
       name: subscription.planName,
       price: stripeSubscription.items.data[0]?.price.unit_amount || 0,
       interval: stripeSubscription.items.data[0]?.price.recurring?.interval || "month",
-      renewsAt: new Date(stripeSubscription.current_period_end * 1000).toISOString().split('T')[0],
-      status: stripeSubscription.status,
+      renewsAt: subscription.currentPeriodEnd.toISOString().split('T')[0],
+      status: stripeSubscription.status ?? subscription.status,
     }
 
     const billingInvoices = userInvoices.map(invoice => ({

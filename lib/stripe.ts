@@ -203,7 +203,7 @@ export class StripeService {
   }
 
   // Retrieve subscription
-  static async getSubscription(subscriptionId: string) {
+  static async getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
     try {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ['latest_invoice', 'customer', 'default_payment_method'],
@@ -341,5 +341,16 @@ export function getPlanById(planId: SubscriptionPlan) {
 
 // Helper function to get all plans
 export function getAllPlans() {
-  return Object.values(STRIPE_PLANS)
+  return Object.values(STRIPE_PLANS) as Array<{
+    id: string
+    name: string
+    description: string
+    priceMonthly: number
+    priceYearly: number
+    stripePriceIdMonthly: string
+    stripePriceIdYearly: string
+    features: string[]
+    maxPatients: number | null
+    isPopular: boolean
+  }>
 }

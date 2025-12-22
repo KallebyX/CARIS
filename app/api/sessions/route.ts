@@ -8,18 +8,18 @@ import { z } from "zod";
 
 const createSessionSchema = z.object({
   patientId: z.number(),
-  sessionDate: z.string(),
-  durationMinutes: z.number().min(15).max(240),
-  type: z.enum(['online', 'presencial']),
+  scheduledAt: z.string(),
+  duration: z.number().min(15).max(240).default(50),
+  type: z.enum(['therapy', 'consultation', 'group']).default('therapy'),
   notes: z.string().optional(),
   timezone: z.string().optional(),
 });
 
 const updateSessionSchema = z.object({
-  sessionDate: z.string().optional(),
-  durationMinutes: z.number().min(15).max(240).optional(),
-  type: z.enum(['online', 'presencial']).optional(),
-  status: z.enum(['agendada', 'confirmada', 'realizada', 'cancelada']).optional(),
+  scheduledAt: z.string().optional(),
+  duration: z.number().min(15).max(240).optional(),
+  type: z.enum(['therapy', 'consultation', 'group']).optional(),
+  status: z.enum(['scheduled', 'confirmed', 'completed', 'cancelled']).optional(),
   notes: z.string().optional(),
   timezone: z.string().optional(),
 });
@@ -57,10 +57,10 @@ export async function POST(request: NextRequest) {
     const newSession = await db.insert(sessions).values({
       psychologistId: userId,
       patientId: sessionData.patientId,
-      sessionDate: new Date(sessionData.sessionDate),
-      durationMinutes: sessionData.durationMinutes,
+      scheduledAt: new Date(sessionData.scheduledAt),
+      duration: sessionData.duration,
       type: sessionData.type,
-      status: 'agendada',
+      status: 'scheduled',
       notes: sessionData.notes,
       timezone: sessionData.timezone || 'America/Sao_Paulo',
     }).returning();
@@ -70,13 +70,25 @@ export async function POST(request: NextRequest) {
     // Automatically sync to calendars if integration is enabled
     try {
       const calendarService = new CalendarIntegrationService();
+      // Map database fields to CalendarIntegrationService expected format
+      const calendarSessionData = {
+        id: createdSession.id,
+        patientId: createdSession.patientId!,
+        psychologistId: createdSession.psychologistId!,
+        sessionDate: createdSession.scheduledAt,
+        durationMinutes: createdSession.duration,
+        type: createdSession.type,
+        status: createdSession.status,
+        notes: createdSession.notes ?? undefined,
+        timezone: createdSession.timezone ?? undefined,
+      };
       const syncResult = await calendarService.syncSessionToCalendars(
-        createdSession,
+        calendarSessionData,
         patient,
         user
       );
 
-      console.log('Session synced to calendars:', syncResult);
+      console.info('Session synced to calendars:', syncResult);
     } catch (syncError) {
       console.error('Error syncing session to calendars:', syncError);
       // Don't fail the request if calendar sync fails
@@ -205,9 +217,9 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update session
-    const updateFields: any = {};
-    if (validatedData.sessionDate) updateFields.sessionDate = new Date(validatedData.sessionDate);
-    if (validatedData.durationMinutes) updateFields.durationMinutes = validatedData.durationMinutes;
+    const updateFields: Partial<typeof sessions.$inferInsert> = {};
+    if (validatedData.scheduledAt) updateFields.scheduledAt = new Date(validatedData.scheduledAt);
+    if (validatedData.duration) updateFields.duration = validatedData.duration;
     if (validatedData.type) updateFields.type = validatedData.type;
     if (validatedData.status) updateFields.status = validatedData.status;
     if (validatedData.notes !== undefined) updateFields.notes = validatedData.notes;
@@ -220,16 +232,31 @@ export async function PUT(request: NextRequest) {
       .returning();
 
     // Update calendars if session details changed
-    if (validatedData.sessionDate || validatedData.durationMinutes || validatedData.notes) {
-      try {
-        const calendarService = new CalendarIntegrationService();
-        await calendarService.updateSessionInCalendars(
-          { ...session, ...updateFields },
-          session.patient,
-          session.psychologist
-        );
-      } catch (syncError) {
-        console.error('Error updating session in calendars:', syncError);
+    if (validatedData.scheduledAt || validatedData.duration || validatedData.notes) {
+      if (session.patient && session.psychologist) {
+        try {
+          const calendarService = new CalendarIntegrationService();
+          const mergedSession = { ...session, ...updateFields };
+          // Map database fields to CalendarIntegrationService expected format
+          const calendarSessionData = {
+            id: mergedSession.id,
+            patientId: mergedSession.patientId!,
+            psychologistId: mergedSession.psychologistId!,
+            sessionDate: mergedSession.scheduledAt,
+            durationMinutes: mergedSession.duration,
+            type: mergedSession.type,
+            status: mergedSession.status,
+            notes: mergedSession.notes ?? undefined,
+            timezone: mergedSession.timezone ?? undefined,
+          };
+          await calendarService.updateSessionInCalendars(
+            calendarSessionData,
+            session.patient,
+            session.psychologist
+          );
+        } catch (syncError) {
+          console.error('Error updating session in calendars:', syncError);
+        }
       }
     }
 

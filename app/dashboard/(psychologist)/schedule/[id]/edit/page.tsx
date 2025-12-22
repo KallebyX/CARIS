@@ -22,6 +22,7 @@ interface Session {
   type: "online" | "presencial"
   status: "agendada" | "confirmada" | "realizada" | "cancelada"
   notes?: string
+  createdAt?: string
   patient: {
     id: number
     name: string
@@ -38,6 +39,8 @@ interface FormData {
   status: "agendada" | "confirmada" | "realizada" | "cancelada"
   notes: string
 }
+
+type FormErrors = Partial<Record<keyof FormData, string>>
 
 export default function EditSessionPage() {
   const router = useRouter()
@@ -57,7 +60,7 @@ export default function EditSessionPage() {
     notes: "",
   })
 
-  const [errors, setErrors] = useState<Partial<FormData>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
   useEffect(() => {
     if (sessionId) {
@@ -100,7 +103,7 @@ export default function EditSessionPage() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {}
+    const newErrors: FormErrors = {}
 
     if (!formData.sessionDate) {
       newErrors.sessionDate = "Selecione uma data"
@@ -422,9 +425,11 @@ export default function EditSessionPage() {
               <Badge className={getStatusColor(session.status)} variant="secondary">
                 {session.status}
               </Badge>
-              <p className="text-sm text-gray-600 mt-2">
-                Criada em {new Date(session.createdAt).toLocaleDateString("pt-BR")}
-              </p>
+              {session.createdAt && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Criada em {new Date(session.createdAt).toLocaleDateString("pt-BR")}
+                </p>
+              )}
             </CardContent>
           </Card>
 

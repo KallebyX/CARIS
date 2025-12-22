@@ -133,18 +133,11 @@ function makeQueryClient() {
         // ============================================================
 
         /**
-         * Use error boundaries for errors
+         * Throw errors to error boundaries
          * Set to false to handle errors manually
          * @default false
          */
-        useErrorBoundary: false,
-
-        /**
-         * Enable suspense mode for queries
-         * Works with React Suspense boundaries
-         * @default false
-         */
-        suspense: false,
+        throwOnError: false,
 
         /**
          * Keep previous data while fetching new data
@@ -175,10 +168,10 @@ function makeQueryClient() {
         networkMode: 'online',
 
         /**
-         * Use error boundaries for mutation errors
+         * Throw errors to error boundaries for mutations
          * @default false
          */
-        useErrorBoundary: false,
+        throwOnError: false,
       },
     },
   })
@@ -248,8 +241,6 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools
           initialIsOpen={false}
-          position="bottom-right"
-          buttonPosition="bottom-right"
         />
       )}
     </QueryClientProvider>

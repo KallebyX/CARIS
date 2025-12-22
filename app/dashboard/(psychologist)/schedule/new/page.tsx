@@ -44,6 +44,8 @@ interface FormData {
   notes: string
 }
 
+type FormErrors = Partial<Record<keyof FormData, string>>
+
 export default function NewSessionPage() {
   const t = useTranslations("psychologist.newSessionPage")
   const router = useRouter()
@@ -63,7 +65,7 @@ export default function NewSessionPage() {
     notes: "",
   })
 
-  const [errors, setErrors] = useState<Partial<FormData>>({})
+  const [errors, setErrors] = useState<FormErrors>({})
 
   useEffect(() => {
     fetchPatients()
@@ -127,7 +129,7 @@ export default function NewSessionPage() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<FormData> = {}
+    const newErrors: FormErrors = {}
 
     if (!formData.patientId) {
       newErrors.patientId = t("validation.selectPatient")
