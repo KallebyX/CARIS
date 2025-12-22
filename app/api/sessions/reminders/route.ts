@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
-import SessionReminderService from "@/lib/session-reminders"
+import { SessionReminderService } from "@/lib/session-reminders"
 import { db } from "@/db"
 import { users, userSettings } from "@/db/schema"
 import { eq } from "drizzle-orm"

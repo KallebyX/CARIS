@@ -211,7 +211,7 @@ export class RealtimeNotificationService {
       const sessionData = await db
         .select({
           id: sessions.id,
-          sessionDate: sessions.sessionDate,
+          sessionDate: sessions.scheduledAt,
           type: sessions.type,
           status: sessions.status,
           patientId: sessions.patientId,

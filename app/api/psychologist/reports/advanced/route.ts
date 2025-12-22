@@ -9,6 +9,7 @@ import {
   sosUsages,
   tasks,
   achievements,
+  userAchievements,
 } from "@/db/schema"
 import { eq, and, gte, lte, count, avg, desc, asc } from "drizzle-orm"
 import { verifyToken } from "@/lib/auth"
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Token não encontrado" }, { status: 401 })
     }
 
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
     if (!decoded || decoded.role !== "psychologist") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
@@ -30,13 +31,13 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get("endDate")
     const patientId = searchParams.get("patientId")
 
-    const psychologistId = decoded.userId
+    const psychologistId = decoded.userId as number
 
     // Filtros de data
     const dateFilter =
       startDate && endDate
-        ? and(gte(sessions.sessionDate, new Date(startDate)), lte(sessions.sessionDate, new Date(endDate)))
-        : gte(sessions.sessionDate, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) // Últimos 90 dias
+        ? and(gte(sessions.scheduledAt, new Date(startDate)), lte(sessions.scheduledAt, new Date(endDate)))
+        : gte(sessions.scheduledAt, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)) // Últimos 90 dias
 
     // Filtro de paciente específico
     const patientFilter = patientId ? eq(sessions.patientId, Number.parseInt(patientId)) : undefined
@@ -55,14 +56,14 @@ export async function GET(request: NextRequest) {
     // 2. Evolução de sessões por mês
     const sessionEvolution = await db
       .select({
-        month: sessions.sessionDate,
+        month: sessions.scheduledAt,
         count: count(),
         status: sessions.status,
       })
       .from(sessions)
       .where(and(eq(sessions.psychologistId, psychologistId), dateFilter, patientFilter))
-      .groupBy(sessions.sessionDate, sessions.status)
-      .orderBy(asc(sessions.sessionDate))
+      .groupBy(sessions.scheduledAt, sessions.status)
+      .orderBy(asc(sessions.scheduledAt))
 
     // 3. Distribuição de humor dos pacientes
     const moodDistribution = await db
@@ -78,10 +79,10 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(patientProfiles.psychologistId, psychologistId),
-          patientFilter ? eq(moodTracking.patientId, Number.parseInt(patientId)) : undefined,
+          patientFilter && patientId ? eq(moodTracking.patientId, Number.parseInt(patientId)) : undefined,
           startDate && endDate
-            ? and(gte(moodTracking.date, startDate), lte(moodTracking.date, endDate))
-            : gte(moodTracking.date, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]),
+            ? and(gte(moodTracking.date, new Date(startDate)), lte(moodTracking.date, new Date(endDate)))
+            : gte(moodTracking.date, new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)),
         ),
       )
       .groupBy(moodTracking.mood, moodTracking.energy, moodTracking.anxiety, moodTracking.date)
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
     // 4. Uso de ferramentas SOS
     const sosStats = await db
       .select({
-        toolName: sosUsages.toolName,
+        type: sosUsages.type,
         count: count(),
         avgDuration: avg(sosUsages.durationMinutes),
         date: sosUsages.createdAt,
@@ -100,11 +101,10 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(patientProfiles.psychologistId, psychologistId),
-          patientFilter ? eq(sosUsages.patientId, Number.parseInt(patientId)) : undefined,
-          dateFilter,
+          patientFilter && patientId ? eq(sosUsages.patientId, Number.parseInt(patientId)) : undefined,
         ),
       )
-      .groupBy(sosUsages.toolName, sosUsages.createdAt)
+      .groupBy(sosUsages.type, sosUsages.createdAt)
       .orderBy(desc(count()))
 
     // 5. Progresso das tarefas
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(tasks.psychologistId, psychologistId),
-          patientFilter ? eq(tasks.patientId, Number.parseInt(patientId)) : undefined,
+          patientFilter && patientId ? eq(tasks.patientId, Number.parseInt(patientId)) : undefined,
           dateFilter,
         ),
       )
@@ -130,38 +130,37 @@ export async function GET(request: NextRequest) {
       .select({
         patientId: diaryEntries.patientId,
         count: count(),
-        avgMood: avg(diaryEntries.mood),
-        date: diaryEntries.createdAt,
+        avgMood: avg(diaryEntries.moodRating),
+        date: diaryEntries.entryDate,
       })
       .from(diaryEntries)
       .innerJoin(patientProfiles, eq(diaryEntries.patientId, patientProfiles.userId))
       .where(
         and(
           eq(patientProfiles.psychologistId, psychologistId),
-          patientFilter ? eq(diaryEntries.patientId, Number.parseInt(patientId)) : undefined,
-          dateFilter,
+          patientFilter && patientId ? eq(diaryEntries.patientId, Number.parseInt(patientId)) : undefined,
         ),
       )
-      .groupBy(diaryEntries.patientId, diaryEntries.createdAt)
-      .orderBy(asc(diaryEntries.createdAt))
+      .groupBy(diaryEntries.patientId, diaryEntries.entryDate)
+      .orderBy(asc(diaryEntries.entryDate))
 
     // 7. Conquistas desbloqueadas
     const achievementStats = await db
       .select({
         type: achievements.type,
         count: count(),
-        patientId: achievements.patientId,
+        userId: userAchievements.userId,
       })
-      .from(achievements)
-      .innerJoin(patientProfiles, eq(achievements.patientId, patientProfiles.userId))
+      .from(userAchievements)
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+      .innerJoin(patientProfiles, eq(userAchievements.userId, patientProfiles.userId))
       .where(
         and(
           eq(patientProfiles.psychologistId, psychologistId),
-          patientFilter ? eq(achievements.patientId, Number.parseInt(patientId)) : undefined,
-          dateFilter,
+          patientFilter && patientId ? eq(userAchievements.userId, Number.parseInt(patientId)) : undefined,
         ),
       )
-      .groupBy(achievements.type, achievements.patientId)
+      .groupBy(achievements.type, userAchievements.userId)
 
     // 8. Lista de pacientes para filtros
     const patientsList = await db
@@ -169,7 +168,7 @@ export async function GET(request: NextRequest) {
         id: users.id,
         name: users.name,
         currentCycle: patientProfiles.currentCycle,
-        avatar: patientProfiles.avatar,
+        avatar: users.avatarUrl,
       })
       .from(users)
       .innerJoin(patientProfiles, eq(users.id, patientProfiles.userId))
@@ -223,9 +222,11 @@ export async function GET(request: NextRequest) {
 
       sosUsage: sosStats.reduce(
         (acc, curr) => {
-          acc[curr.toolName] = {
-            count: curr.count,
-            avgDuration: Math.round(Number(curr.avgDuration) || 0),
+          if (curr.type) {
+            acc[curr.type] = {
+              count: curr.count,
+              avgDuration: Math.round(Number(curr.avgDuration) || 0),
+            }
           }
           return acc
         },

@@ -40,11 +40,42 @@ export async function POST(request: NextRequest) {
     }
 
     const calendarService = new CalendarIntegrationService();
-    
+
+    // Map session data to expected interface format
+    const sessionData = {
+      id: session.id,
+      patientId: session.patientId!,
+      psychologistId: session.psychologistId!,
+      sessionDate: session.scheduledAt,
+      durationMinutes: session.duration,
+      type: session.type,
+      status: session.status,
+      notes: session.notes ?? undefined,
+      timezone: session.timezone ?? undefined,
+    };
+
+    const patientData = session.patient ? {
+      id: session.patient.id,
+      name: session.patient.name,
+      email: session.patient.email,
+      role: session.patient.role,
+    } : null;
+
+    const psychologistData = session.psychologist ? {
+      id: session.psychologist.id,
+      name: session.psychologist.name,
+      email: session.psychologist.email,
+      role: session.psychologist.role,
+    } : null;
+
+    if (!patientData || !psychologistData) {
+      return NextResponse.json({ error: 'Patient or psychologist data missing' }, { status: 400 });
+    }
+
     const result = await calendarService.syncSessionToCalendars(
-      session,
-      session.patient,
-      session.psychologist
+      sessionData,
+      patientData,
+      psychologistData
     );
 
     return NextResponse.json({

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       const recentSessions = await db.query.sessions.findMany({
         where: and(
           eq(sessions.patientId, parseInt(patientId)),
-          gte(sessions.sessionDate, thirtyDaysAgo)
+          gte(sessions.scheduledAt, thirtyDaysAgo)
         ),
       })
 
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       const recentSessions = await db.query.sessions.findMany({
         where: and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, lastMonth)
+          gte(sessions.scheduledAt, lastMonth)
         ),
       })
 

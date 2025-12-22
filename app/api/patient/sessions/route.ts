@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     const patientSessions = await db
       .select({
         id: sessions.id,
-        sessionDate: sessions.sessionDate,
-        durationMinutes: sessions.durationMinutes,
+        sessionDate: sessions.scheduledAt,
+        durationMinutes: sessions.duration,
         type: sessions.type,
         status: sessions.status,
         notes: sessions.notes,
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
       .from(sessions)
       .leftJoin(users, eq(sessions.psychologistId, users.id))
       .where(eq(sessions.patientId, userId))
-      .orderBy(desc(sessions.sessionDate))
+      .orderBy(desc(sessions.scheduledAt))
       .limit(50)
 
     return NextResponse.json({ 

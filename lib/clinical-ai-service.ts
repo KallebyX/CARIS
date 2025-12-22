@@ -168,19 +168,19 @@ export class ClinicalAIService {
             .where(and(
               eq(sessions.patientId, patient.patientId),
               eq(sessions.psychologistId, patient.psychologistId),
-              gte(sessions.sessionDate, sevenDaysAgo)
+              gte(sessions.scheduledAt, sevenDaysAgo)
             ))
-            .orderBy(desc(sessions.sessionDate))
+            .orderBy(desc(sessions.scheduledAt))
 
           if (recentEntries.length === 0) continue
 
           // Generate session analysis
           const sessionAnalysis = await analyzeSessionProgress(
             recentSessions.map(s => ({
-              sessionDate: s.sessionDate,
+              sessionDate: s.scheduledAt,
               notes: s.notes || '',
               patientMood: 5, // Default if no mood tracking
-              duration: s.durationMinutes,
+              duration: s.duration,
               type: s.type,
             })),
             recentEntries.map(e => ({
@@ -215,7 +215,7 @@ export class ClinicalAIService {
               emotions: e.emotions || '',
             })),
             recentSessions.map(s => ({
-              sessionDate: s.sessionDate,
+              sessionDate: s.scheduledAt,
               notes: s.notes || '',
               patientMood: 5,
             })),

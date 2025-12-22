@@ -53,7 +53,7 @@ export async function POST(
     }
 
     // Calcular duração real da sessão
-    const sessionStart = new Date(session.sessionDate)
+    const sessionStart = new Date(session.scheduledAt)
     const sessionEnd = new Date()
     const actualDurationMinutes = Math.round((sessionEnd.getTime() - sessionStart.getTime()) / (1000 * 60))
 

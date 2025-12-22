@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
       filteredEntries.map(entry => ({
         content: entry.content || '',
         moodRating: entry.moodRating || 5,
-        emotions: entry.emotions || null
+        emotions: entry.emotions ?? undefined
       })),
       {
         currentCycle: patientProfile[0]?.currentCycle || 'Criar',
@@ -104,10 +104,10 @@ export async function GET(req: NextRequest) {
       sum + (entry.moodRating || 5), 0
     ) / filteredEntries.length
 
-    const emotionDistribution = {}
+    const emotionDistribution: Record<string, number> = {}
     filteredEntries.forEach(entry => {
       if (entry.dominantEmotion) {
-        emotionDistribution[entry.dominantEmotion] = 
+        emotionDistribution[entry.dominantEmotion] =
           (emotionDistribution[entry.dominantEmotion] || 0) + 1
       }
     })

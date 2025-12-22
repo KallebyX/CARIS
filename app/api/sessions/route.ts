@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: (sessions, { desc }) => [desc(sessions.sessionDate)],
+        orderBy: (sessions, { desc }) => [desc(sessions.scheduledAt)],
         limit: 100,
       });
     } else if (user.role === 'patient') {
@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: (sessions, { desc }) => [desc(sessions.sessionDate)],
+        orderBy: (sessions, { desc }) => [desc(sessions.scheduledAt)],
         limit: 100,
       });
     } else {

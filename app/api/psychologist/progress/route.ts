@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       .from(sessions)
       .where(and(
         eq(sessions.patientId, parseInt(patientId)),
-        gte(sessions.sessionDate, thirtyDaysAgo),
+        gte(sessions.scheduledAt, thirtyDaysAgo),
         eq(sessions.status, "realizada")
       ))
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         .from(sessions)
         .where(and(
           eq(sessions.patientId, parseInt(patientId)),
-          gte(sessions.sessionDate, thirtyDaysAgo),
+          gte(sessions.scheduledAt, thirtyDaysAgo),
           eq(sessions.status, "realizada")
         ))
 

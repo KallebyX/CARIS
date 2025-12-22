@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/db"
-import { diaryEntries, tasks, sosUsages, sessions, achievements, moodTracking } from "@/db/schema"
+import { diaryEntries, tasks, sosUsages, sessions, userAchievements, achievements, moodTracking } from "@/db/schema"
 import { eq, and, gte, desc, count, sql } from "drizzle-orm"
 import { getUserIdFromRequest } from "@/lib/auth"
 
@@ -55,14 +55,17 @@ export async function GET(request: Request) {
       .where(eq(sessions.patientId, userId))
 
     // Buscar conquistas
-    const userAchievements = await db.query.achievements.findMany({
-      where: eq(achievements.patientId, userId),
-      orderBy: [desc(achievements.unlockedAt)],
+    const userAchievementsData = await db.query.userAchievements.findMany({
+      where: eq(userAchievements.userId, userId),
+      orderBy: [desc(userAchievements.unlockedAt)],
+      with: {
+        achievement: true,
+      },
     })
 
     // Buscar dados do mapa emocional dos últimos 30 dias
     const emotionalMapData = await db.query.moodTracking.findMany({
-      where: and(eq(moodTracking.patientId, userId), gte(moodTracking.date, thirtyDaysAgo.toISOString().split("T")[0])),
+      where: and(eq(moodTracking.patientId, userId), gte(moodTracking.date, thirtyDaysAgo)),
       orderBy: [desc(moodTracking.date)],
       limit: 30,
     })
@@ -83,11 +86,11 @@ export async function GET(request: Request) {
 
     // Calcular progresso das conquistas
     const achievementProgress = {
-      firstEntry: userAchievements.some((a) => a.type === "first_entry"),
-      weekStreak: userAchievements.some((a) => a.type === "week_streak"),
-      sosUsage: userAchievements.some((a) => a.type === "sos_usage"),
-      taskCompletion: userAchievements.some((a) => a.type === "task_completion"),
-      monthlyGoal: userAchievements.some((a) => a.type === "monthly_goal"),
+      firstEntry: userAchievementsData.some((a) => a.achievement?.type === "first_entry"),
+      weekStreak: userAchievementsData.some((a) => a.achievement?.type === "week_streak"),
+      sosUsage: userAchievementsData.some((a) => a.achievement?.type === "sos_usage"),
+      taskCompletion: userAchievementsData.some((a) => a.achievement?.type === "task_completion"),
+      monthlyGoal: userAchievementsData.some((a) => a.achievement?.type === "monthly_goal"),
     }
 
     return NextResponse.json({
@@ -97,7 +100,7 @@ export async function GET(request: Request) {
         sos: sosStats[0] || { total: 0, recent: 0, totalMinutes: 0 },
         sessions: sessionStats[0] || { total: 0, completed: 0, upcoming: 0 },
       },
-      achievements: userAchievements,
+      achievements: userAchievementsData,
       achievementProgress,
       emotionalMapData,
       recentTasks,

@@ -68,9 +68,9 @@ export async function GET(request: NextRequest) {
       .where(and(
         eq(sessions.patientId, parseInt(patientId)),
         eq(sessions.psychologistId, userId),
-        gte(sessions.sessionDate, ninetyDaysAgo)
+        gte(sessions.scheduledAt, ninetyDaysAgo)
       ))
-      .orderBy(desc(sessions.sessionDate))
+      .orderBy(desc(sessions.scheduledAt))
 
     let insights: any = {}
 
@@ -78,10 +78,10 @@ export async function GET(request: NextRequest) {
       // Generate session analysis
       const sessionAnalysis = await analyzeSessionProgress(
         recentSessions.map(s => ({
-          sessionDate: s.sessionDate,
+          sessionDate: s.scheduledAt,
           notes: s.notes || '',
           patientMood: 5, // Would need to get from session feedback
-          duration: s.durationMinutes,
+          duration: s.duration,
           type: s.type,
         })),
         recentEntries.map(e => ({
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
           emotions: e.emotions || '',
         })),
         recentSessions.map(s => ({
-          sessionDate: s.sessionDate,
+          sessionDate: s.scheduledAt,
           notes: s.notes || '',
           patientMood: 5,
         })),
@@ -144,9 +144,9 @@ export async function GET(request: NextRequest) {
           riskLevel: e.riskLevel || 'low',
         })),
         recentSessions.map(s => ({
-          sessionDate: s.sessionDate,
+          sessionDate: s.scheduledAt,
           notes: s.notes || '',
-          duration: s.durationMinutes,
+          duration: s.duration,
         }))
       )
 

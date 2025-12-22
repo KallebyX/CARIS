@@ -55,16 +55,16 @@ export async function GET(request: Request) {
 
     const existingSessions = await db
       .select({
-        sessionDate: sessions.sessionDate,
-        durationMinutes: sessions.durationMinutes,
+        sessionDate: sessions.scheduledAt,
+        durationMinutes: sessions.duration,
         status: sessions.status,
       })
       .from(sessions)
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, startOfDay),
-          lte(sessions.sessionDate, endOfDay),
+          gte(sessions.scheduledAt, startOfDay),
+          lte(sessions.scheduledAt, endOfDay),
           // Considerar apenas sessões confirmadas e agendadas
           // (canceladas não bloqueiam horário)
         ),

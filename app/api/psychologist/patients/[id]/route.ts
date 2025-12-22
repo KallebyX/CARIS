@@ -20,9 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const patient = await db.query.users.findFirst({
       where: eq(users.id, patientId),
       with: {
-        patientProfile: {
-          where: eq(users.id, patientId), // This seems redundant, but shows intent
-        },
+        patientProfile: true,
       },
     })
 

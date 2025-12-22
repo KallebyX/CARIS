@@ -51,7 +51,7 @@ export async function POST(
     }
 
     // Verificar horário (pode iniciar até 15 min antes e 5 min depois)
-    const sessionDate = new Date(session.sessionDate)
+    const sessionDate = new Date(session.scheduledAt)
     const now = new Date()
     const timeDiff = sessionDate.getTime() - now.getTime()
     const minutesDiff = timeDiff / (1000 * 60)

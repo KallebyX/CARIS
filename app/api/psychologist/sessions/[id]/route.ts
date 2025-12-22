@@ -38,8 +38,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const sessionData = await db
       .select({
         id: sessions.id,
-        sessionDate: sessions.sessionDate,
-        durationMinutes: sessions.durationMinutes,
+        sessionDate: sessions.scheduledAt,
+        durationMinutes: sessions.duration,
         type: sessions.type,
         status: sessions.status,
         notes: sessions.notes,
@@ -114,8 +114,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     // Se está alterando data/horário, verificar conflitos
     if (validatedData.sessionDate || validatedData.durationMinutes) {
-      const newDate = validatedData.sessionDate ? new Date(validatedData.sessionDate) : currentSession.sessionDate
-      const newDuration = validatedData.durationMinutes || currentSession.durationMinutes
+      const newDate = validatedData.sessionDate ? new Date(validatedData.sessionDate) : currentSession.scheduledAt
+      const newDuration = validatedData.durationMinutes || currentSession.duration
       const newEndTime = new Date(newDate.getTime() + newDuration * 60000)
 
       // Buscar sessões conflitantes (excluindo a sessão atual)
@@ -125,8 +125,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         .where(
           and(
             eq(sessions.psychologistId, psychologistId),
-            gte(sessions.sessionDate, new Date(newDate.getTime() - 3 * 60 * 60 * 1000)), // 3 horas antes
-            lte(sessions.sessionDate, new Date(newEndTime.getTime() + 3 * 60 * 60 * 1000)), // 3 horas depois
+            gte(sessions.scheduledAt, new Date(newDate.getTime() - 3 * 60 * 60 * 1000)), // 3 horas antes
+            lte(sessions.scheduledAt, new Date(newEndTime.getTime() + 3 * 60 * 60 * 1000)), // 3 horas depois
             eq(sessions.status, "confirmada"),
             // Excluir a sessão atual da verificação
             // Note: Drizzle doesn't have a direct "not equal" operator, so we'll handle this in the application logic
@@ -136,8 +136,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       const hasConflict = conflictingSessions.some((session) => {
         if (session.id === sessionId) return false // Ignorar a sessão atual
 
-        const sessionStart = new Date(session.sessionDate)
-        const sessionEnd = new Date(sessionStart.getTime() + session.durationMinutes * 60000)
+        const sessionStart = new Date(session.scheduledAt)
+        const sessionEnd = new Date(sessionStart.getTime() + session.duration * 60000)
 
         return (
           (newDate >= sessionStart && newDate < sessionEnd) ||
@@ -162,10 +162,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     if (validatedData.sessionDate) {
-      updateData.sessionDate = new Date(validatedData.sessionDate)
+      updateData.scheduledAt = new Date(validatedData.sessionDate)
     }
     if (validatedData.durationMinutes) {
-      updateData.durationMinutes = validatedData.durationMinutes
+      updateData.duration = validatedData.durationMinutes
     }
     if (validatedData.type) {
       updateData.type = validatedData.type
@@ -184,8 +184,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const sessionWithPatient = await db
       .select({
         id: sessions.id,
-        sessionDate: sessions.sessionDate,
-        durationMinutes: sessions.durationMinutes,
+        sessionDate: sessions.scheduledAt,
+        durationMinutes: sessions.duration,
         type: sessions.type,
         status: sessions.status,
         notes: sessions.notes,
