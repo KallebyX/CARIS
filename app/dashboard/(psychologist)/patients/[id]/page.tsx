@@ -35,11 +35,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
   const [data, setData] = useState<PatientData | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<{ id: number; role: "psychologist" | "patient" } | null>(null)
+  const [patientId, setPatientId] = useState<string>("")
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { id } = await params
+        setPatientId(id)
         const [patientRes, userRes] = await Promise.all([
           fetch(`/api/psychologist/patients/${id}`),
           fetch("/api/users/me"),
@@ -94,7 +96,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
             <div>
               <h1 className="text-2xl font-bold text-slate-800">{patient.name}</h1>
               <div className="flex items-center gap-2 text-sm text-slate-500">
-                <span>ID: {params.id}</span>
+                <span>ID: {patientId}</span>
                 <Badge className={"bg-green-100 text-green-800"}>{t("active")}</Badge>
               </div>
             </div>

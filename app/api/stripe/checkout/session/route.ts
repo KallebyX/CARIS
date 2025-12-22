@@ -22,13 +22,24 @@ export async function GET(request: NextRequest) {
     // Get subscription details if it exists
     let subscriptionData = null
     if (session.subscription && typeof session.subscription !== 'string') {
+      // In Stripe API v2024, current_period fields are no longer available directly
+      // We estimate the period end as 30 days from start_date or billing_cycle_anchor
+      const periodEnd = session.subscription.billing_cycle_anchor
+        ? new Date((session.subscription.billing_cycle_anchor + 30 * 24 * 60 * 60) * 1000)
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
       subscriptionData = {
         id: session.subscription.id,
         status: session.subscription.status,
         planId: session.subscription.metadata?.planId,
-        currentPeriodEnd: new Date(session.subscription.current_period_end * 1000),
+        currentPeriodEnd: periodEnd,
       }
     }
+
+    // Get plan name from subscription if it's an object
+    const planName = (session.subscription && typeof session.subscription !== 'string')
+      ? session.subscription.metadata?.planName || 'Professional'
+      : 'Professional'
 
     return NextResponse.json({
       sessionId: session.id,
@@ -36,7 +47,7 @@ export async function GET(request: NextRequest) {
       amountTotal: session.amount_total,
       currency: session.currency,
       customerEmail: session.customer_details?.email,
-      planName: session.subscription?.metadata?.planName || 'Professional',
+      planName,
       subscription: subscriptionData,
     })
 

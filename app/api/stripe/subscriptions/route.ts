@@ -99,12 +99,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       subscription: {
         id: subscription.id,
-        status: stripeSubscription.status,
+        status: stripeSubscription.status ?? subscription.status,
         planId: subscription.planId,
         planName: subscription.planName,
-        currentPeriodStart: new Date(stripeSubscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000),
-        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+        currentPeriodStart: subscription.currentPeriodStart,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end ?? subscription.cancelAtPeriodEnd,
         canceledAt: subscription.canceledAt,
       },
     })

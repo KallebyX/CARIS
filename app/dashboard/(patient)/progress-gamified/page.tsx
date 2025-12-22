@@ -421,7 +421,12 @@ export default function GamifiedProgressPage() {
               <CardTitle>{t("emotionalMap.title")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <EmotionalMap data={data.emotionalMapData} />
+              <EmotionalMap data={data.emotionalMapData.map(item => ({
+                date: item.date,
+                humor: item.mood,
+                intensidade: item.energy,
+                evento: item.notes,
+              }))} />
             </CardContent>
           </Card>
         </TabsContent>

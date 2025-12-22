@@ -80,10 +80,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   const handleLogout = async () => {
-    const success = await logout()
-    if (success) {
-      router.push("/login")
-    }
+    await logout()
   }
 
   const getNavigationItems = () => {

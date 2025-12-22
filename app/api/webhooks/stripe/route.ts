@@ -23,7 +23,7 @@ import {
 } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import Stripe from 'stripe'
-import { sendEmail } from '@/lib/email'
+// Email notifications are handled by the EmailService class
 import { PaymentHandler } from '@/lib/payment-handler'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -33,6 +33,14 @@ interface WebhookProcessingResult {
   success: boolean
   error?: string
   retryable: boolean
+}
+
+// Helper function to get subscription ID from invoice in Stripe API v2024
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  // In Stripe API v2024, subscription is accessed via parent.subscription_details
+  const subscriptionRef = invoice.parent?.subscription_details?.subscription
+  if (!subscriptionRef) return null
+  return typeof subscriptionRef === 'string' ? subscriptionRef : subscriptionRef.id
 }
 
 export async function POST(request: NextRequest) {
@@ -260,6 +268,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     })
 
     if (!existingSub) {
+      // In Stripe API v2024, current_period fields may come as legacy data
+      // Use billing_cycle_anchor as fallback for period calculations
+      const subData = subscription as unknown as Record<string, unknown>
+      const periodStart = subData.current_period_start
+        ? new Date((subData.current_period_start as number) * 1000)
+        : new Date(subscription.billing_cycle_anchor * 1000)
+      const periodEnd = subData.current_period_end
+        ? new Date((subData.current_period_end as number) * 1000)
+        : new Date((subscription.billing_cycle_anchor + 30 * 24 * 60 * 60) * 1000)
+
       await db.insert(subscriptions).values({
         userId: dbCustomer.userId,
         customerId: dbCustomer.id,
@@ -269,8 +287,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         planId: subscription.metadata?.planId || 'professional',
         planName: subscription.metadata?.planName || 'Professional',
         priceId: subscription.items.data[0].price.id,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: periodStart,
+        currentPeriodEnd: periodEnd,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       })
     }
@@ -304,13 +322,22 @@ async function handleCustomerDeleted(customer: Stripe.Customer) {
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  // In Stripe API v2024, current_period fields may come as legacy data
+  const subData = subscription as unknown as Record<string, unknown>
+  const periodStart = subData.current_period_start
+    ? new Date((subData.current_period_start as number) * 1000)
+    : new Date(subscription.billing_cycle_anchor * 1000)
+  const periodEnd = subData.current_period_end
+    ? new Date((subData.current_period_end as number) * 1000)
+    : new Date((subscription.billing_cycle_anchor + 30 * 24 * 60 * 60) * 1000)
+
   await db
     .update(subscriptions)
     .set({
       status: subscription.status,
       priceId: subscription.items.data[0].price.id,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
       updatedAt: new Date(),
@@ -358,10 +385,11 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoiceCreated(invoice: Stripe.Invoice) {
-  if (!invoice.subscription) return
+  const invoiceSubId = getInvoiceSubscriptionId(invoice)
+  if (!invoiceSubId || !invoice.id) return
 
   const subscription = await db.query.subscriptions.findFirst({
-    where: eq(subscriptions.stripeSubscriptionId, invoice.subscription as string),
+    where: eq(subscriptions.stripeSubscriptionId, invoiceSubId),
   })
 
   if (!subscription) return
@@ -376,25 +404,22 @@ async function handleInvoiceCreated(invoice: Stripe.Invoice) {
       userId: subscription.userId,
       subscriptionId: subscription.id,
       stripeInvoiceId: invoice.id,
-      invoiceNumber: invoice.number || '',
-      status: invoice.status || 'draft',
+      invoiceNumber: invoice.number ?? `INV-${invoice.id}`,
+      status: (invoice.status ?? 'draft') as string,
       amountDue: invoice.amount_due,
       amountPaid: invoice.amount_paid,
       currency: invoice.currency,
-      description: invoice.description || '',
-      invoiceUrl: invoice.invoice_pdf || '',
-      hostedInvoiceUrl: invoice.hosted_invoice_url || '',
-      invoicePdf: invoice.invoice_pdf || '',
-      dueDate: invoice.due_date ? new Date(invoice.due_date * 1000) : null,
     })
   }
 }
 
 async function handleInvoiceFinalized(invoice: Stripe.Invoice) {
+  if (!invoice.id) return
+
   await db
     .update(invoices)
     .set({
-      status: invoice.status || 'open',
+      status: (invoice.status || 'open') as string,
       invoiceNumber: invoice.number || '',
       hostedInvoiceUrl: invoice.hosted_invoice_url || '',
       invoicePdf: invoice.invoice_pdf || '',
@@ -404,6 +429,8 @@ async function handleInvoiceFinalized(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  if (!invoice.id) return
+
   await db
     .update(invoices)
     .set({
@@ -415,9 +442,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     .where(eq(invoices.stripeInvoiceId, invoice.id))
 
   // Clear payment failures
-  if (invoice.subscription) {
+  const invoiceSubId = getInvoiceSubscriptionId(invoice)
+  if (invoiceSubId) {
     const subscription = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.stripeSubscriptionId, invoice.subscription as string),
+      where: eq(subscriptions.stripeSubscriptionId, invoiceSubId),
     })
 
     if (subscription) {
@@ -429,7 +457,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         })
         .where(and(
           eq(paymentFailures.subscriptionId, subscription.id),
-          eq(paymentFailures.resolvedAt, null as any)
+          eq(paymentFailures.resolvedAt, null as unknown as Date)
         ))
 
       // Send payment success email
@@ -439,6 +467,8 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  if (!invoice.id) return
+
   await db
     .update(invoices)
     .set({
@@ -447,9 +477,10 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     })
     .where(eq(invoices.stripeInvoiceId, invoice.id))
 
-  if (invoice.subscription) {
+  const invoiceSubId = getInvoiceSubscriptionId(invoice)
+  if (invoiceSubId) {
     const subscription = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.stripeSubscriptionId, invoice.subscription as string),
+      where: eq(subscriptions.stripeSubscriptionId, invoiceSubId),
     })
 
     if (subscription) {
@@ -457,7 +488,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       const existingFailure = await db.query.paymentFailures.findFirst({
         where: and(
           eq(paymentFailures.subscriptionId, subscription.id),
-          eq(paymentFailures.resolvedAt, null as any)
+          eq(paymentFailures.resolvedAt, null as unknown as Date)
         ),
       })
 
@@ -489,9 +520,10 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 }
 
 async function handleInvoicePaymentActionRequired(invoice: Stripe.Invoice) {
-  if (invoice.subscription) {
+  const invoiceSubId = getInvoiceSubscriptionId(invoice)
+  if (invoiceSubId) {
     const subscription = await db.query.subscriptions.findFirst({
-      where: eq(subscriptions.stripeSubscriptionId, invoice.subscription as string),
+      where: eq(subscriptions.stripeSubscriptionId, invoiceSubId),
     })
 
     if (subscription) {
@@ -508,15 +540,20 @@ async function handlePaymentIntentCreated(paymentIntent: Stripe.PaymentIntent) {
 }
 
 async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
+  // In Stripe API v2024, charges are accessed via latest_charge
+  const latestCharge = paymentIntent.latest_charge
+  const chargeId = typeof latestCharge === 'string' ? latestCharge : latestCharge?.id
+  const receiptUrl = typeof latestCharge === 'object' ? latestCharge?.receipt_url : undefined
+
   await db.insert(payments).values({
     userId: parseInt(paymentIntent.metadata?.userId || '0'),
     stripePaymentIntentId: paymentIntent.id,
-    stripeChargeId: paymentIntent.charges.data[0]?.id || '',
+    stripeChargeId: chargeId || '',
     amount: paymentIntent.amount,
     currency: paymentIntent.currency,
     status: 'succeeded',
     description: paymentIntent.description || '',
-    receiptUrl: paymentIntent.charges.data[0]?.receipt_url || '',
+    receiptUrl: receiptUrl || '',
   })
 }
 
