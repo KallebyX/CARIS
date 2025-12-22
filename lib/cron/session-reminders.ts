@@ -160,8 +160,14 @@ export class SessionReminderCronJobs {
 // Create singleton instance
 const cronJobs = SessionReminderCronJobs.getInstance()
 
-// Auto-initialize and start if running in production
-if (process.env.NODE_ENV === "production" || process.env.ENABLE_CRON === "true") {
+// Auto-initialize and start if running in production runtime (not during build)
+// During Vercel/Next.js build, NODE_ENV is production but we shouldn't start cron jobs
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build"
+const shouldInitCron =
+  !isBuildPhase &&
+  (process.env.NODE_ENV === "production" || process.env.ENABLE_CRON === "true")
+
+if (shouldInitCron) {
   cronJobs.initializeJobs()
   cronJobs.start()
 
