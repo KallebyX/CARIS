@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
     safeError('[DIARY_POST]', 'Diary entry error:', error)
 
     await logAuditEvent({
-      userId: await getUserIdFromRequest(req),
+      userId: (await getUserIdFromRequest(req)) ?? undefined,
       action: 'diary_entry_failed',
       resourceType: AUDIT_RESOURCES.DIARY_ENTRY,
       severity: 'critical',
@@ -283,7 +283,7 @@ export async function GET(req: NextRequest) {
     safeError('[DIARY_GET]', 'Diary entries fetch error:', error)
     
     await logAuditEvent({
-      userId: await getUserIdFromRequest(req),
+      userId: (await getUserIdFromRequest(req)) ?? undefined,
       action: 'diary_read_failed',
       resourceType: AUDIT_RESOURCES.DIARY_ENTRY,
       severity: 'critical',

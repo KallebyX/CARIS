@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       .where(eq(patientProfiles.userId, userId))
       .limit(1)
 
-    if (patientProfile.length > 0) {
+    if (patientProfile.length > 0 && patientProfile[0].psychologistId) {
       const realtimeService = RealtimeNotificationService.getInstance()
       await realtimeService.notifySOSActivated(userId, patientProfile[0].psychologistId, toolName)
     }

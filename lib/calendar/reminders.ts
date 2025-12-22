@@ -50,8 +50,8 @@ export class ReminderService {
       // Get upcoming sessions in the next 24 hours
       const upcomingSessions = await db.query.sessions.findMany({
         where: and(
-          gte(sessions.sessionDate, now),
-          lte(sessions.sessionDate, next24Hours),
+          gte(sessions.scheduledAt, now),
+          lte(sessions.scheduledAt, next24Hours),
           eq(sessions.status, 'confirmada')
         ),
         with: {
@@ -69,7 +69,7 @@ export class ReminderService {
       });
 
       for (const session of upcomingSessions) {
-        const sessionDate = new Date(session.sessionDate);
+        const sessionDate = new Date(session.scheduledAt);
         const timeUntilSession = Math.floor((sessionDate.getTime() - now.getTime()) / (1000 * 60));
 
         const patientSettings = session.patient.settings;
@@ -128,7 +128,7 @@ export class ReminderService {
       const otherUser = recipient === 'patient' ? session.psychologist : session.patient;
       const settings = recipientUser.settings;
 
-      const sessionDate = new Date(session.sessionDate);
+      const sessionDate = new Date(session.scheduledAt);
       const formattedDate = sessionDate.toLocaleDateString('pt-BR', {
         weekday: 'long',
         year: 'numeric',

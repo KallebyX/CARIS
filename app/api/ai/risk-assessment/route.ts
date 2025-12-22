@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/db'
 import { diaryEntries, moodTracking, sessions } from '@/db/schema'
-import { eq, desc, gte } from 'drizzle-orm'
+import { eq, desc, gte, and } from 'drizzle-orm'
 import { predictRiskEscalation } from '@/lib/ai/predictive-analytics'
 import { assessRelapseRisk } from '@/lib/ai/outcome-prediction'
 import { getUserIdFromRequest } from '@/lib/auth'
@@ -44,15 +44,13 @@ export async function POST(req: NextRequest) {
       const recentEntries = await db
         .select()
         .from(diaryEntries)
-        .where(eq(diaryEntries.patientId, patientId))
-        .where(gte(diaryEntries.entryDate, fourteenDaysAgo))
+        .where(and(eq(diaryEntries.patientId, patientId), gte(diaryEntries.entryDate, fourteenDaysAgo)))
         .orderBy(desc(diaryEntries.entryDate))
 
       const recentMoods = await db
         .select()
         .from(moodTracking)
-        .where(eq(moodTracking.patientId, patientId))
-        .where(gte(moodTracking.date, fourteenDaysAgo))
+        .where(and(eq(moodTracking.patientId, patientId), gte(moodTracking.date, fourteenDaysAgo)))
         .orderBy(desc(moodTracking.date))
 
       // Determine current risk level from recent entries
@@ -91,8 +89,7 @@ export async function POST(req: NextRequest) {
       const moodHistory = await db
         .select()
         .from(moodTracking)
-        .where(eq(moodTracking.patientId, patientId))
-        .where(gte(moodTracking.date, ninetyDaysAgo))
+        .where(and(eq(moodTracking.patientId, patientId), gte(moodTracking.date, ninetyDaysAgo)))
         .orderBy(desc(moodTracking.date))
 
       const recentDiaries = await db

@@ -39,8 +39,8 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, startOfWeek),
-          lte(sessions.sessionDate, endOfWeek),
+          gte(sessions.scheduledAt, startOfWeek),
+          lte(sessions.scheduledAt, endOfWeek),
         ),
       )
 
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, startOfMonth),
-          lte(sessions.sessionDate, endOfMonth),
+          gte(sessions.scheduledAt, startOfMonth),
+          lte(sessions.scheduledAt, endOfMonth),
         ),
       )
 
@@ -80,8 +80,8 @@ export async function GET(request: Request) {
     const upcomingSessions = await db
       .select({
         id: sessions.id,
-        sessionDate: sessions.sessionDate,
-        durationMinutes: sessions.durationMinutes,
+        sessionDate: sessions.scheduledAt,
+        durationMinutes: sessions.duration,
         type: sessions.type,
         status: sessions.status,
         patient: {
@@ -96,13 +96,13 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, now),
-          lte(sessions.sessionDate, nextWeek),
+          gte(sessions.scheduledAt, now),
+          lte(sessions.scheduledAt, nextWeek),
           // Apenas sessões agendadas e confirmadas
           sql`${sessions.status} IN ('agendada', 'confirmada')`,
         ),
       )
-      .orderBy(sessions.sessionDate)
+      .orderBy(sessions.scheduledAt)
       .limit(10)
 
     // Pacientes ativos (com sessões nos últimos 30 dias)
@@ -111,7 +111,7 @@ export async function GET(request: Request) {
       .select({
         patientId: sessions.patientId,
         patientName: users.name,
-        lastSession: sql<Date>`MAX(${sessions.sessionDate})`,
+        lastSession: sql<Date>`MAX(${sessions.scheduledAt})`,
         totalSessions: count(),
       })
       .from(sessions)
@@ -119,24 +119,24 @@ export async function GET(request: Request) {
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, thirtyDaysAgo),
+          gte(sessions.scheduledAt, thirtyDaysAgo),
           eq(sessions.status, "realizada"),
         ),
       )
       .groupBy(sessions.patientId, users.name)
-      .orderBy(sql`MAX(${sessions.sessionDate}) DESC`)
+      .orderBy(sql`MAX(${sessions.scheduledAt}) DESC`)
 
     // Horas trabalhadas no mês
     const [monthlyHours] = await db
       .select({
-        totalMinutes: sql<number>`SUM(${sessions.durationMinutes})`,
+        totalMinutes: sql<number>`SUM(${sessions.duration})`,
       })
       .from(sessions)
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, startOfMonth),
-          lte(sessions.sessionDate, endOfMonth),
+          gte(sessions.scheduledAt, startOfMonth),
+          lte(sessions.scheduledAt, endOfMonth),
           eq(sessions.status, "realizada"),
         ),
       )
@@ -146,18 +146,18 @@ export async function GET(request: Request) {
     // Sessões por dia da semana (últimos 30 dias)
     const sessionsByWeekday = await db
       .select({
-        weekday: sql<number>`EXTRACT(DOW FROM ${sessions.sessionDate})`,
+        weekday: sql<number>`EXTRACT(DOW FROM ${sessions.scheduledAt})`,
         count: count(),
       })
       .from(sessions)
       .where(
         and(
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, thirtyDaysAgo),
+          gte(sessions.scheduledAt, thirtyDaysAgo),
           eq(sessions.status, "realizada"),
         ),
       )
-      .groupBy(sql`EXTRACT(DOW FROM ${sessions.sessionDate})`)
+      .groupBy(sql`EXTRACT(DOW FROM ${sessions.scheduledAt})`)
 
     const weekdayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
     const weekdayStats = weekdayNames.map((name, index) => ({

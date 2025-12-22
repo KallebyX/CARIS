@@ -636,6 +636,8 @@ export const userSettings = pgTable("user_settings", {
   notifications: boolean("notifications").default(true),
   emailNotifications: boolean("email_notifications").default(true),
   smsNotifications: boolean("sms_notifications").default(false),
+  pushNotifications: boolean("push_notifications").default(false),
+  pushSubscription: text("push_subscription"), // JSON stringified PushSubscription
   // Calendar integrations
   googleCalendarEnabled: boolean("google_calendar_enabled").default(false),
   googleCalendarAccessToken: text("google_calendar_access_token"),

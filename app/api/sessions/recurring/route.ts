@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getUserIdFromRequest } from "@/lib/auth"
-import RecurringSessionService from "@/lib/recurring-sessions"
+import { RecurringSessionService } from "@/lib/recurring-sessions"
 import { db } from "@/db"
 import { users, sessions } from "@/db/schema"
 import { eq } from "drizzle-orm"

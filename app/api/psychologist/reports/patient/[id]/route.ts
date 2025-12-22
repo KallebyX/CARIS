@@ -9,6 +9,7 @@ import {
   sosUsages,
   tasks,
   achievements,
+  userAchievements,
 } from "@/db/schema"
 import { eq, and, gte, desc, asc } from "drizzle-orm"
 import { verifyToken } from "@/lib/auth"
@@ -20,14 +21,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Token não encontrado" }, { status: 401 })
     }
 
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
     if (!decoded || decoded.role !== "psychologist") {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
     const { id } = await params
     const patientId = Number.parseInt(id)
-    const psychologistId = decoded.userId
+    const psychologistId = decoded.userId as number
 
     // Verificar se o paciente pertence ao psicólogo
     const patient = await db
@@ -36,10 +37,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         name: users.name,
         email: users.email,
         currentCycle: patientProfiles.currentCycle,
-        avatar: patientProfiles.avatar,
+        avatar: users.avatarUrl,
         birthDate: patientProfiles.birthDate,
-        phone: patientProfiles.phone,
-        createdAt: patientProfiles.createdAt,
+        phone: users.phone,
       })
       .from(users)
       .innerJoin(patientProfiles, eq(users.id, patientProfiles.userId))
@@ -60,21 +60,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const sessionHistory = await db
       .select({
         id: sessions.id,
-        sessionDate: sessions.sessionDate,
+        sessionDate: sessions.scheduledAt,
         type: sessions.type,
         status: sessions.status,
         notes: sessions.notes,
-        durationMinutes: sessions.durationMinutes,
+        durationMinutes: sessions.duration,
       })
       .from(sessions)
       .where(
         and(
           eq(sessions.patientId, patientId),
           eq(sessions.psychologistId, psychologistId),
-          gte(sessions.sessionDate, sixMonthsAgo),
+          gte(sessions.scheduledAt, sixMonthsAgo),
         ),
       )
-      .orderBy(desc(sessions.sessionDate))
+      .orderBy(desc(sessions.scheduledAt))
 
     // 2. Evolução do humor
     const moodEvolution = await db
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       })
       .from(moodTracking)
       .where(
-        and(eq(moodTracking.patientId, patientId), gte(moodTracking.date, sixMonthsAgo.toISOString().split("T")[0])),
+        and(eq(moodTracking.patientId, patientId), gte(moodTracking.date, sixMonthsAgo)),
       )
       .orderBy(asc(moodTracking.date))
 
@@ -95,20 +95,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const diaryActivity = await db
       .select({
         id: diaryEntries.id,
-        title: diaryEntries.title,
-        mood: diaryEntries.mood,
-        tags: diaryEntries.tags,
-        createdAt: diaryEntries.createdAt,
-        isPrivate: diaryEntries.isPrivate,
+        moodRating: diaryEntries.moodRating,
+        emotions: diaryEntries.emotions,
+        entryDate: diaryEntries.entryDate,
+        content: diaryEntries.content,
       })
       .from(diaryEntries)
-      .where(and(eq(diaryEntries.patientId, patientId), gte(diaryEntries.createdAt, sixMonthsAgo)))
-      .orderBy(desc(diaryEntries.createdAt))
+      .where(and(eq(diaryEntries.patientId, patientId), gte(diaryEntries.entryDate, sixMonthsAgo)))
+      .orderBy(desc(diaryEntries.entryDate))
 
     // 4. Uso de ferramentas SOS
     const sosActivity = await db
       .select({
-        toolName: sosUsages.toolName,
+        type: sosUsages.type,
+        level: sosUsages.level,
         durationMinutes: sosUsages.durationMinutes,
         createdAt: sosUsages.createdAt,
       })
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         priority: tasks.priority,
         dueDate: tasks.dueDate,
         createdAt: tasks.createdAt,
-        updatedAt: tasks.updatedAt,
+        completedAt: tasks.completedAt,
       })
       .from(tasks)
       .where(
@@ -142,13 +142,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const patientAchievements = await db
       .select({
         type: achievements.type,
-        title: achievements.title,
+        name: achievements.name,
         description: achievements.description,
-        unlockedAt: achievements.unlockedAt,
+        unlockedAt: userAchievements.unlockedAt,
       })
-      .from(achievements)
-      .where(and(eq(achievements.patientId, patientId), gte(achievements.unlockedAt, sixMonthsAgo)))
-      .orderBy(desc(achievements.unlockedAt))
+      .from(userAchievements)
+      .innerJoin(achievements, eq(userAchievements.achievementId, achievements.id))
+      .where(and(eq(userAchievements.userId, patientId), gte(userAchievements.unlockedAt, sixMonthsAgo)))
+      .orderBy(desc(userAchievements.unlockedAt))
 
     // Calcular estatísticas
     const stats = {
@@ -163,7 +164,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       diaryEntries: diaryActivity.length,
       avgDiaryMood:
         diaryActivity.length > 0
-          ? Math.round((diaryActivity.reduce((acc, d) => acc + d.mood, 0) / diaryActivity.length) * 10) / 10
+          ? Math.round((diaryActivity.reduce((acc, d) => acc + (d.moodRating || 0), 0) / diaryActivity.length) * 10) / 10
           : 0,
 
       sosUsages: sosActivity.length,
@@ -171,7 +172,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         sosActivity.length > 0
           ? sosActivity.reduce(
               (acc, curr) => {
-                acc[curr.toolName] = (acc[curr.toolName] || 0) + 1
+                if (curr.type) {
+                  acc[curr.type] = (acc[curr.type] || 0) + 1
+                }
                 return acc
               },
               {} as Record<string, number>,
@@ -205,10 +208,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
       diaryChart: diaryActivity.reduce(
         (acc, entry) => {
-          const week = getWeekNumber(new Date(entry.createdAt))
+          const week = getWeekNumber(new Date(entry.entryDate))
           if (!acc[week]) acc[week] = { week, entries: 0, avgMood: 0, totalMood: 0 }
           acc[week].entries += 1
-          acc[week].totalMood += entry.mood
+          acc[week].totalMood += entry.moodRating || 0
           acc[week].avgMood = acc[week].totalMood / acc[week].entries
           return acc
         },
@@ -219,7 +222,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         (acc, usage) => {
           const month = new Date(usage.createdAt).toLocaleDateString("pt-BR", { month: "short" })
           if (!acc[month]) acc[month] = {}
-          acc[month][usage.toolName] = (acc[month][usage.toolName] || 0) + 1
+          if (usage.type) {
+            acc[month][usage.type] = (acc[month][usage.type] || 0) + 1
+          }
           return acc
         },
         {} as Record<string, any>,

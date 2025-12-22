@@ -162,7 +162,7 @@ export async function deleteExpiredUserData(
             eq(sessions.patientId, userId),
             eq(sessions.psychologistId, userId)
           ),
-          lt(sessions.sessionDate, cutoffDate),
+          lt(sessions.scheduledAt, cutoffDate),
           sql`${sessions.status} IN ('concluída', 'cancelada')`
         )
       )
@@ -178,7 +178,7 @@ export async function deleteExpiredUserData(
               eq(sessions.patientId, userId),
               eq(sessions.psychologistId, userId)
             ),
-            lt(sessions.sessionDate, cutoffDate),
+            lt(sessions.scheduledAt, cutoffDate),
             sql`${sessions.status} IN ('concluída', 'cancelada')`
           )
         )

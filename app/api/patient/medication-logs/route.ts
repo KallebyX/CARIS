@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching medication logs:", error)
-    return apiError("Erro ao buscar registros de medicação", 500)
+    return apiError("Erro ao buscar registros de medicação", { status: 500 })
   }
 }
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!medication) {
-      return apiError("Medicamento não encontrado", 404)
+      return apiError("Medicamento não encontrado", { status: 404 })
     }
 
     // Verify schedule ownership if provided
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
       })
 
       if (!schedule) {
-        return apiError("Agendamento não encontrado", 404)
+        return apiError("Agendamento não encontrado", { status: 404 })
       }
     }
 
@@ -169,13 +169,13 @@ export async function POST(request: NextRequest) {
       })
       .returning()
 
-    return apiSuccess(newLog, 201)
+    return apiSuccess(newLog, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), 400)
+      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), { status: 400 })
     }
     console.error("Error creating medication log:", error)
-    return apiError("Erro ao criar registro de medicação", 500)
+    return apiError("Erro ao criar registro de medicação", { status: 500 })
   }
 }
 
@@ -194,7 +194,7 @@ export async function PATCH(request: NextRequest) {
     const { id, ...updateData } = body
 
     if (!id) {
-      return apiError("ID do registro é obrigatório", 400)
+      return apiError("ID do registro é obrigatório", { status: 400 })
     }
 
     const validatedData = UpdateLogSchema.parse(updateData)
@@ -208,7 +208,7 @@ export async function PATCH(request: NextRequest) {
     })
 
     if (!existingLog) {
-      return apiError("Registro não encontrado", 404)
+      return apiError("Registro não encontrado", { status: 404 })
     }
 
     // Build update object
@@ -244,9 +244,9 @@ export async function PATCH(request: NextRequest) {
     return apiSuccess(updatedLog)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), 400)
+      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), { status: 400 })
     }
     console.error("Error updating medication log:", error)
-    return apiError("Erro ao atualizar registro de medicação", 500)
+    return apiError("Erro ao atualizar registro de medicação", { status: 500 })
   }
 }

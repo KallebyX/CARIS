@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching medications:", error)
-    return apiError("Erro ao buscar medicamentos", 500)
+    return apiError("Erro ao buscar medicamentos", { status: 500 })
   }
 }
 
@@ -124,9 +124,9 @@ export async function POST(request: NextRequest) {
         foodInstructions: medicationData.foodInstructions,
         sideEffects: medicationData.sideEffects,
         interactions: medicationData.interactions,
-        startDate: new Date(medicationData.startDate),
-        endDate: medicationData.endDate ? new Date(medicationData.endDate) : null,
-        refillDate: medicationData.refillDate ? new Date(medicationData.refillDate) : null,
+        startDate: medicationData.startDate,
+        endDate: medicationData.endDate ?? null,
+        refillDate: medicationData.refillDate ?? null,
         refillCount: medicationData.refillCount ?? 0,
         isActive: medicationData.isActive ?? true,
         isAsNeeded: medicationData.isAsNeeded ?? false,
@@ -161,13 +161,13 @@ export async function POST(request: NextRequest) {
         medication: newMedication,
         schedule: newSchedule,
       },
-      201
+      { status: 201 }
     )
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), 400)
+      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), { status: 400 })
     }
     console.error("Error creating medication:", error)
-    return apiError("Erro ao criar medicamento", 500)
+    return apiError("Erro ao criar medicamento", { status: 500 })
   }
 }

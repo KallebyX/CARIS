@@ -182,10 +182,10 @@ export async function POST(request: NextRequest) {
       .where(and(
         eq(sessions.patientId, parseInt(patientId)),
         eq(sessions.psychologistId, userId),
-        gte(sessions.sessionDate, start),
-        lte(sessions.sessionDate, end)
+        gte(sessions.scheduledAt, start),
+        lte(sessions.scheduledAt, end)
       ))
-      .orderBy(desc(sessions.sessionDate))
+      .orderBy(desc(sessions.scheduledAt))
 
     // Generate AI report
     const aiReport = await generateProgressReport(
@@ -199,9 +199,9 @@ export async function POST(request: NextRequest) {
         riskLevel: e.riskLevel || 'low',
       })),
       sessionData.map(s => ({
-        sessionDate: s.sessionDate,
+        sessionDate: s.scheduledAt,
         notes: s.notes || '',
-        duration: s.durationMinutes,
+        duration: s.duration,
       }))
     )
 

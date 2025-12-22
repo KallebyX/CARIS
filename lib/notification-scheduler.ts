@@ -32,7 +32,7 @@ export class NotificationScheduler {
       const upcomingSessions = await db
         .select({
           id: sessions.id,
-          sessionDate: sessions.sessionDate,
+          sessionDate: sessions.scheduledAt,
           type: sessions.type,
           patientId: sessions.patientId,
           psychologistId: sessions.psychologistId,
@@ -46,8 +46,8 @@ export class NotificationScheduler {
         .where(
           and(
             eq(sessions.status, "confirmada"),
-            gte(sessions.sessionDate, tomorrow),
-            lte(sessions.sessionDate, dayAfterTomorrow),
+            gte(sessions.scheduledAt, tomorrow),
+            lte(sessions.scheduledAt, dayAfterTomorrow),
           ),
         )
 
@@ -91,12 +91,12 @@ export class NotificationScheduler {
       const missedSessions = await db
         .select({
           id: sessions.id,
-          sessionDate: sessions.sessionDate,
+          sessionDate: sessions.scheduledAt,
           patientId: sessions.patientId,
           psychologistId: sessions.psychologistId,
         })
         .from(sessions)
-        .where(and(eq(sessions.status, "confirmada"), lte(sessions.sessionDate, oneHourAgo)))
+        .where(and(eq(sessions.status, "confirmada"), lte(sessions.scheduledAt, oneHourAgo)))
 
       // Marcar como perdidas e notificar
       for (const session of missedSessions) {

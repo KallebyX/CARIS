@@ -50,7 +50,7 @@ export async function GET(
 
     const medicationId = parseInt(params.id)
     if (isNaN(medicationId)) {
-      return apiError("ID de medicamento inválido", 400)
+      return apiError("ID de medicamento inválido", { status: 400 })
     }
 
     // Fetch medication with schedules
@@ -73,7 +73,7 @@ export async function GET(
     return apiSuccess(medication)
   } catch (error) {
     console.error("Error fetching medication:", error)
-    return apiError("Erro ao buscar medicamento", 500)
+    return apiError("Erro ao buscar medicamento", { status: 500 })
   }
 }
 
@@ -93,7 +93,7 @@ export async function PATCH(
 
     const medicationId = parseInt(params.id)
     if (isNaN(medicationId)) {
-      return apiError("ID de medicamento inválido", 400)
+      return apiError("ID de medicamento inválido", { status: 400 })
     }
 
     // Verify ownership
@@ -149,10 +149,10 @@ export async function PATCH(
     return apiSuccess(updatedMedication)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), 400)
+      return apiError("Dados inválidos: " + error.errors.map((e) => e.message).join(", "), { status: 400 })
     }
     console.error("Error updating medication:", error)
-    return apiError("Erro ao atualizar medicamento", 500)
+    return apiError("Erro ao atualizar medicamento", { status: 500 })
   }
 }
 
@@ -172,7 +172,7 @@ export async function DELETE(
 
     const medicationId = parseInt(params.id)
     if (isNaN(medicationId)) {
-      return apiError("ID de medicamento inválido", 400)
+      return apiError("ID de medicamento inválido", { status: 400 })
     }
 
     // Verify ownership
@@ -205,6 +205,6 @@ export async function DELETE(
     return apiSuccess({ message: "Medicamento desativado com sucesso" })
   } catch (error) {
     console.error("Error deleting medication:", error)
-    return apiError("Erro ao deletar medicamento", 500)
+    return apiError("Erro ao deletar medicamento", { status: 500 })
   }
 }

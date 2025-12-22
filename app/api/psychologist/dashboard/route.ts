@@ -32,17 +32,17 @@ export async function GET(request: Request) {
     const sessionsToday = await db
       .select({ value: count() })
       .from(sessions)
-      .where(and(eq(sessions.psychologistId, psychologistId), gte(sessions.sessionDate, today)))
+      .where(and(eq(sessions.psychologistId, psychologistId), gte(sessions.scheduledAt, today)))
 
     const upcomingSessions = await db.query.sessions.findMany({
-      where: and(eq(sessions.psychologistId, psychologistId), gte(sessions.sessionDate, today)),
+      where: and(eq(sessions.psychologistId, psychologistId), gte(sessions.scheduledAt, today)),
       limit: 3,
       with: {
         patient: {
           columns: { name: true },
         },
       },
-      orderBy: (sessions, { asc }) => [asc(sessions.sessionDate)],
+      orderBy: (sessions, { asc }) => [asc(sessions.scheduledAt)],
     })
 
     const recentDiaryEntries = await db.query.diaryEntries.findMany({

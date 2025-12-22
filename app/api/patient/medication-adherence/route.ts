@@ -79,6 +79,9 @@ export async function GET(request: NextRequest) {
       `)
     }
 
+    // Convert result to array (Drizzle execute returns RowList which is array-like)
+    const adherenceRows = Array.from(adherenceStats) as Record<string, unknown>[]
+
     // Calculate overall adherence
     let overallStats = {
       totalDoses: 0,
@@ -88,13 +91,13 @@ export async function GET(request: NextRequest) {
       overallAdherence: 0,
     }
 
-    if (adherenceStats.rows.length > 0) {
-      overallStats = adherenceStats.rows.reduce(
-        (acc, row: any) => ({
-          totalDoses: acc.totalDoses + parseInt(row.total_doses),
-          takenDoses: acc.takenDoses + parseInt(row.taken_doses),
-          skippedDoses: acc.skippedDoses + parseInt(row.skipped_doses),
-          missedDoses: acc.missedDoses + parseInt(row.missed_doses),
+    if (adherenceRows.length > 0) {
+      overallStats = adherenceRows.reduce<typeof overallStats>(
+        (acc, row: Record<string, unknown>) => ({
+          totalDoses: acc.totalDoses + parseInt(String(row.total_doses)),
+          takenDoses: acc.takenDoses + parseInt(String(row.taken_doses)),
+          skippedDoses: acc.skippedDoses + parseInt(String(row.skipped_doses)),
+          missedDoses: acc.missedDoses + parseInt(String(row.missed_doses)),
           overallAdherence: 0, // Will calculate after
         }),
         overallStats
@@ -166,7 +169,7 @@ export async function GET(request: NextRequest) {
         endDate: new Date(),
       },
       overall: overallStats,
-      byMedication: adherenceStats.rows,
+      byMedication: adherenceRows,
       alerts: {
         lowStock: lowStockMedications,
         refillSoon: refillSoonMedications,
@@ -175,6 +178,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Error fetching medication adherence:", error)
-    return apiError("Erro ao buscar aderência medicamentosa", 500)
+    return apiError("Erro ao buscar aderência medicamentosa", { status: 500 })
   }
 }

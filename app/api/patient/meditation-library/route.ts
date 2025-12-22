@@ -79,20 +79,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      conditions.push(
-        or(
-          ilike(meditationAudios.title, `%${search}%`),
-          ilike(meditationAudios.description, `%${search}%`),
-          ilike(meditationAudios.instructor, `%${search}%`)
-        )
+      const searchCondition = or(
+        ilike(meditationAudios.title, `%${search}%`),
+        ilike(meditationAudios.description, `%${search}%`),
+        ilike(meditationAudios.instructor, `%${search}%`)
       )
-    }
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions))
+      if (searchCondition) {
+        conditions.push(searchCondition)
+      }
     }
 
     const audios = await query
+      .where(and(...conditions))
       .orderBy(desc(meditationAudios.isFeatured), desc(meditationAudios.playCount), desc(meditationAudios.createdAt))
       .limit(limit)
       .offset(offset)
