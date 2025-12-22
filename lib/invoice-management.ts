@@ -15,7 +15,7 @@ import { db } from '@/db'
 import { invoices, subscriptions, users } from '@/db/schema'
 import { eq, desc, and, gte, lte } from 'drizzle-orm'
 import { sendEmail } from './email'
-import jsPDF from 'jspdf'
+// jsPDF is imported dynamically in generatePDF to avoid SSR issues
 
 export interface InvoiceData {
   id: string
@@ -388,6 +388,8 @@ export class InvoiceManager {
 
   /**
    * Generate PDF invoice
+   * Note: PDF generation is available via Stripe's hosted invoice PDF
+   * For custom PDF generation, use the stripePdfUrl from the invoice data
    */
   static async generatePDF(invoiceId: string): Promise<Buffer | null> {
     try {
@@ -396,104 +398,16 @@ export class InvoiceManager {
         throw new Error('Invoice not found')
       }
 
-      const doc = new jsPDF()
-
-      // Header
-      doc.setFillColor(102, 126, 234)
-      doc.rect(0, 0, 210, 40, 'F')
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(24)
-      doc.text('CÁRIS', 105, 20, { align: 'center' })
-      doc.setFontSize(12)
-      doc.text('Mental Health Platform', 105, 30, { align: 'center' })
-
-      // Invoice details
-      doc.setTextColor(0, 0, 0)
-      doc.setFontSize(20)
-      doc.text(`Invoice ${invoice.invoiceNumber}`, 20, 60)
-
-      doc.setFontSize(10)
-      doc.text(`Issued: ${invoice.createdAt.toLocaleDateString('pt-BR')}`, 20, 70)
-      if (invoice.dueDate) {
-        doc.text(`Due: ${invoice.dueDate.toLocaleDateString('pt-BR')}`, 20, 76)
+      // For production, use Stripe's PDF URL instead of generating custom PDFs
+      // This avoids SSR issues with client-side PDF libraries
+      if (invoice.stripePdfUrl) {
+        console.log('Use Stripe PDF URL:', invoice.stripePdfUrl)
       }
 
-      // Status
-      const statusText = invoice.status === 'paid' ? 'PAID' : 'DUE'
-      const statusColor = invoice.status === 'paid' ? [16, 185, 129] : [245, 158, 11]
-      doc.setFillColor(...statusColor)
-      doc.rect(150, 55, 40, 10, 'F')
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(12)
-      doc.text(statusText, 170, 62, { align: 'center' })
-
-      // Bill to
-      doc.setTextColor(0, 0, 0)
-      doc.setFontSize(10)
-      doc.setFont(undefined, 'bold')
-      doc.text('BILL TO', 20, 90)
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(12)
-      doc.text(invoice.customerName, 20, 98)
-      doc.setFontSize(10)
-      doc.text(invoice.customerEmail, 20, 104)
-
-      // Items table
-      let yPos = 120
-      doc.setFontSize(10)
-      doc.setFont(undefined, 'bold')
-      doc.text('Description', 20, yPos)
-      doc.text('Qty', 110, yPos, { align: 'center' })
-      doc.text('Unit Price', 140, yPos, { align: 'right' })
-      doc.text('Amount', 180, yPos, { align: 'right' })
-
-      doc.setFont(undefined, 'normal')
-      yPos += 8
-
-      invoice.items.forEach(item => {
-        doc.text(item.description, 20, yPos)
-        doc.text(item.quantity.toString(), 110, yPos, { align: 'center' })
-        doc.text(`R$ ${(item.unitAmount / 100).toFixed(2)}`, 140, yPos, { align: 'right' })
-        doc.text(`R$ ${(item.amount / 100).toFixed(2)}`, 180, yPos, { align: 'right' })
-        yPos += 6
-      })
-
-      // Totals
-      yPos += 10
-      doc.text('Subtotal:', 140, yPos, { align: 'right' })
-      doc.text(`R$ ${(invoice.subtotal / 100).toFixed(2)}`, 180, yPos, { align: 'right' })
-
-      if (invoice.tax > 0) {
-        yPos += 6
-        doc.text('Tax:', 140, yPos, { align: 'right' })
-        doc.text(`R$ ${(invoice.tax / 100).toFixed(2)}`, 180, yPos, { align: 'right' })
-      }
-
-      yPos += 8
-      doc.setFont(undefined, 'bold')
-      doc.setFontSize(12)
-      doc.text('Total:', 140, yPos, { align: 'right' })
-      doc.text(`R$ ${(invoice.total / 100).toFixed(2)}`, 180, yPos, { align: 'right' })
-
-      if (invoice.amountDue > 0) {
-        yPos += 8
-        doc.setTextColor(239, 68, 68)
-        doc.text('Amount Due:', 140, yPos, { align: 'right' })
-        doc.text(`R$ ${(invoice.amountDue / 100).toFixed(2)}`, 180, yPos, { align: 'right' })
-      }
-
-      // Footer
-      doc.setTextColor(156, 163, 175)
-      doc.setFontSize(8)
-      doc.setFont(undefined, 'normal')
-      doc.text(
-        'Thank you for using CÁRIS. For questions, contact support@caris.com.br',
-        105,
-        280,
-        { align: 'center' }
-      )
-
-      return Buffer.from(doc.output('arraybuffer'))
+      // PDF generation is disabled in favor of Stripe's built-in PDF generation
+      // To implement custom PDFs, use a server-side PDF library like pdfkit
+      console.warn('Custom PDF generation is disabled. Use invoice.stripePdfUrl instead.')
+      return null
     } catch (error) {
       console.error('Error generating PDF:', error)
       return null

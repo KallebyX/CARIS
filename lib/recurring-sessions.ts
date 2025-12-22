@@ -2,7 +2,7 @@ import { db } from "@/db"
 import { sessions } from "@/db/schema"
 import { eq, and, gte, inArray } from "drizzle-orm"
 import { addWeeks, addDays, addMonths, isBefore, isAfter, startOfDay } from "date-fns"
-import SessionConflictService from "./session-conflicts"
+import sessionConflictService, { SessionConflictService } from "./session-conflicts"
 
 /**
  * Recurring Sessions Service
@@ -59,7 +59,7 @@ export class RecurringSessionService {
   private conflictService: SessionConflictService
 
   constructor() {
-    this.conflictService = SessionConflictService.getInstance()
+    this.conflictService = sessionConflictService
   }
 
   static getInstance(): RecurringSessionService {

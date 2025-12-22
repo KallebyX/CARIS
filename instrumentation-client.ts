@@ -192,3 +192,6 @@ if (isSentryEnabled && typeof window !== "undefined") {
 
 export const sentryEnabled = isSentryEnabled
 export { Sentry }
+
+// Required by Sentry for Next.js navigation tracking
+export const onRouterTransitionStart = isSentryEnabled ? Sentry.captureRouterTransitionStart : () => {}
