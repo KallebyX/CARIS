@@ -41,28 +41,23 @@ export function Footer() {
             <h4 className="font-semibold text-lg mb-4">Produto</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="#funcionalidades" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/#funcionalidades" className="text-slate-400 hover:text-white transition-colors">
                   Funcionalidades
                 </Link>
               </li>
               <li>
-                <Link href="#precos" className="text-slate-400 hover:text-white transition-colors">
+                <Link href="/#precos" className="text-slate-400 hover:text-white transition-colors">
                   Preços
                 </Link>
               </li>
               <li>
-                <Link href="/demo" className="text-slate-400 hover:text-white transition-colors">
-                  Demo
+                <Link href="/register" className="text-slate-400 hover:text-white transition-colors">
+                  Começar Agora
                 </Link>
               </li>
               <li>
-                <Link href="/integrations" className="text-slate-400 hover:text-white transition-colors">
-                  Integrações
-                </Link>
-              </li>
-              <li>
-                <Link href="/api" className="text-slate-400 hover:text-white transition-colors">
-                  API
+                <Link href="/#depoimentos" className="text-slate-400 hover:text-white transition-colors">
+                  Depoimentos
                 </Link>
               </li>
             </ul>
@@ -73,28 +68,18 @@ export function Footer() {
             <h4 className="font-semibold text-lg mb-4">Suporte</h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/help" className="text-slate-400 hover:text-white transition-colors">
-                  Central de Ajuda
+                <Link href="/#faq" className="text-slate-400 hover:text-white transition-colors">
+                  Perguntas Frequentes
                 </Link>
               </li>
               <li>
-                <Link href="/docs" className="text-slate-400 hover:text-white transition-colors">
-                  Documentação
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-slate-400 hover:text-white transition-colors">
+                <a href="mailto:contato@caris.com.br" className="text-slate-400 hover:text-white transition-colors">
                   Contato
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/training" className="text-slate-400 hover:text-white transition-colors">
-                  Treinamentos
-                </Link>
-              </li>
-              <li>
-                <Link href="/community" className="text-slate-400 hover:text-white transition-colors">
-                  Comunidade
+                <Link href="/login" className="text-slate-400 hover:text-white transition-colors">
+                  Acessar Plataforma
                 </Link>
               </li>
             </ul>
