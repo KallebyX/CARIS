@@ -120,14 +120,20 @@ async function initRedis() {
         token: redisToken,
       })
       redisAvailable = true
-      console.log('[Rate Limit] Using Upstash Redis for distributed rate limiting')
+      console.log('[Rate Limit] ✅ Using Upstash Redis for distributed rate limiting')
     } catch (error) {
-      console.warn('[Rate Limit] Failed to initialize Redis, falling back to in-memory store:', error)
+      console.warn('[Rate Limit] ⚠️ Failed to initialize Redis, falling back to in-memory store:', error)
       redisClient = null
       redisAvailable = false
     }
   } else {
-    console.log('[Rate Limit] Redis not configured, using in-memory store (not recommended for production)')
+    // Only log warning in production where Redis is important
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[Rate Limit] ⚠️ Redis not configured. For production, set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN')
+      console.warn('[Rate Limit] Using in-memory store - rate limits will not persist across serverless instances')
+    } else {
+      console.log('[Rate Limit] Using in-memory store (Redis not configured - OK for development)')
+    }
     redisAvailable = false
   }
 
