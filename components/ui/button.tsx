@@ -72,14 +72,26 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     "aria-label": ariaLabel,
     ...props
   }, ref) => {
-    const Comp = asChild ? Slot : "button"
-
     // Determine if button has accessible label
     const hasAccessibleLabel = ariaLabel || (typeof children === 'string' && children.length > 0)
 
     // For icon-only buttons, ensure aria-label is provided
     if (size === "icon" && !hasAccessibleLabel && !asChild) {
       console.warn('Icon buttons should have an aria-label for accessibility')
+    }
+
+    // When asChild is true, pass children directly without wrapping
+    // Slot expects a single React element child
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref}
+          className={cn(buttonVariants({ variant, size, className }))}
+          {...props}
+        >
+          {children}
+        </Slot>
+      )
     }
 
     const content = (
@@ -97,7 +109,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     )
 
     return (
-      <Comp
+      <button
         ref={ref}
         type={type}
         className={cn(buttonVariants({ variant, size, className }))}
@@ -113,7 +125,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {loadingText || 'Loading...'}
           </span>
         )}
-      </Comp>
+      </button>
     )
   }
 )
