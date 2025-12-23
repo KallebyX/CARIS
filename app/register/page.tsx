@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { ArrowLeft, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "@/lib/i18n"
@@ -24,6 +24,8 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
     role: "",
+    dataProcessingConsent: false,
+    termsAccepted: false,
   })
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -50,6 +52,15 @@ export default function RegisterPage() {
       return
     }
 
+    if (!formData.dataProcessingConsent || !formData.termsAccepted) {
+      toast({
+        title: tCommon('error'),
+        description: t('consentRequired') || "Você precisa aceitar os termos para continuar.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -61,6 +72,8 @@ export default function RegisterPage() {
           email: formData.email,
           password: formData.password,
           role: formData.role,
+          dataProcessingConsent: formData.dataProcessingConsent,
+          termsAccepted: formData.termsAccepted,
         }),
       })
 
@@ -192,9 +205,46 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="dataProcessingConsent"
+                    checked={formData.dataProcessingConsent}
+                    onCheckedChange={(checked) =>
+                      setFormData({...formData, dataProcessingConsent: checked === true})
+                    }
+                    disabled={isLoading}
+                    className="border-white data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 mt-0.5"
+                  />
+                  <Label htmlFor="dataProcessingConsent" className="text-sm text-teal-100 leading-tight cursor-pointer">
+                    {t('dataProcessingConsent') || "Autorizo o processamento dos meus dados para funcionamento da plataforma."}
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="termsAccepted"
+                    checked={formData.termsAccepted}
+                    onCheckedChange={(checked) =>
+                      setFormData({...formData, termsAccepted: checked === true})
+                    }
+                    disabled={isLoading}
+                    className="border-white data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500 mt-0.5"
+                  />
+                  <Label htmlFor="termsAccepted" className="text-sm text-teal-100 leading-tight cursor-pointer">
+                    {t('termsAccepted') || "Li e aceito os"}{" "}
+                    <Link href="/terms" className="text-orange-300 hover:text-orange-400 underline">
+                      {t('termsOfService') || "Termos de Uso"}
+                    </Link>{" "}
+                    {t('and') || "e"}{" "}
+                    <Link href="/privacy" className="text-orange-300 hover:text-orange-400 underline">
+                      {t('privacyPolicy') || "Política de Privacidade"}
+                    </Link>.
+                  </Label>
+                </div>
+              </div>
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !formData.dataProcessingConsent || !formData.termsAccepted}
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white h-12 text-base font-semibold rounded-full shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? tCommon('saving') : t('register')}
