@@ -6,15 +6,11 @@ import Image from "next/image"
 
 export function HeroSection() {
   return (
-    <section id="sobre" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 bg-slate-50 overflow-hidden">
-      <div className="absolute inset-0">
-        <Image
-          src="/images/auth-background.png"
-          alt="Fundo Abstrato"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-50"
-        />
+    <section id="sobre" className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 bg-gradient-to-br from-slate-50 via-teal-50/30 to-orange-50/20 overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-teal-200/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-200/20 rounded-full blur-3xl" />
       </div>
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">

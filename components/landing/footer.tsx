@@ -21,16 +21,16 @@ export function Footer() {
               e sensibilidade.
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-slate-400 hover:text-white transition-colors">
+              <Link href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Siga-nos no Facebook">
                 <Facebook className="w-5 h-5" />
               </Link>
-              <Link href="#" className="text-slate-400 hover:text-white transition-colors">
+              <Link href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Siga-nos no Instagram">
                 <Instagram className="w-5 h-5" />
               </Link>
-              <Link href="#" className="text-slate-400 hover:text-white transition-colors">
+              <Link href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Siga-nos no LinkedIn">
                 <Linkedin className="w-5 h-5" />
               </Link>
-              <Link href="#" className="text-slate-400 hover:text-white transition-colors">
+              <Link href="#" className="text-slate-400 hover:text-white transition-colors" aria-label="Siga-nos no Twitter">
                 <Twitter className="w-5 h-5" />
               </Link>
             </div>

@@ -16,8 +16,10 @@ export interface AuditLogEntry {
 
 /**
  * Registra uma entrada de auditoria
+ * Esta função falha silenciosamente para não interromper operações críticas
+ * como login/registro quando a tabela de auditoria não existir
  */
-export async function logAuditEvent(entry: AuditLogEntry) {
+export async function logAuditEvent(entry: AuditLogEntry): Promise<void> {
   try {
     await db.insert(auditLogs).values({
       userId: entry.userId,
@@ -30,9 +32,22 @@ export async function logAuditEvent(entry: AuditLogEntry) {
       ipAddress: entry.ipAddress,
       userAgent: entry.userAgent,
     })
-  } catch (error) {
-    console.error('Erro ao registrar log de auditoria:', error)
-    // Não relançar o erro para não quebrar a operação principal
+  } catch (error: unknown) {
+    // Fail silently - audit logging should never break main operations
+    // Check if it's a "table doesn't exist" error and log appropriately
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const isTableMissing = errorMessage.includes('does not exist') ||
+                           errorMessage.includes('42P01') // PostgreSQL error code for undefined table
+
+    if (isTableMissing) {
+      // Only log once to avoid spam - table migration is needed
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[AUDIT] audit_logs table not found - run database migrations')
+      }
+    } else {
+      console.error('[AUDIT] Failed to log audit event:', errorMessage)
+    }
+    // Never re-throw - this prevents cascading failures in auth flows
   }
 }
 
