@@ -610,26 +610,43 @@ export async function POST(request: NextRequest) {
     // ========================================
     addLog("🔧 Verificando colunas existentes...")
 
-    // Check if scheduled_at column exists in sessions table and add if missing
-    try {
-      const columnsResult = await sql`
-        SELECT column_name FROM information_schema.columns
-        WHERE table_name = 'sessions' AND column_name = 'scheduled_at'
-      `
-      if (columnsResult.length === 0) {
-        addLog("  ⚠️ Coluna scheduled_at não existe em sessions, adicionando...")
-        await sql`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP`
-        // Try to migrate from old column name if exists
-        try {
-          await sql`UPDATE sessions SET scheduled_at = session_date WHERE scheduled_at IS NULL AND session_date IS NOT NULL`
-        } catch {
-          // session_date column might not exist, ignore
+    // Helper function to check and add column if missing
+    const ensureColumn = async (tableName: string, columnName: string, columnDef: string) => {
+      try {
+        const result = await sql`
+          SELECT column_name FROM information_schema.columns
+          WHERE table_name = ${tableName} AND column_name = ${columnName}
+        `
+        if (result.length === 0) {
+          addLog(`  ⚠️ Coluna ${columnName} não existe em ${tableName}, adicionando...`)
+          await sql.unsafe(`ALTER TABLE ${tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDef}`)
+          addLog(`  ✅ Coluna ${columnName} adicionada`)
+          return true
         }
-        addLog("  ✅ Coluna scheduled_at adicionada")
+        return false
+      } catch (err) {
+        addLog(`  ⚠️ Erro ao verificar/adicionar ${columnName}: ${err instanceof Error ? err.message : 'Erro'}`)
+        return false
       }
-    } catch (colError) {
-      addLog(`  ⚠️ Erro ao verificar colunas: ${colError instanceof Error ? colError.message : 'Erro desconhecido'}`)
     }
+
+    // Check sessions.scheduled_at
+    await ensureColumn('sessions', 'scheduled_at', 'TIMESTAMP')
+    // Try to migrate from old column name if exists
+    try {
+      await sql`UPDATE sessions SET scheduled_at = session_date WHERE scheduled_at IS NULL AND session_date IS NOT NULL`
+    } catch {
+      // session_date column might not exist, ignore
+    }
+
+    // Check chat_messages.room_id
+    await ensureColumn('chat_messages', 'room_id', 'TEXT')
+
+    // Check other potentially missing columns
+    await ensureColumn('diary_entries', 'patient_id', 'INTEGER')
+    await ensureColumn('notifications', 'user_id', 'INTEGER')
+    await ensureColumn('audit_logs', 'user_id', 'INTEGER')
+    await ensureColumn('mood_tracking', 'patient_id', 'INTEGER')
 
     // ========================================
     // CRIAR ÍNDICES
@@ -639,7 +656,7 @@ export async function POST(request: NextRequest) {
     // Helper function to create index safely
     const createIndexSafely = async (indexName: string, tableName: string, columnName: string) => {
       try {
-        await sql`CREATE INDEX IF NOT EXISTS ${sql.identifier([indexName])} ON ${sql.identifier([tableName])}(${sql.identifier([columnName])})`
+        await sql.unsafe(`CREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName}(${columnName})`)
         return true
       } catch (indexError) {
         addLog(`  ⚠️ Índice ${indexName} não criado: ${indexError instanceof Error ? indexError.message : 'Erro'}`)
@@ -647,23 +664,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await sql`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_sessions_psychologist ON sessions(psychologist_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_sessions_patient ON sessions(patient_id)`
-
-    // This index may fail if column doesn't exist, handle gracefully
-    try {
-      await sql`CREATE INDEX IF NOT EXISTS idx_sessions_scheduled ON sessions(scheduled_at)`
-    } catch (scheduledIndexError) {
-      addLog(`  ⚠️ Índice idx_sessions_scheduled não criado (coluna pode não existir)`)
-    }
-
-    await sql`CREATE INDEX IF NOT EXISTS idx_diary_patient ON diary_entries(patient_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs(user_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_mood_tracking_patient ON mood_tracking(patient_id)`
+    await createIndexSafely('idx_users_email', 'users', 'email')
+    await createIndexSafely('idx_users_role', 'users', 'role')
+    await createIndexSafely('idx_sessions_psychologist', 'sessions', 'psychologist_id')
+    await createIndexSafely('idx_sessions_patient', 'sessions', 'patient_id')
+    await createIndexSafely('idx_sessions_scheduled', 'sessions', 'scheduled_at')
+    await createIndexSafely('idx_diary_patient', 'diary_entries', 'patient_id')
+    await createIndexSafely('idx_notifications_user', 'notifications', 'user_id')
+    await createIndexSafely('idx_chat_messages_room', 'chat_messages', 'room_id')
+    await createIndexSafely('idx_audit_logs_user', 'audit_logs', 'user_id')
+    await createIndexSafely('idx_mood_tracking_patient', 'mood_tracking', 'patient_id')
 
     addLog("  ✅ Índices criados")
 
