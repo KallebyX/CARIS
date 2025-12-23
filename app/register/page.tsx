@@ -170,8 +170,9 @@ export default function RegisterPage() {
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     className="bg-white/20 border-teal-400 h-12 pr-10 placeholder:text-teal-200 focus:bg-white/30 disabled:opacity-50"
                     required
-                    minLength={6}
+                    minLength={8}
                     disabled={isLoading}
+                    placeholder="Mínimo 8 caracteres"
                   />
                   <button
                     type="button"

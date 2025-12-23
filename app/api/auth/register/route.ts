@@ -11,19 +11,16 @@ import { rateLimit, RateLimitPresets } from "@/lib/rate-limit"
 import { safeError } from "@/lib/safe-logger"
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email("Email inválido"),
   password: z.string()
-    .min(12, "A senha deve ter no mínimo 12 caracteres")
-    .regex(/[A-Z]/, "A senha deve conter pelo menos uma letra maiúscula")
-    .regex(/[a-z]/, "A senha deve conter pelo menos uma letra minúscula")
-    .regex(/[0-9]/, "A senha deve conter pelo menos um número")
-    .regex(/[^A-Za-z0-9]/, "A senha deve conter pelo menos um caractere especial"),
-  name: z.string().min(1),
+    .min(8, "A senha deve ter no mínimo 8 caracteres")
+    .max(100, "A senha deve ter no máximo 100 caracteres"),
+  name: z.string().min(1, "Nome é obrigatório"),
   role: z.enum(["patient", "psychologist"]),
   // Campos específicos para psicólogos
   crp: z.string().optional(),
   bio: z.string().optional(),
-  // Campos específicos para pacientes  
+  // Campos específicos para pacientes
   psychologistId: z.number().optional(),
   // Consentimentos obrigatórios
   dataProcessingConsent: z.boolean().refine(val => val === true, {
