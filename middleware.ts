@@ -353,5 +353,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/api/((?!auth|health).*)/:path*"],
+  // Exclude: /api/auth/*, /api/health/*, /api/admin/setup (for initial database setup)
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/api/((?!auth|health|admin/setup).*)/:path*"],
 }
