@@ -606,15 +606,59 @@ export async function POST(request: NextRequest) {
     addLog("  ✅ subscriptions")
 
     // ========================================
+    // VERIFICAR E ADICIONAR COLUNAS FALTANTES
+    // ========================================
+    addLog("🔧 Verificando colunas existentes...")
+
+    // Check if scheduled_at column exists in sessions table and add if missing
+    try {
+      const columnsResult = await sql`
+        SELECT column_name FROM information_schema.columns
+        WHERE table_name = 'sessions' AND column_name = 'scheduled_at'
+      `
+      if (columnsResult.length === 0) {
+        addLog("  ⚠️ Coluna scheduled_at não existe em sessions, adicionando...")
+        await sql`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP`
+        // Try to migrate from old column name if exists
+        try {
+          await sql`UPDATE sessions SET scheduled_at = session_date WHERE scheduled_at IS NULL AND session_date IS NOT NULL`
+        } catch {
+          // session_date column might not exist, ignore
+        }
+        addLog("  ✅ Coluna scheduled_at adicionada")
+      }
+    } catch (colError) {
+      addLog(`  ⚠️ Erro ao verificar colunas: ${colError instanceof Error ? colError.message : 'Erro desconhecido'}`)
+    }
+
+    // ========================================
     // CRIAR ÍNDICES
     // ========================================
     addLog("📊 Criando índices...")
+
+    // Helper function to create index safely
+    const createIndexSafely = async (indexName: string, tableName: string, columnName: string) => {
+      try {
+        await sql`CREATE INDEX IF NOT EXISTS ${sql.identifier([indexName])} ON ${sql.identifier([tableName])}(${sql.identifier([columnName])})`
+        return true
+      } catch (indexError) {
+        addLog(`  ⚠️ Índice ${indexName} não criado: ${indexError instanceof Error ? indexError.message : 'Erro'}`)
+        return false
+      }
+    }
 
     await sql`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`
     await sql`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`
     await sql`CREATE INDEX IF NOT EXISTS idx_sessions_psychologist ON sessions(psychologist_id)`
     await sql`CREATE INDEX IF NOT EXISTS idx_sessions_patient ON sessions(patient_id)`
-    await sql`CREATE INDEX IF NOT EXISTS idx_sessions_scheduled ON sessions(scheduled_at)`
+
+    // This index may fail if column doesn't exist, handle gracefully
+    try {
+      await sql`CREATE INDEX IF NOT EXISTS idx_sessions_scheduled ON sessions(scheduled_at)`
+    } catch (scheduledIndexError) {
+      addLog(`  ⚠️ Índice idx_sessions_scheduled não criado (coluna pode não existir)`)
+    }
+
     await sql`CREATE INDEX IF NOT EXISTS idx_diary_patient ON diary_entries(patient_id)`
     await sql`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id)`
     await sql`CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id)`
