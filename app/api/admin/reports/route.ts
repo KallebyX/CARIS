@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, verifyAdminAccess } from "@/lib/auth"
 import { db } from "@/db"
 import { users, financialReports, subscriptions, sessions, clinicUsers } from "@/db/schema"
 import { eq, and, count, sum, gte, desc, sql } from "drizzle-orm"
@@ -11,12 +11,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Verify user is global admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 

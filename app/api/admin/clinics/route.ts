@@ -1,8 +1,51 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, verifyAdminAccess } from "@/lib/auth"
 import { db } from "@/db"
 import { clinics, clinicUsers, users } from "@/db/schema"
-import { eq, and, count } from "drizzle-orm"
+import { eq, and, count, sql } from "drizzle-orm"
+
+/**
+ * Safely get user count for a clinic, handling missing clinic_users table
+ */
+async function getClinicUserCount(clinicId: number): Promise<number> {
+  try {
+    const userCount = await db
+      .select({ count: count() })
+      .from(clinicUsers)
+      .where(
+        and(
+          eq(clinicUsers.clinicId, clinicId),
+          eq(clinicUsers.status, "active")
+        )
+      )
+    return userCount[0]?.count || 0
+  } catch (error) {
+    // If clinic_users table doesn't exist, return 0
+    const errorMessage = error instanceof Error ? error.message : ''
+    if (errorMessage.includes('clinic_users') || errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+      return 0
+    }
+    throw error
+  }
+}
+
+/**
+ * Safely get clinic owner info using raw SQL to avoid selecting non-existent columns
+ */
+async function getClinicOwner(ownerId: number): Promise<{ id: number; name: string; email: string } | null> {
+  try {
+    const result = await db.execute<{ id: number; name: string; email: string }>(
+      sql`SELECT id, name, email FROM users WHERE id = ${ownerId} LIMIT 1`
+    )
+    if (result.rows && result.rows.length > 0) {
+      return result.rows[0]
+    }
+    return null
+  } catch (error) {
+    console.error("Error fetching clinic owner:", error)
+    return null
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,45 +54,73 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Verify user is global admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    // Get all clinics with their basic stats
-    const allClinics = await db.query.clinics.findMany({
-      with: {
-        owner: {
-          columns: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
-    })
+    // Get all clinics using raw SQL to avoid selecting non-existent columns
+    const clinicsResult = await db.execute<{
+      id: number
+      name: string
+      slug: string
+      description: string | null
+      logo_url: string | null
+      website: string | null
+      phone: string | null
+      email: string | null
+      address: string | null
+      cnpj: string | null
+      owner_id: number
+      status: string
+      plan_type: string
+      max_users: number
+      max_psychologists: number
+      max_patients: number
+      settings: unknown
+      created_at: Date
+      updated_at: Date
+    }>(
+      sql`SELECT id, name, slug, description, logo_url, website, phone, email, address, cnpj,
+          owner_id, status, plan_type, max_users, max_psychologists, max_patients, settings,
+          created_at, updated_at
+          FROM clinics ORDER BY created_at DESC`
+    )
 
-    // Get user counts for each clinic
+    const allClinics = clinicsResult.rows || []
+
+    // Get user counts and owner info for each clinic
     const clinicsWithStats = await Promise.all(
       allClinics.map(async (clinic) => {
-        const userCount = await db
-          .select({ count: count() })
-          .from(clinicUsers)
-          .where(
-            and(
-              eq(clinicUsers.clinicId, clinic.id),
-              eq(clinicUsers.status, "active")
-            )
-          )
+        const [totalUsers, owner] = await Promise.all([
+          getClinicUserCount(clinic.id),
+          getClinicOwner(clinic.owner_id)
+        ])
 
         return {
-          ...clinic,
-          totalUsers: userCount[0]?.count || 0,
-          currentSubscription: null // Note: Subscription relation not available on clinics
+          id: clinic.id,
+          name: clinic.name,
+          slug: clinic.slug,
+          description: clinic.description,
+          logo: clinic.logo_url,
+          website: clinic.website,
+          phone: clinic.phone,
+          email: clinic.email,
+          address: clinic.address,
+          cnpj: clinic.cnpj,
+          ownerId: clinic.owner_id,
+          status: clinic.status,
+          planType: clinic.plan_type,
+          maxUsers: clinic.max_users,
+          maxPsychologists: clinic.max_psychologists,
+          maxPatients: clinic.max_patients,
+          settings: clinic.settings,
+          createdAt: clinic.created_at,
+          updatedAt: clinic.updated_at,
+          owner,
+          totalUsers,
+          currentSubscription: null
         }
       })
     )
@@ -74,12 +145,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
     }
 
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Verify user is global admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
@@ -123,12 +191,12 @@ export async function POST(request: NextRequest) {
     // Use provided ownerId or current admin user
     const finalOwnerId = ownerId || userId
 
-    // Verify owner exists
-    const owner = await db.query.users.findFirst({
-      where: eq(users.id, finalOwnerId)
-    })
+    // Verify owner exists using raw SQL
+    const ownerResult = await db.execute<{ id: number }>(
+      sql`SELECT id FROM users WHERE id = ${finalOwnerId} LIMIT 1`
+    )
 
-    if (!owner) {
+    if (!ownerResult.rows || ownerResult.rows.length === 0) {
       return NextResponse.json(
         { error: "Proprietario nao encontrado" },
         { status: 400 }
@@ -152,13 +220,21 @@ export async function POST(request: NextRequest) {
       status
     }).returning()
 
-    // Add owner as clinic admin
-    await db.insert(clinicUsers).values({
-      clinicId: newClinic.id,
-      userId: finalOwnerId,
-      role: "owner",
-      status: "active"
-    })
+    // Try to add owner as clinic admin (may fail if clinic_users table doesn't exist)
+    try {
+      await db.insert(clinicUsers).values({
+        clinicId: newClinic.id,
+        userId: finalOwnerId,
+        role: "owner",
+        status: "active"
+      })
+    } catch (error) {
+      // If clinic_users table doesn't exist, just continue
+      const errorMessage = error instanceof Error ? error.message : ''
+      if (!errorMessage.includes('clinic_users') && !errorMessage.includes('does not exist') && !errorMessage.includes('relation')) {
+        throw error
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -180,12 +256,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
     }
 
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Verify user is global admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
@@ -253,12 +326,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
     }
 
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Verify user is global admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
@@ -269,13 +339,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "ID da clinica e obrigatorio" }, { status: 400 })
     }
 
-    // Check if clinic has users
-    const userCount = await db
-      .select({ count: count() })
-      .from(clinicUsers)
-      .where(eq(clinicUsers.clinicId, parseInt(clinicId)))
+    // Check if clinic has users (handle missing clinic_users table)
+    const clinicUserCount = await getClinicUserCount(parseInt(clinicId))
 
-    if (Number(userCount[0]?.count || 0) > 0) {
+    if (clinicUserCount > 0) {
       return NextResponse.json(
         { error: "Nao e possivel excluir uma clinica com usuarios" },
         { status: 400 }

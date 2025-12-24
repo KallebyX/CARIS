@@ -1,11 +1,43 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, verifyAdminAccess } from "@/lib/auth"
 import { db } from "@/db"
 import { clinics, clinicUsers, users, subscriptions, subscriptionPlans, sessions } from "@/db/schema"
 import { eq, and, count, sum, gte, sql } from "drizzle-orm"
 import { withCache, CachePresets, generateCacheKey } from "@/lib/api-cache"
 import { apiUnauthorized, apiForbidden, apiSuccess, handleApiError } from "@/lib/api-response"
 import { safeError } from "@/lib/safe-logger"
+
+/**
+ * Safely count clinic users, handling missing clinic_users table
+ */
+async function safeCountClinicUsers(whereClause?: { status?: string; since?: Date }): Promise<number> {
+  try {
+    if (whereClause?.since) {
+      const result = await db
+        .select({ count: count() })
+        .from(clinicUsers)
+        .where(
+          and(
+            eq(clinicUsers.status, whereClause.status || "active"),
+            gte(clinicUsers.joinedAt, whereClause.since)
+          )
+        )
+      return result[0]?.count || 0
+    } else {
+      const result = await db
+        .select({ count: count() })
+        .from(clinicUsers)
+        .where(eq(clinicUsers.status, whereClause?.status || "active"))
+      return result[0]?.count || 0
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : ''
+    if (errorMessage.includes('clinic_users') || errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+      return 0
+    }
+    throw error
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,12 +46,9 @@ export async function GET(request: NextRequest) {
       return apiUnauthorized("Não autorizado")
     }
 
-    // Verify user is global admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Verify user is global admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return apiForbidden("Acesso negado")
     }
 
@@ -46,11 +75,8 @@ export async function GET(request: NextRequest) {
           .from(clinics)
           .where(eq(clinics.status, "active"))
 
-        // Total users across all clinics
-        const totalUsersResult = await db
-          .select({ count: count() })
-          .from(clinicUsers)
-          .where(eq(clinicUsers.status, "active"))
+        // Total users across all clinics (safe query)
+        const totalUsers = await safeCountClinicUsers({ status: "active" })
 
         // New clinics this month
         const newClinicsThisMonthResult = await db
@@ -58,16 +84,8 @@ export async function GET(request: NextRequest) {
           .from(clinics)
           .where(gte(clinics.createdAt, firstDayOfMonth))
 
-        // New users this month
-        const newUsersThisMonthResult = await db
-          .select({ count: count() })
-          .from(clinicUsers)
-          .where(
-            and(
-              eq(clinicUsers.status, "active"),
-              gte(clinicUsers.joinedAt, firstDayOfMonth)
-            )
-          )
+        // New users this month (safe query)
+        const newUsersThisMonth = await safeCountClinicUsers({ status: "active", since: firstDayOfMonth })
 
         // Total revenue (sum of active subscriptions joined with plans)
         const totalRevenueResult = await db
@@ -92,9 +110,9 @@ export async function GET(request: NextRequest) {
         return {
           totalClinics: totalClinicsResult[0]?.count || 0,
           activeClinics: activeClinicsResult[0]?.count || 0,
-          totalUsers: totalUsersResult[0]?.count || 0,
+          totalUsers,
           newClinicsThisMonth: newClinicsThisMonthResult[0]?.count || 0,
-          newUsersThisMonth: newUsersThisMonthResult[0]?.count || 0,
+          newUsersThisMonth,
           totalRevenue: totalRevenueResult[0]?.total || 0,
           sessionsThisMonth: sessionsThisMonthResult[0]?.count || 0,
           growthRates: {
