@@ -667,6 +667,12 @@ export async function POST(request: NextRequest) {
     // Check users.status (critical for super admin creation)
     await ensureColumn('users', 'status', "TEXT DEFAULT 'active' NOT NULL")
 
+    // Check users.password_changed_at (critical for authentication token validation)
+    await ensureColumn('users', 'password_changed_at', 'TIMESTAMP')
+
+    // Check users.last_login_at
+    await ensureColumn('users', 'last_login_at', 'TIMESTAMP')
+
     // Check sessions.scheduled_at
     await ensureColumn('sessions', 'scheduled_at', 'TIMESTAMP')
     // Try to migrate from old column name if exists
