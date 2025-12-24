@@ -630,6 +630,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check users.is_global_admin (critical for super admin creation)
+    await ensureColumn('users', 'is_global_admin', 'BOOLEAN DEFAULT false')
+
     // Check sessions.scheduled_at
     await ensureColumn('sessions', 'scheduled_at', 'TIMESTAMP')
     // Try to migrate from old column name if exists
