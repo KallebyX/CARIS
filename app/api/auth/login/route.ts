@@ -45,9 +45,19 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parsedBody.data
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    })
+    // Use explicit column selection to avoid issues with missing columns in the database
+    // This is more resilient than db.query.users.findFirst() which selects ALL schema columns
+    const [user] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        password: users.password,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
 
     if (!user) {
       await logAuditEvent({
