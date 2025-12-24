@@ -306,12 +306,12 @@ export default function AdminCompliancePage() {
 
                 <div>
                   <Label>Ação</Label>
-                  <Select value={filters.action} onValueChange={(value) => handleFilterChange('action', value)}>
+                  <Select value={filters.action || "all"} onValueChange={(value) => handleFilterChange('action', value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       <SelectItem value="login">Login</SelectItem>
                       <SelectItem value="logout">Logout</SelectItem>
                       <SelectItem value="create">Criar</SelectItem>
@@ -325,12 +325,12 @@ export default function AdminCompliancePage() {
 
                 <div>
                   <Label>Recurso</Label>
-                  <Select value={filters.resourceType} onValueChange={(value) => handleFilterChange('resourceType', value)}>
+                  <Select value={filters.resourceType || "all"} onValueChange={(value) => handleFilterChange('resourceType', value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="user">Usuário</SelectItem>
                       <SelectItem value="session">Sessão</SelectItem>
                       <SelectItem value="diary_entry">Diário</SelectItem>
@@ -341,12 +341,12 @@ export default function AdminCompliancePage() {
 
                 <div>
                   <Label>Severidade</Label>
-                  <Select value={filters.severity} onValueChange={(value) => handleFilterChange('severity', value)}>
+                  <Select value={filters.severity || "all"} onValueChange={(value) => handleFilterChange('severity', value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Todas" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todas</SelectItem>
+                      <SelectItem value="all">Todas</SelectItem>
                       <SelectItem value="info">Info</SelectItem>
                       <SelectItem value="warning">Warning</SelectItem>
                       <SelectItem value="critical">Critical</SelectItem>

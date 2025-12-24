@@ -367,12 +367,12 @@ export default function AdminUsersPage() {
 
           <div>
             <Label>Filtrar por papel</Label>
-            <Select value={filterRole} onValueChange={setFilterRole}>
+            <Select value={filterRole || "all"} onValueChange={(v) => setFilterRole(v === "all" ? "" : v)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Todos os papeis" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os papeis</SelectItem>
+                <SelectItem value="all">Todos os papeis</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="clinic_owner">Proprietario</SelectItem>
                 <SelectItem value="clinic_admin">Admin Clinica</SelectItem>
@@ -384,12 +384,12 @@ export default function AdminUsersPage() {
 
           <div>
             <Label>Filtrar por status</Label>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="active">Ativo</SelectItem>
                 <SelectItem value="suspended">Suspenso</SelectItem>
                 <SelectItem value="inactive">Inativo</SelectItem>

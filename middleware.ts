@@ -295,12 +295,26 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Verifica permissões de admin
-    if (pathname.startsWith("/admin") && payload.role !== "admin") {
+    // Verifica permissões de admin para páginas e API admin
+    const isAdminPage = pathname.startsWith("/admin")
+    const isAdminApi = pathname.startsWith("/api/admin")
+
+    if ((isAdminPage || isAdminApi) && payload.role !== "admin") {
       logSecurityEvent("unauthorized_admin_access", request, {
         userId: payload.userId,
-        role: payload.role
+        role: payload.role,
+        path: pathname
       })
+
+      // For API routes, return 403 JSON response
+      if (isAdminApi) {
+        return NextResponse.json(
+          { error: "Acesso negado. Permissao de administrador necessaria." },
+          { status: 403 }
+        )
+      }
+
+      // For admin pages, redirect to dashboard
       const response = NextResponse.redirect(new URL("/dashboard", request.url))
       return applySecurityHeaders(response, request)
     }

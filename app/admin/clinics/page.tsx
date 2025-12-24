@@ -353,12 +353,12 @@ export default function AdminClinicsPage() {
           </div>
           <div>
             <Label>Filtrar por status</Label>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus || "all"} onValueChange={(v) => setFilterStatus(v === "all" ? "" : v)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="active">Ativa</SelectItem>
                 <SelectItem value="suspended">Suspensa</SelectItem>
                 <SelectItem value="inactive">Inativa</SelectItem>
@@ -367,12 +367,12 @@ export default function AdminClinicsPage() {
           </div>
           <div>
             <Label>Filtrar por plano</Label>
-            <Select value={filterPlan} onValueChange={setFilterPlan}>
+            <Select value={filterPlan || "all"} onValueChange={(v) => setFilterPlan(v === "all" ? "" : v)}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Todos os planos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os planos</SelectItem>
+                <SelectItem value="all">Todos os planos</SelectItem>
                 <SelectItem value="basic">Basico</SelectItem>
                 <SelectItem value="professional">Profissional</SelectItem>
                 <SelectItem value="enterprise">Empresarial</SelectItem>
