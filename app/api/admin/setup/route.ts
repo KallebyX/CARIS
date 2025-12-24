@@ -861,7 +861,42 @@ export async function POST(request: NextRequest) {
     }
     addLog("  ✅ Categorias de meditação")
 
-    // Achievements
+    // Achievements - First ensure all required columns exist (explicit check before seeding)
+    addLog("  🔄 Verificando estrutura da tabela achievements antes de inserir dados...")
+
+    const achievementColumns = await sql`
+      SELECT column_name FROM information_schema.columns WHERE table_name = 'achievements'
+    `
+    const existingAchievementCols = achievementColumns.map((row: { column_name: string }) => row.column_name)
+    addLog(`  📋 Colunas existentes em achievements: ${existingAchievementCols.join(', ')}`)
+
+    // Add missing columns with explicit ALTER TABLE (bypass information_schema caching issues)
+    const requiredAchievementColumns = [
+      { name: 'type', def: "TEXT DEFAULT 'activity'" },
+      { name: 'category', def: "TEXT DEFAULT 'engagement'" },
+      { name: 'requirement', def: 'INTEGER DEFAULT 1' },
+      { name: 'xp_reward', def: 'INTEGER DEFAULT 0' },
+      { name: 'rarity', def: "TEXT DEFAULT 'common'" },
+      { name: 'is_active', def: 'BOOLEAN DEFAULT true' },
+    ]
+
+    for (const col of requiredAchievementColumns) {
+      if (!existingAchievementCols.includes(col.name)) {
+        addLog(`  ⚠️ Adicionando coluna ${col.name} em achievements...`)
+        try {
+          await sql.unsafe(`ALTER TABLE achievements ADD COLUMN ${col.name} ${col.def}`)
+          addLog(`  ✅ Coluna ${col.name} adicionada`)
+        } catch (colErr) {
+          const errMsg = colErr instanceof Error ? colErr.message : ''
+          if (errMsg.includes('already exists')) {
+            addLog(`  ✅ Coluna ${col.name} já existe`)
+          } else {
+            addLog(`  ❌ Erro ao adicionar coluna ${col.name}: ${errMsg}`)
+          }
+        }
+      }
+    }
+
     const achievements = [
       { name: "Primeiro Passo", desc: "Complete seu cadastro", icon: "🎉", type: "milestone", cat: "engagement", req: 1, xp: 50, rarity: "common" },
       { name: "Escritor Iniciante", desc: "Escreva sua primeira entrada no diário", icon: "📝", type: "activity", cat: "diary", req: 1, xp: 25, rarity: "common" },
