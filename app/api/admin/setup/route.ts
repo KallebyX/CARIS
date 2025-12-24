@@ -610,17 +610,48 @@ export async function POST(request: NextRequest) {
     // ========================================
     addLog("🔧 Verificando colunas existentes...")
 
-    // Helper function to check and add column if missing
+    // Helper function to check and add column if missing with verification
     const ensureColumn = async (tableName: string, columnName: string, columnDef: string) => {
       try {
+        // First check if column exists
         const result = await sql`
           SELECT column_name FROM information_schema.columns
           WHERE table_name = ${tableName} AND column_name = ${columnName}
         `
         if (result.length === 0) {
           addLog(`  ⚠️ Coluna ${columnName} não existe em ${tableName}, adicionando...`)
+
+          // Try to add the column
           await sql.unsafe(`ALTER TABLE ${tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDef}`)
-          addLog(`  ✅ Coluna ${columnName} adicionada`)
+
+          // Wait a moment for schema cache to update (Neon serverless can have delays)
+          await new Promise(resolve => setTimeout(resolve, 100))
+
+          // Verify the column was actually added
+          const verifyResult = await sql`
+            SELECT column_name FROM information_schema.columns
+            WHERE table_name = ${tableName} AND column_name = ${columnName}
+          `
+
+          if (verifyResult.length === 0) {
+            addLog(`  ❌ Falha ao adicionar coluna ${columnName} - tentando novamente...`)
+            // Try a direct ALTER TABLE without IF NOT EXISTS
+            try {
+              await sql.unsafe(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDef}`)
+              addLog(`  ✅ Coluna ${columnName} adicionada na segunda tentativa`)
+            } catch (retryErr) {
+              // If column already exists error, that's fine
+              const errMsg = retryErr instanceof Error ? retryErr.message : ''
+              if (errMsg.includes('already exists')) {
+                addLog(`  ✅ Coluna ${columnName} já existe`)
+              } else {
+                addLog(`  ❌ Erro ao adicionar ${columnName}: ${errMsg}`)
+                throw retryErr
+              }
+            }
+          } else {
+            addLog(`  ✅ Coluna ${columnName} adicionada e verificada`)
+          }
           return true
         }
         return false
@@ -689,20 +720,54 @@ export async function POST(request: NextRequest) {
     const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || "Admin@Caris2024!"
     const superAdminName = process.env.SUPER_ADMIN_NAME || "Administrador CÁRIS"
 
+    // First verify is_global_admin column exists before INSERT
+    const columnCheck = await sql`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'users' AND column_name = 'is_global_admin'
+    `
+
+    const hasIsGlobalAdmin = columnCheck.length > 0
+
+    if (!hasIsGlobalAdmin) {
+      addLog("  ⚠️ Coluna is_global_admin não encontrada, criando admin sem essa coluna...")
+    }
+
     const existingAdmin = await sql`
       SELECT id, email FROM users WHERE email = ${superAdminEmail}
     `
 
     if (existingAdmin.length > 0) {
       addLog(`  ⚠️ Super admin já existe: ${superAdminEmail}`)
+
+      // If admin exists but is_global_admin column exists and might not be set, update it
+      if (hasIsGlobalAdmin) {
+        await sql`
+          UPDATE users SET is_global_admin = true WHERE email = ${superAdminEmail}
+        `
+        addLog(`  ✅ is_global_admin atualizado para admin existente`)
+      }
     } else {
       const hashedPassword = await bcrypt.hash(superAdminPassword, 12)
 
-      const [admin] = await sql`
-        INSERT INTO users (name, email, password_hash, role, is_global_admin, status)
-        VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin', true, 'active')
-        RETURNING id, email
-      `
+      let admin
+      if (hasIsGlobalAdmin) {
+        // Insert with is_global_admin column
+        const result = await sql`
+          INSERT INTO users (name, email, password_hash, role, is_global_admin, status)
+          VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin', true, 'active')
+          RETURNING id, email
+        `
+        admin = result[0]
+      } else {
+        // Insert without is_global_admin column (fallback for edge cases)
+        const result = await sql`
+          INSERT INTO users (name, email, password_hash, role, status)
+          VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin', 'active')
+          RETURNING id, email
+        `
+        admin = result[0]
+        addLog(`  ⚠️ Admin criado sem is_global_admin - a coluna será adicionada em execução futura`)
+      }
 
       await sql`
         INSERT INTO user_settings (user_id)
