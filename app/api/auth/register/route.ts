@@ -3,7 +3,7 @@ import { users, patientProfiles, psychologistProfiles } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { NextResponse, NextRequest } from "next/server"
 import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
+import * as jose from "jose"
 import { z } from "zod"
 import { initializePrivacySettings, recordConsent, CONSENT_TYPES, LEGAL_BASIS } from "@/lib/consent"
 import { logAuditEvent, AUDIT_ACTIONS, AUDIT_RESOURCES, getRequestInfo } from "@/lib/audit"
@@ -176,11 +176,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Gerar token JWT
-    const token = jwt.sign(
-      { userId: newUser.id, role: newUser.role }, 
-      process.env.JWT_SECRET!, 
-      { expiresIn: "7d" }
-    )
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+    const token = await new jose.SignJWT({ userId: newUser.id, role: newUser.role })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('7d')
+      .sign(secret)
 
     // Log de login após registro
     await logAuditEvent({
