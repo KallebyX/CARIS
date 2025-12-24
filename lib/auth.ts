@@ -131,3 +131,64 @@ export async function verifyToken(token: string) {
     return null
   }
 }
+
+/**
+ * User info returned by verifyAdminAccess
+ */
+export interface AdminUser {
+  id: number
+  role: string
+  isGlobalAdmin: boolean
+}
+
+/**
+ * Verifies if a user has admin access.
+ * Uses raw SQL queries to handle cases where some columns might not exist in the database.
+ * @param userId The user ID to check.
+ * @returns AdminUser object if admin, null otherwise.
+ */
+export async function verifyAdminAccess(userId: number): Promise<AdminUser | null> {
+  try {
+    // First, try to get basic user info with columns that should always exist
+    const basicResult = await db.execute<{ id: number; role: string }>(
+      sql`SELECT id, role FROM users WHERE id = ${userId} LIMIT 1`
+    )
+
+    if (!basicResult.rows || basicResult.rows.length === 0) {
+      return null
+    }
+
+    const user = basicResult.rows[0]
+    let isGlobalAdmin = false
+
+    // Try to get is_global_admin if the column exists
+    try {
+      const adminResult = await db.execute<{ is_global_admin: boolean | null }>(
+        sql`SELECT is_global_admin FROM users WHERE id = ${userId} LIMIT 1`
+      )
+      if (adminResult.rows && adminResult.rows.length > 0 && adminResult.rows[0].is_global_admin !== null) {
+        isGlobalAdmin = adminResult.rows[0].is_global_admin === true
+      }
+    } catch (adminCheckError) {
+      // If the is_global_admin column doesn't exist, just ignore
+      const errorMessage = adminCheckError instanceof Error ? adminCheckError.message : ''
+      if (!errorMessage.includes('is_global_admin') && !errorMessage.includes('does not exist') && !errorMessage.includes('column')) {
+        safeWarn("[AUTH]", `Error checking is_global_admin: ${errorMessage}`)
+      }
+    }
+
+    // Check if user has admin access
+    if (user.role !== 'admin' && !isGlobalAdmin) {
+      return null
+    }
+
+    return {
+      id: user.id,
+      role: user.role,
+      isGlobalAdmin
+    }
+  } catch (error) {
+    safeError("[AUTH]", "Error verifying admin access:", error)
+    return null
+  }
+}

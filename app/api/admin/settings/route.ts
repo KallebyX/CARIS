@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserIdFromRequest } from "@/lib/auth"
+import { getUserIdFromRequest, verifyAdminAccess } from "@/lib/auth"
 import { db } from "@/db"
 import { users } from "@/db/schema"
 import { eq } from "drizzle-orm"
@@ -12,13 +12,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
     }
 
-    // Check if user is admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: { role: true, isGlobalAdmin: true }
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Check if user is admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
@@ -111,13 +107,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
     }
 
-    // Check if user is admin
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: { role: true, isGlobalAdmin: true }
-    })
-
-    if (!user || (user.role !== "admin" && !user.isGlobalAdmin)) {
+    // Check if user is admin using safe method
+    const adminUser = await verifyAdminAccess(userId)
+    if (!adminUser) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
