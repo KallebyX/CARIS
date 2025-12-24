@@ -664,6 +664,9 @@ export async function POST(request: NextRequest) {
     // Check users.is_global_admin (critical for super admin creation)
     await ensureColumn('users', 'is_global_admin', 'BOOLEAN DEFAULT false')
 
+    // Check users.status (critical for super admin creation)
+    await ensureColumn('users', 'status', "TEXT DEFAULT 'active' NOT NULL")
+
     // Check sessions.scheduled_at
     await ensureColumn('sessions', 'scheduled_at', 'TIMESTAMP')
     // Try to migrate from old column name if exists
@@ -720,16 +723,21 @@ export async function POST(request: NextRequest) {
     const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || "Admin@Caris2024!"
     const superAdminName = process.env.SUPER_ADMIN_NAME || "Administrador CÁRIS"
 
-    // First verify is_global_admin column exists before INSERT
+    // First verify is_global_admin and status columns exist before INSERT
     const columnCheck = await sql`
       SELECT column_name FROM information_schema.columns
-      WHERE table_name = 'users' AND column_name = 'is_global_admin'
+      WHERE table_name = 'users' AND column_name IN ('is_global_admin', 'status')
     `
 
-    const hasIsGlobalAdmin = columnCheck.length > 0
+    const existingColumns = columnCheck.map((row: { column_name: string }) => row.column_name)
+    const hasIsGlobalAdmin = existingColumns.includes('is_global_admin')
+    const hasStatus = existingColumns.includes('status')
 
     if (!hasIsGlobalAdmin) {
       addLog("  ⚠️ Coluna is_global_admin não encontrada, criando admin sem essa coluna...")
+    }
+    if (!hasStatus) {
+      addLog("  ⚠️ Coluna status não encontrada, criando admin sem essa coluna...")
     }
 
     const existingAdmin = await sql`
@@ -750,16 +758,26 @@ export async function POST(request: NextRequest) {
       const hashedPassword = await bcrypt.hash(superAdminPassword, 12)
 
       let admin
-      if (hasIsGlobalAdmin) {
-        // Insert with is_global_admin column
+      // Build dynamic INSERT based on available columns
+      if (hasIsGlobalAdmin && hasStatus) {
+        // Both columns exist
         const result = await sql`
           INSERT INTO users (name, email, password_hash, role, is_global_admin, status)
           VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin', true, 'active')
           RETURNING id, email
         `
         admin = result[0]
-      } else {
-        // Insert without is_global_admin column (fallback for edge cases)
+      } else if (hasIsGlobalAdmin && !hasStatus) {
+        // Only is_global_admin exists
+        const result = await sql`
+          INSERT INTO users (name, email, password_hash, role, is_global_admin)
+          VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin', true)
+          RETURNING id, email
+        `
+        admin = result[0]
+        addLog(`  ⚠️ Admin criado sem status - a coluna será adicionada em execução futura`)
+      } else if (!hasIsGlobalAdmin && hasStatus) {
+        // Only status exists
         const result = await sql`
           INSERT INTO users (name, email, password_hash, role, status)
           VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin', 'active')
@@ -767,6 +785,15 @@ export async function POST(request: NextRequest) {
         `
         admin = result[0]
         addLog(`  ⚠️ Admin criado sem is_global_admin - a coluna será adicionada em execução futura`)
+      } else {
+        // Neither column exists
+        const result = await sql`
+          INSERT INTO users (name, email, password_hash, role)
+          VALUES (${superAdminName}, ${superAdminEmail}, ${hashedPassword}, 'admin')
+          RETURNING id, email
+        `
+        admin = result[0]
+        addLog(`  ⚠️ Admin criado sem is_global_admin e status - as colunas serão adicionadas em execução futura`)
       }
 
       await sql`
