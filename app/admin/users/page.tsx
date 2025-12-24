@@ -2,6 +2,12 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AlertCircle } from "lucide-react"
 
 interface User {
   id: number
@@ -12,6 +18,7 @@ interface User {
   isGlobalAdmin: boolean
   lastLoginAt: string | null
   createdAt: string
+  phone?: string
   clinics: Array<{
     id: number
     name: string
@@ -28,47 +35,194 @@ interface UserStats {
   newUsersThisMonth: number
 }
 
+interface UserFormData {
+  name: string
+  email: string
+  phone: string
+  role: string
+  status: string
+  password: string
+}
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<UserStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterRole, setFilterRole] = useState("")
   const [filterStatus, setFilterStatus] = useState("")
 
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [formData, setFormData] = useState<UserFormData>({
+    name: "",
+    email: "",
+    phone: "",
+    role: "patient",
+    status: "active",
+    password: "",
+  })
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usersResponse, statsResponse] = await Promise.all([
-          fetch("/api/admin/users"),
-          fetch("/api/admin/users/stats")
-        ])
-
-        if (usersResponse.ok) {
-          const usersData = await usersResponse.json()
-          setUsers(usersData.data || [])
-        }
-
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json()
-          setStats(statsData.data)
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchData()
   }, [])
+
+  const fetchData = async () => {
+    try {
+      const [usersResponse, statsResponse] = await Promise.all([
+        fetch("/api/admin/users"),
+        fetch("/api/admin/users/stats")
+      ])
+
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json()
+        setUsers(usersData.data || [])
+      }
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats(statsData.data)
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateUser = async () => {
+    if (!formData.name || !formData.email || !formData.password) {
+      alert("Nome, email e senha sao obrigatorios")
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+      if (res.ok) {
+        await fetchData()
+        setIsCreateModalOpen(false)
+        resetForm()
+      } else {
+        const data = await res.json()
+        alert(data.error || "Erro ao criar usuario")
+      }
+    } catch (error) {
+      console.error("Error creating user:", error)
+      alert("Erro ao criar usuario")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return
+    setSaving(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedUser.id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.role,
+          status: formData.status,
+          ...(formData.password ? { password: formData.password } : {}),
+        }),
+      })
+      if (res.ok) {
+        await fetchData()
+        setIsEditModalOpen(false)
+        setSelectedUser(null)
+        resetForm()
+      } else {
+        const data = await res.json()
+        alert(data.error || "Erro ao atualizar usuario")
+      }
+    } catch (error) {
+      console.error("Error updating user:", error)
+      alert("Erro ao atualizar usuario")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleToggleStatus = async () => {
+    if (!selectedUser) return
+    const newStatus = selectedUser.status === "active" ? "suspended" : "active"
+    setSaving(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: selectedUser.id, status: newStatus }),
+      })
+      if (res.ok) {
+        await fetchData()
+        setIsStatusModalOpen(false)
+        setSelectedUser(null)
+      } else {
+        const data = await res.json()
+        alert(data.error || "Erro ao alterar status")
+      }
+    } catch (error) {
+      console.error("Error toggling status:", error)
+      alert("Erro ao alterar status")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      role: "patient",
+      status: "active",
+      password: "",
+    })
+  }
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user)
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || "",
+      role: user.role,
+      status: user.status,
+      password: "",
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const openViewModal = (user: User) => {
+    setSelectedUser(user)
+    setIsViewModalOpen(true)
+  }
+
+  const openStatusModal = (user: User) => {
+    setSelectedUser(user)
+    setIsStatusModalOpen(true)
+  }
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesRole = filterRole === "" || user.role === filterRole
     const matchesStatus = filterStatus === "" || user.status === filterStatus
-    
+
     return matchesSearch && matchesRole && matchesStatus
   })
 
@@ -104,38 +258,28 @@ export default function AdminUsersPage() {
 
   const formatRole = (role: string) => {
     switch (role) {
-      case "admin":
-        return "Administrador"
-      case "clinic_owner":
-        return "Proprietário"
-      case "clinic_admin":
-        return "Admin Clínica"
-      case "psychologist":
-        return "Psicólogo"
-      case "patient":
-        return "Paciente"
-      default:
-        return role
+      case "admin": return "Administrador"
+      case "clinic_owner": return "Proprietario"
+      case "clinic_admin": return "Admin Clinica"
+      case "psychologist": return "Psicologo"
+      case "patient": return "Paciente"
+      default: return role
     }
   }
 
   const formatStatus = (status: string) => {
     switch (status) {
-      case "active":
-        return "Ativo"
-      case "suspended":
-        return "Suspenso"
-      case "inactive":
-        return "Inativo"
-      default:
-        return status
+      case "active": return "Ativo"
+      case "suspended": return "Suspenso"
+      case "inactive": return "Inativo"
+      default: return status
     }
   }
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-slate-800">Gestão de Usuários</h1>
+        <h1 className="text-3xl font-bold text-slate-800">Gestao de Usuarios</h1>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white p-6 rounded-lg border border-slate-200 animate-pulse">
@@ -153,31 +297,31 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Gestão de Usuários</h1>
-          <p className="text-slate-600 mt-1">Gerencie todos os usuários da plataforma</p>
+          <h1 className="text-3xl font-bold text-slate-800">Gestao de Usuarios</h1>
+          <p className="text-slate-600 mt-1">Gerencie todos os usuarios da plataforma</p>
         </div>
-        <button className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center gap-2">
-          ➕ Novo Usuário
-        </button>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
+          + Novo Usuario
+        </Button>
       </div>
 
-      {/* Estatísticas */}
+      {/* Stats */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <div className="bg-white p-6 rounded-lg border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Total de Usuários</p>
+              <p className="text-sm font-medium text-slate-600">Total de Usuarios</p>
               <p className="text-2xl font-bold text-slate-900">{stats?.totalUsers || 0}</p>
-              <p className="text-xs text-slate-500">Todos os usuários</p>
+              <p className="text-xs text-slate-500">Todos os usuarios</p>
             </div>
             <div className="text-2xl">👥</div>
           </div>
         </div>
-        
+
         <div className="bg-white p-6 rounded-lg border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Usuários Ativos</p>
+              <p className="text-sm font-medium text-slate-600">Usuarios Ativos</p>
               <p className="text-2xl font-bold text-slate-900">{stats?.activeUsers || 0}</p>
               <p className="text-xs text-green-600">Status ativo</p>
             </div>
@@ -190,7 +334,7 @@ export default function AdminUsersPage() {
             <div>
               <p className="text-sm font-medium text-slate-600">Administradores</p>
               <p className="text-2xl font-bold text-slate-900">{stats?.adminUsers || 0}</p>
-              <p className="text-xs text-slate-500">Admins e proprietários</p>
+              <p className="text-xs text-slate-500">Admins e proprietarios</p>
             </div>
             <div className="text-2xl">👑</div>
           </div>
@@ -199,7 +343,7 @@ export default function AdminUsersPage() {
         <div className="bg-white p-6 rounded-lg border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-600">Novos Este Mês</p>
+              <p className="text-sm font-medium text-slate-600">Novos Este Mes</p>
               <p className="text-2xl font-bold text-slate-900">{stats?.newUsersThisMonth || 0}</p>
               <p className="text-xs text-green-600">Crescimento</p>
             </div>
@@ -208,79 +352,75 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Filtros */}
+      {/* Filters */}
       <div className="bg-white p-6 rounded-lg border border-slate-200">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Buscar usuário
-            </label>
-            <input
-              type="text"
+            <Label>Buscar usuario</Label>
+            <Input
               placeholder="Nome ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="mt-1"
             />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Filtrar por papel
-            </label>
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="">Todos os papéis</option>
-              <option value="admin">Administrador</option>
-              <option value="clinic_owner">Proprietário</option>
-              <option value="clinic_admin">Admin Clínica</option>
-              <option value="psychologist">Psicólogo</option>
-              <option value="patient">Paciente</option>
-            </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Filtrar por status
-            </label>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="">Todos os status</option>
-              <option value="active">Ativo</option>
-              <option value="suspended">Suspenso</option>
-              <option value="inactive">Inativo</option>
-            </select>
+            <Label>Filtrar por papel</Label>
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Todos os papeis" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos os papeis</SelectItem>
+                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="clinic_owner">Proprietario</SelectItem>
+                <SelectItem value="clinic_admin">Admin Clinica</SelectItem>
+                <SelectItem value="psychologist">Psicologo</SelectItem>
+                <SelectItem value="patient">Paciente</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Filtrar por status</Label>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Todos os status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="suspended">Suspenso</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-end">
-            <button
+            <Button
+              variant="outline"
               onClick={() => {
                 setSearchTerm("")
                 setFilterRole("")
                 setFilterStatus("")
               }}
-              className="w-full px-4 py-2 text-slate-600 border border-slate-300 rounded-md hover:bg-slate-50"
+              className="w-full"
             >
               Limpar Filtros
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Lista de Usuários */}
+      {/* Users Table */}
       <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Usuário
+                  Usuario
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Papel
@@ -289,13 +429,13 @@ export default function AdminUsersPage() {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Clínicas
+                  Clinicas
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Último Login
+                  Ultimo Login
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Ações
+                  Acoes
                 </th>
               </tr>
             </thead>
@@ -330,7 +470,7 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-slate-900">
-                      {user.clinics.length > 0 ? (
+                      {user.clinics && user.clinics.length > 0 ? (
                         <div className="space-y-1">
                           {user.clinics.slice(0, 2).map((clinic) => (
                             <div key={clinic.id} className="text-xs">
@@ -347,7 +487,7 @@ export default function AdminUsersPage() {
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-500">Nenhuma clínica</span>
+                        <span className="text-slate-500">Nenhuma clinica</span>
                       )}
                     </div>
                   </td>
@@ -360,21 +500,24 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <button className="text-teal-600 hover:text-teal-900">
+                      <button
+                        onClick={() => openEditModal(user)}
+                        className="text-teal-600 hover:text-teal-900"
+                      >
                         Editar
                       </button>
-                      <button className="text-slate-600 hover:text-slate-900">
+                      <button
+                        onClick={() => openViewModal(user)}
+                        className="text-slate-600 hover:text-slate-900"
+                      >
                         Ver
                       </button>
-                      {user.status === "active" ? (
-                        <button className="text-red-600 hover:text-red-900">
-                          Suspender
-                        </button>
-                      ) : (
-                        <button className="text-green-600 hover:text-green-900">
-                          Ativar
-                        </button>
-                      )}
+                      <button
+                        onClick={() => openStatusModal(user)}
+                        className={user.status === "active" ? "text-red-600 hover:text-red-900" : "text-green-600 hover:text-green-900"}
+                      >
+                        {user.status === "active" ? "Suspender" : "Ativar"}
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -386,11 +529,255 @@ export default function AdminUsersPage() {
         {filteredUsers.length === 0 && (
           <div className="text-center py-12">
             <div className="text-slate-500">
-              {users.length === 0 ? "Nenhum usuário encontrado" : "Nenhum usuário corresponde aos filtros"}
+              {users.length === 0 ? "Nenhum usuario encontrado" : "Nenhum usuario corresponde aos filtros"}
             </div>
           </div>
         )}
       </div>
+
+      {/* Create/Edit Modal */}
+      <Dialog open={isCreateModalOpen || isEditModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsCreateModalOpen(false)
+          setIsEditModalOpen(false)
+          setSelectedUser(null)
+          resetForm()
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{isEditModalOpen ? "Editar Usuario" : "Novo Usuario"}</DialogTitle>
+            <DialogDescription>
+              {isEditModalOpen ? "Atualize as informacoes do usuario" : "Preencha os dados para criar um novo usuario"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="name">Nome *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="password">
+                {isEditModalOpen ? "Nova Senha (deixe vazio para manter)" : "Senha *"}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="role">Papel</Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="patient">Paciente</SelectItem>
+                  <SelectItem value="psychologist">Psicologo</SelectItem>
+                  <SelectItem value="clinic_admin">Admin Clinica</SelectItem>
+                  <SelectItem value="clinic_owner">Proprietario</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="suspended">Suspenso</SelectItem>
+                  <SelectItem value="inactive">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsCreateModalOpen(false)
+              setIsEditModalOpen(false)
+              setSelectedUser(null)
+              resetForm()
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={isEditModalOpen ? handleUpdateUser : handleCreateUser} disabled={saving}>
+              {saving ? "Salvando..." : isEditModalOpen ? "Salvar Alteracoes" : "Criar Usuario"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsViewModalOpen(false)
+          setSelectedUser(null)
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Usuario</DialogTitle>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center text-white text-xl font-medium">
+                  {selectedUser.name.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
+                  <p className="text-slate-500">{selectedUser.email}</p>
+                  {selectedUser.isGlobalAdmin && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                      Super Admin
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">Papel</p>
+                  <span className={getRoleColor(selectedUser.role)}>
+                    {formatRole(selectedUser.role)}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Status</p>
+                  <span className={getStatusColor(selectedUser.status)}>
+                    {formatStatus(selectedUser.status)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">Ultimo Login</p>
+                  <p className="font-medium">
+                    {selectedUser.lastLoginAt
+                      ? new Date(selectedUser.lastLoginAt).toLocaleString('pt-BR')
+                      : "Nunca"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Criado em</p>
+                  <p className="font-medium">
+                    {new Date(selectedUser.createdAt).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+
+              {selectedUser.clinics && selectedUser.clinics.length > 0 && (
+                <div>
+                  <p className="text-sm text-slate-500 mb-2">Clinicas</p>
+                  <div className="space-y-2">
+                    {selectedUser.clinics.map((clinic) => (
+                      <div key={clinic.id} className="p-2 bg-slate-50 rounded">
+                        <p className="font-medium">{clinic.name}</p>
+                        <p className="text-xs text-slate-500">{clinic.role} - {clinic.status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => {
+              setIsViewModalOpen(false)
+              if (selectedUser) openEditModal(selectedUser)
+            }}>
+              Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Toggle Modal */}
+      <Dialog open={isStatusModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsStatusModalOpen(false)
+          setSelectedUser(null)
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              Alterar Status do Usuario
+            </DialogTitle>
+            <DialogDescription>
+              {selectedUser?.status === "active" ? (
+                <>
+                  Tem certeza que deseja <strong>suspender</strong> o usuario <strong>{selectedUser?.name}</strong>?
+                  <br />
+                  <span className="text-red-600">O usuario nao podera mais acessar o sistema.</span>
+                </>
+              ) : (
+                <>
+                  Tem certeza que deseja <strong>ativar</strong> o usuario <strong>{selectedUser?.name}</strong>?
+                  <br />
+                  <span className="text-green-600">O usuario podera acessar o sistema novamente.</span>
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsStatusModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant={selectedUser?.status === "active" ? "destructive" : "default"}
+              onClick={handleToggleStatus}
+              disabled={saving}
+            >
+              {saving ? "Processando..." : selectedUser?.status === "active" ? "Suspender" : "Ativar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

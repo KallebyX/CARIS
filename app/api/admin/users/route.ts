@@ -148,3 +148,75 @@ export async function POST(request: NextRequest) {
     return handleApiError(error)
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const adminUserId = await getUserIdFromRequest(request)
+    if (!adminUserId) {
+      return apiUnauthorized("Nao autorizado")
+    }
+
+    // Verify user is global admin
+    const adminUser = await db.query.users.findFirst({
+      where: eq(users.id, adminUserId)
+    })
+
+    if (!adminUser || (adminUser.role !== "admin" && !adminUser.isGlobalAdmin)) {
+      return apiForbidden("Acesso negado")
+    }
+
+    const body = await request.json()
+    const { id, ...updates } = body
+
+    if (!id) {
+      return apiBadRequest("ID do usuario e obrigatorio")
+    }
+
+    // Build update object
+    const updateValues: Record<string, unknown> = {}
+
+    if (updates.name !== undefined) updateValues.name = updates.name
+    if (updates.email !== undefined) updateValues.email = updates.email
+    if (updates.phone !== undefined) updateValues.phone = updates.phone
+    if (updates.role !== undefined) updateValues.role = updates.role
+    if (updates.status !== undefined) updateValues.status = updates.status
+    if (updates.isGlobalAdmin !== undefined) updateValues.isGlobalAdmin = updates.isGlobalAdmin
+
+    // Handle password update
+    if (updates.password) {
+      const bcrypt = require('bcryptjs')
+      updateValues.password = await bcrypt.hash(updates.password, 10)
+      updateValues.passwordChangedAt = new Date()
+    }
+
+    updateValues.updatedAt = new Date()
+
+    // Check email uniqueness if updating email
+    if (updates.email) {
+      const existingUser = await db.query.users.findFirst({
+        where: eq(users.email, updates.email)
+      })
+      if (existingUser && existingUser.id !== id) {
+        return apiConflict("Email ja esta em uso")
+      }
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateValues)
+      .where(eq(users.id, id))
+      .returning()
+
+    if (!updatedUser) {
+      return apiBadRequest("Usuario nao encontrado")
+    }
+
+    // Return user without password
+    const { password: _, ...userResponse } = updatedUser
+
+    return apiSuccess({ user: userResponse })
+  } catch (error) {
+    console.error("Error updating user:", error)
+    return handleApiError(error)
+  }
+}
