@@ -6,14 +6,47 @@ import { eq } from "drizzle-orm"
 import { safeError, safeWarn } from "@/lib/safe-logger"
 
 /**
+ * Extracts the token from a request, handling both NextRequest and standard Request.
+ * Uses the cookies API when available (NextRequest), with regex fallback for standard Request.
+ */
+function extractToken(request: NextRequest | Request): string | null {
+  // Try to use Next.js cookies API first (more reliable, handles encoding)
+  if ('cookies' in request && typeof request.cookies?.get === 'function') {
+    const cookieValue = request.cookies.get("token")?.value
+    if (cookieValue) {
+      return cookieValue.trim()
+    }
+  }
+
+  // Fallback: parse from raw cookie header for standard Request
+  const cookieHeader = request.headers.get("cookie")
+  if (!cookieHeader) {
+    return null
+  }
+
+  // Match token cookie, handling potential quotes around value
+  const tokenMatch = cookieHeader.match(/(?:^|;\s*)token=("?)([^";]+)\1(?:;|$)/)
+  if (tokenMatch) {
+    // Decode URI components in case of encoding, and trim whitespace
+    try {
+      return decodeURIComponent(tokenMatch[2]).trim()
+    } catch {
+      // If decoding fails, return the raw value trimmed
+      return tokenMatch[2].trim()
+    }
+  }
+
+  return null
+}
+
+/**
  * Extrai o ID do usuário do token JWT na requisição.
  * Valida se o token foi emitido após a última mudança de senha.
  * @param request A requisição Next.js ou Fetch API.
  * @returns O ID do usuário como número, ou null se não autorizado.
  */
 export async function getUserIdFromRequest(request: NextRequest | Request) {
-  const tokenCookie = (request.headers.get("cookie") || "").match(/token=([^;]+)/)
-  const token = tokenCookie ? tokenCookie[1] : null
+  const token = extractToken(request)
 
   if (!token) {
     return null
