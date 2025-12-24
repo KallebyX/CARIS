@@ -897,6 +897,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Wait for schema cache to fully update after adding columns
+    addLog("  ⏳ Aguardando atualização do schema cache...")
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Create a fresh database connection to avoid stale schema cache
+    const freshSql = neon(databaseUrl)
+
+    // Verify columns exist with fresh connection before inserting
+    const verifyColumns = await freshSql`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'achievements'
+      AND column_name IN ('type', 'category', 'requirement', 'xp_reward', 'rarity', 'is_active')
+    `
+    const verifiedCols = verifyColumns.map((r: { column_name: string }) => r.column_name)
+    addLog(`  ✅ Colunas verificadas com nova conexão: ${verifiedCols.join(', ')}`)
+
+    if (verifiedCols.length < 6) {
+      addLog("  ⚠️ Algumas colunas não foram detectadas, tentando adicionar novamente...")
+      for (const col of requiredAchievementColumns) {
+        if (!verifiedCols.includes(col.name)) {
+          try {
+            await freshSql.unsafe(`ALTER TABLE achievements ADD COLUMN IF NOT EXISTS ${col.name} ${col.def}`)
+            addLog(`  ✅ Coluna ${col.name} adicionada via conexão fresca`)
+          } catch (e) {
+            // Ignore if already exists
+          }
+        }
+      }
+      // Wait again after second attempt
+      await new Promise(resolve => setTimeout(resolve, 300))
+    }
+
     const achievements = [
       { name: "Primeiro Passo", desc: "Complete seu cadastro", icon: "🎉", type: "milestone", cat: "engagement", req: 1, xp: 50, rarity: "common" },
       { name: "Escritor Iniciante", desc: "Escreva sua primeira entrada no diário", icon: "📝", type: "activity", cat: "diary", req: 1, xp: 25, rarity: "common" },
@@ -906,12 +938,23 @@ export async function POST(request: NextRequest) {
       { name: "Zen Master", desc: "Complete 50 meditações", icon: "☯️", type: "milestone", cat: "meditation", req: 50, xp: 300, rarity: "legendary" },
     ]
 
+    // Use raw SQL insert via fresh connection to avoid schema cache issues
     for (const ach of achievements) {
-      await sql`
-        INSERT INTO achievements (name, description, icon, type, category, requirement, xp_reward, rarity)
-        VALUES (${ach.name}, ${ach.desc}, ${ach.icon}, ${ach.type}, ${ach.cat}, ${ach.req}, ${ach.xp}, ${ach.rarity})
-        ON CONFLICT DO NOTHING
-      `
+      try {
+        await freshSql.unsafe(`
+          INSERT INTO achievements (name, description, icon, type, category, requirement, xp_reward, rarity)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          ON CONFLICT DO NOTHING
+        `, [ach.name, ach.desc, ach.icon, ach.type, ach.cat, ach.req, ach.xp, ach.rarity])
+      } catch (insertErr) {
+        const errMsg = insertErr instanceof Error ? insertErr.message : ''
+        addLog(`  ⚠️ Erro ao inserir achievement ${ach.name}: ${errMsg}`)
+        // If column doesn't exist error, skip this achievement
+        if (errMsg.includes('does not exist')) {
+          addLog(`  ⚠️ Pulando achievements - colunas ainda não disponíveis`)
+          break
+        }
+      }
     }
     addLog("  ✅ Conquistas")
 
