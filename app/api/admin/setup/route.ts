@@ -685,6 +685,14 @@ export async function POST(request: NextRequest) {
     await ensureColumn('audit_logs', 'user_id', 'INTEGER')
     await ensureColumn('mood_tracking', 'patient_id', 'INTEGER')
 
+    // Check achievements table columns (critical for achievements insert)
+    await ensureColumn('achievements', 'type', "TEXT DEFAULT 'activity' NOT NULL")
+    await ensureColumn('achievements', 'category', "TEXT DEFAULT 'engagement' NOT NULL")
+    await ensureColumn('achievements', 'requirement', 'INTEGER DEFAULT 1 NOT NULL')
+    await ensureColumn('achievements', 'xp_reward', 'INTEGER DEFAULT 0 NOT NULL')
+    await ensureColumn('achievements', 'rarity', "TEXT DEFAULT 'common' NOT NULL")
+    await ensureColumn('achievements', 'is_active', 'BOOLEAN DEFAULT true NOT NULL')
+
     // ========================================
     // CRIAR ÍNDICES
     // ========================================
