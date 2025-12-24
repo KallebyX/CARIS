@@ -1,19 +1,11 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { users, sessions } from "@/db/schema"
 import { eq, and, count, gte } from "drizzle-orm"
-import * as jose from "jose"
+import { getUserIdFromRequest } from "@/lib/auth"
 
-async function getUserIdFromToken(request: Request) {
-  const token = request.headers.get("cookie")?.split("token=")[1]?.split(";")[0]
-  if (!token) return null
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
-  const { payload } = await jose.jwtVerify(token, secret)
-  return payload.userId as number
-}
-
-export async function GET(request: Request) {
-  const psychologistId = await getUserIdFromToken(request)
+export async function GET(request: NextRequest) {
+  const psychologistId = await getUserIdFromRequest(request)
   if (!psychologistId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
