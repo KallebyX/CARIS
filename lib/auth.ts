@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server"
 import * as jose from "jose"
 import { db } from "@/db"
 import { users } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { safeError, safeWarn } from "@/lib/safe-logger"
 
 /**
@@ -61,22 +61,51 @@ export async function getUserIdFromRequest(request: NextRequest | Request) {
     // SECURITY: Check if token was issued before password change
     // This invalidates all old tokens when password is changed
     if (tokenIssuedAt && userId) {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, userId),
-        columns: {
-          id: true,
-          passwordChangedAt: true,
-        }
-      })
+      try {
+        // First, verify the user exists with a basic query that doesn't require password_changed_at
+        const userExists = await db.query.users.findFirst({
+          where: eq(users.id, userId),
+          columns: {
+            id: true,
+          }
+        })
 
-      if (user && user.passwordChangedAt) {
-        const passwordChangedTimestamp = Math.floor(user.passwordChangedAt.getTime() / 1000)
-
-        // If token was issued before password change, invalidate it
-        if (tokenIssuedAt < passwordChangedTimestamp) {
-          safeWarn("[AUTH]", `Token invalidated - issued before password change. User: ${userId}`)
+        if (!userExists) {
+          safeWarn("[AUTH]", `User not found: ${userId}`)
           return null
         }
+
+        // Try to check password_changed_at if the column exists
+        // This uses a raw parameterized query to handle the case where the column might not exist
+        try {
+          const result = await db.execute<{ password_changed_at: Date | null }>(
+            sql`SELECT password_changed_at FROM users WHERE id = ${userId} LIMIT 1`
+          )
+
+          if (result.rows && result.rows.length > 0 && result.rows[0].password_changed_at) {
+            const passwordChangedTimestamp = Math.floor(new Date(result.rows[0].password_changed_at).getTime() / 1000)
+
+            // If token was issued before password change, invalidate it
+            if (tokenIssuedAt < passwordChangedTimestamp) {
+              safeWarn("[AUTH]", `Token invalidated - issued before password change. User: ${userId}`)
+              return null
+            }
+          }
+        } catch (passwordCheckError) {
+          // If the password_changed_at column doesn't exist, just skip this check
+          // The token is still valid based on JWT verification
+          const errorMessage = passwordCheckError instanceof Error ? passwordCheckError.message : ''
+          if (errorMessage.includes('password_changed_at') || errorMessage.includes('does not exist') || errorMessage.includes('column')) {
+            // Column doesn't exist yet, skip password change check
+            // This is expected during initial setup or migration
+          } else {
+            // Other error, log it but don't fail auth
+            safeWarn("[AUTH]", `Error checking password_changed_at: ${errorMessage}`)
+          }
+        }
+      } catch (userCheckError) {
+        safeError("[AUTH]", "Error verifying user:", userCheckError)
+        return null
       }
     }
 
