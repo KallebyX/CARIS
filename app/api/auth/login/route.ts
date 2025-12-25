@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
         email: users.email,
         password: users.password,
         role: users.role,
+        isGlobalAdmin: users.isGlobalAdmin,
       })
       .from(users)
       .where(eq(users.email, email))
@@ -94,7 +95,11 @@ export async function POST(request: NextRequest) {
     }
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
-    const token = await new jose.SignJWT({ userId: user.id, role: user.role })
+    const token = await new jose.SignJWT({
+      userId: user.id,
+      role: user.role,
+      isGlobalAdmin: user.isGlobalAdmin ?? false,
+    })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('7d')
