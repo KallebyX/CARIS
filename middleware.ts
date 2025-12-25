@@ -298,11 +298,13 @@ export async function middleware(request: NextRequest) {
     // Verifica permissões de admin para páginas e API admin
     const isAdminPage = pathname.startsWith("/admin")
     const isAdminApi = pathname.startsWith("/api/admin")
+    const hasAdminAccess = payload.role === "admin" || payload.isGlobalAdmin === true
 
-    if ((isAdminPage || isAdminApi) && payload.role !== "admin") {
+    if ((isAdminPage || isAdminApi) && !hasAdminAccess) {
       logSecurityEvent("unauthorized_admin_access", request, {
         userId: payload.userId,
         role: payload.role,
+        isGlobalAdmin: payload.isGlobalAdmin,
         path: pathname
       })
 
